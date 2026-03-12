@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CopyPlus, LayoutDashboard, ShoppingCart, FileText, ArrowLeft } from "lucide-react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -26,9 +27,10 @@ export default async function AdminLayout({ children }: {
                     </Link>
                     <Link
                         href="/admin"
-                        className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+                        className="flex items-center gap-2 text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
                     >
-                        LOCALU - Admin Panel
+                        <Image src="/logo.png" alt="Localu Logo" width={32} height={32} className="object-contain" priority />
+                        LOCALU - Admin
                     </Link>
                 </div>
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">

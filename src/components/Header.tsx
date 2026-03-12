@@ -26,10 +26,17 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                     href="/"
                     className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 >
-                    <div className="flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-2 rounded-xl shadow-sm">
-                        <Store className="w-6 h-6" />
+                    <div className="flex items-center justify-center p-1 bg-white/50 dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <Image
+                            src="/logo.png"
+                            alt="Localu Logo"
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain"
+                            priority
+                        />
                     </div>
-                    <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
                         LOCALU
                     </span>
                 </Link>
