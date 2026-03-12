@@ -12,6 +12,25 @@ export const metadata: Metadata = {
   title: "Localu - Hyperlocal Delivery",
   description: "Get everything delivered to your door.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "Localu",
+    description: "Get everything delivered to your door.",
+    siteName: "Localu",
+    images: [
+      {
+        url: "/logo.png",
+        width: 800,
+        height: 600,
+        alt: "Localu Logo",
+      },
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
