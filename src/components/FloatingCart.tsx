@@ -36,7 +36,7 @@ export default function FloatingCart({ onCartClick }: { onCartClick: () => void 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onCartClick}
-            className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl shadow-blue-600/30 dark:shadow-blue-900/50 hover:bg-blue-700 transition-colors"
+            className="fixed bottom-24 md:bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl shadow-blue-600/30 dark:shadow-blue-900/50 hover:bg-blue-700 transition-colors"
         >
             <ShoppingCart className="h-6 w-6" />
             {itemCount > 0 && (

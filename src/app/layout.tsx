@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
   title: "Localu - Hyperlocal Delivery",
   description: "Get everything delivered to your door.",
   manifest: "/manifest.json",

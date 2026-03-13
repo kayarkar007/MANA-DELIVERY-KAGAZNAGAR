@@ -82,7 +82,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
 
     return (
         <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             initial="hidden"
             animate="show"
             variants={{
@@ -129,17 +129,17 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                         <div className="p-6 flex flex-col justify-between flex-grow">
                             <div>
                                 <div className="flex justify-between items-start gap-4">
-                                    <h3 className="font-bold text-xl text-gray-900 dark:text-white leading-tight">
+                                    <h3 className="font-bold text-base md:text-xl text-gray-900 dark:text-white leading-tight">
                                         {product.name}
                                     </h3>
                                 </div>
-                                <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2 bg-gray-50 dark:bg-gray-700 inline-block px-2 py-1 rounded">
-                                    Unit: {product.unit}
+                                <p className="text-[10px] md:text-sm font-medium text-gray-400 dark:text-gray-500 mt-2 bg-gray-50 dark:bg-gray-700 inline-block px-2 py-1 rounded">
+                                    {product.unit}
                                 </p>
                             </div>
 
-                            <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-50 dark:border-gray-700">
-                                <div className="font-black text-2xl text-gray-900 dark:text-white">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4 md:mt-8 pt-4 border-t border-gray-50 dark:border-gray-700">
+                                <div className="font-black text-lg md:text-2xl text-gray-900 dark:text-white">
                                     ₹{product.price}
                                 </div>
 

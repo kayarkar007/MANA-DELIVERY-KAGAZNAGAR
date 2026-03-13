@@ -59,11 +59,11 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             </div>
                             <Link
                                 href="/profile"
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                 title="My Orders"
                             >
                                 <Package className="w-4 h-4" />
-                                <span className="text-xs font-bold hidden sm:inline">My Orders</span>
+                                <span className="text-xs font-bold">My Orders</span>
                             </Link>
                             <button
                                 onClick={() => signOut()}

@@ -6,12 +6,10 @@ export async function POST(req: Request) {
         const { amount } = await req.json();
 
         if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-            // Mock response if keys aren't configured yet so that developers can test UI
-            return NextResponse.json({
-                success: true,
-                order: { id: "order_mock_" + Date.now(), amount: Math.round(amount * 100), currency: "INR" },
-                mock: true
-            });
+            return NextResponse.json(
+                { success: false, error: "Razorpay credentials are not configured in the environment variables." },
+                { status: 400 }
+            );
         }
 
         const razorpay = new Razorpay({

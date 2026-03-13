@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Localu - Hyperlocal Delivery App
+
+Localu is a premium hyperlocal delivery platform built with Next.js, featuring grocery delivery, home services, and pharmacy integration.
+
+## Features
+
+- 🛍️ **Hyperlocal Shopping**: Browse local groceries, fruits, veggies, and more.
+- 🛠️ **Home Services**: Book local services like repairs and deliveries.
+- 🛒 **Smart Cart**: Persistent cart with real-time pricing and tax calculation.
+- 📱 **Mobile Optimized**: Premium app-like experience with sticky navigation and responsive layouts.
+- 🌓 **Dark Mode**: Sleek dark mode support using `next-themes`.
+- 🛡️ **Admin Panel**: Comprehensive dashboard for managing products, categories, and orders.
+- 💳 **Flexible Payments**: Support for Cash on Delivery and Manual UPI payments.
+
+## Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org) (App Router)
+- **Database**: [MongoDB](https://www.mongodb.com) with Mongoose
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Auth**: [NextAuth.js](https://next-auth.js.org)
+- **Notifications**: [Sonner](https://sonner.stevenly.me)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+Create a `.env.local` file with the following:
+```env
+MONGODB_URI=your_mongodb_uri
+NEXTAUTH_SECRET=your_auth_secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
+### Installation
+
+```bash
+npm install
+```
+
+### Seeding the Database
+
+To populate the app with initial categories and products, run:
+```bash
+npx tsx scripts/seed.ts
+```
+
+### Running for Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Production Seeding
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> [!IMPORTANT]
+> The `/api/seed` route has been removed for security. Use the CLI script `scripts/seed.ts` for database management.

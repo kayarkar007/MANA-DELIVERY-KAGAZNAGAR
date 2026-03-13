@@ -44,17 +44,17 @@ export default async function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
         </div>
 
-        <div className="relative z-10 p-10 md:p-20 flex flex-col items-start justify-center min-h-[400px]">
-          <span className="px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-300 font-bold uppercase tracking-widest text-xs mb-6 backdrop-blur-md border border-blue-400/30">
+        <div className="relative z-10 p-6 md:p-20 flex flex-col items-start justify-center min-h-[400px]">
+          <span className="px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-300 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-6 backdrop-blur-md border border-blue-400/30">
             Local Delivery Redefined
           </span>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6 max-w-2xl">
+          <h1 className="text-4xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6 max-w-2xl">
             Everything you need, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
               delivered fast.
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 max-w-xl font-medium mb-10 leading-relaxed">
+          <p className="text-base md:text-xl text-gray-300 max-w-xl font-medium mb-10 leading-relaxed">
             From fresh daily groceries to instant medicine delivery and home services.
             Experience the super app built for your local neighborhood.
           </p>

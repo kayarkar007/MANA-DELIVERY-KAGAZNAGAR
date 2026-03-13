@@ -19,7 +19,7 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(true);
     const [placingOrder, setPlacingOrder] = useState(false);
     const [locating, setLocating] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi" | "razorpay">("razorpay");
+    const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi">("cod");
     const [transactionId, setTransactionId] = useState("");
 
     const [promoCode, setPromoCode] = useState("");
@@ -224,62 +224,8 @@ export default function CheckoutPage() {
             return;
         }
 
-        if (paymentMethod === "razorpay" && finalTotal > 0) {
-            try {
-                const res = await fetch("/api/payment/create-order", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ amount: finalTotal }),
-                });
-                const data = await res.json();
-
-                if (!data.success) {
-                    toast.error("Failed to initialize payment");
-                    setPlacingOrder(false);
-                    return;
-                }
-
-                if (data.mock) {
-                    toast.success("Test Mode: Mock Payment successful.");
-                    await submitOrder("razorpay", "mock_payment_" + Date.now());
-                    return;
-                }
-
-                const options = {
-                    key: data.keyId,
-                    amount: finalTotal * 100,
-                    currency: "INR",
-                    name: "Localu",
-                    description: "Order Payment",
-                    order_id: data.order.id,
-                    handler: async function (response: any) {
-                        toast.success("Payment successful! Placing order...");
-                        await submitOrder("razorpay", response.razorpay_payment_id);
-                    },
-                    prefill: {
-                        name: form.name,
-                        contact: form.whatsapp,
-                    },
-                    theme: {
-                        color: "#2563eb"
-                    }
-                };
-
-                const rzp = new (window as any).Razorpay(options);
-                rzp.on('payment.failed', function (response: any) {
-                    toast.error(response.error.description);
-                    setPlacingOrder(false);
-                });
-                rzp.open();
-            } catch (e) {
-                toast.error("Payment gateway error");
-                setPlacingOrder(false);
-                return;
-            }
-        } else {
-            // COD or UPI or Wallet
-            await submitOrder(paymentMethod, paymentMethod === "upi" ? transactionId : undefined);
-        }
+        // COD or UPI or Wallet
+        await submitOrder(paymentMethod, paymentMethod === "upi" ? transactionId : undefined);
     };
 
     if (loading) {
@@ -387,14 +333,7 @@ export default function CheckoutPage() {
                                             <Banknote className="w-6 h-6 mb-2" />
                                             <span className="font-bold text-sm text-center">Cash on Delivery</span>
                                         </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod("razorpay")}
-                                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${paymentMethod === "razorpay" ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-blue-300 dark:hover:border-blue-700"}`}
-                                        >
-                                            <CreditCard className="w-6 h-6 mb-2" />
-                                            <span className="font-bold text-sm text-center">Pay Online (Card/UPI)</span>
-                                        </button>
+
                                         <button
                                             type="button"
                                             onClick={() => setPaymentMethod("upi")}
