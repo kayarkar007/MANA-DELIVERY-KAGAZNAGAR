@@ -41,7 +41,7 @@ export default async function Home() {
             className="object-cover opacity-30 mix-blend-overlay"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
+          <div className="absolute inset-0 bg-linear-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
         </div>
 
         <div className="relative z-10 p-6 md:p-20 flex flex-col items-start justify-center min-h-[400px]">
@@ -50,7 +50,7 @@ export default async function Home() {
           </span>
           <h1 className="text-4xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6 max-w-2xl">
             Everything you need, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-300">
               delivered fast.
             </span>
           </h1>
@@ -120,7 +120,7 @@ export default async function Home() {
                 >
                   <Link
                     href={`/category/${category.slug}`}
-                    className="block group relative overflow-hidden rounded-[2rem] aspect-[4/5] shadow-sm hover:shadow-2xl transition-all duration-500"
+                    className="block group relative overflow-hidden rounded-4xl aspect-4/5 shadow-sm hover:shadow-2xl transition-all duration-500"
                   >
                     {category.image ? (
                       <Image
@@ -131,12 +131,12 @@ export default async function Home() {
                       />
                     ) : (
                       <div className={`absolute inset-0 ${category.type === "service"
-                        ? "bg-gradient-to-br from-purple-400 to-indigo-600"
-                        : "bg-gradient-to-br from-blue-400 to-cyan-500"
+                        ? "bg-linear-to-br from-purple-400 to-indigo-600"
+                        : "bg-linear-to-br from-blue-400 to-cyan-500"
                         }`}></div>
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+                    <div className="absolute inset-0 bg-linear-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
 
                     <div className="absolute inset-0 p-6 flex flex-col justify-end">
                       <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">

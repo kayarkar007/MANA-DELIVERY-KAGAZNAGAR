@@ -4,6 +4,11 @@ import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
+const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+if (process.env.NODE_ENV === "production" && !nextAuthSecret) {
+    throw new Error("NEXTAUTH_SECRET is required in production");
+}
+
 export const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({
@@ -67,7 +72,7 @@ export const authOptions: AuthOptions = {
     pages: {
         signIn: "/login",
     },
-    secret: process.env.NEXTAUTH_SECRET || "default_local_secret_change_me_in_prod",
+    secret: nextAuthSecret,
 };
 
 const handler = NextAuth(authOptions);

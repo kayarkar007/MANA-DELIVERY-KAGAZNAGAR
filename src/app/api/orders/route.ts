@@ -4,6 +4,7 @@ import Order from "@/models/Order";
 import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireUser } from "@/lib/routeAuth";
 
 export async function POST(request: Request) {
     try {
@@ -124,11 +125,27 @@ export async function GET(req: Request) {
     try {
         await connectToDatabase();
 
+        const auth = await requireUser();
+        if ("response" in auth) return auth.response;
+
         // Parse URL to check for userId query
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('userId');
+        const userIdParam = searchParams.get("userId");
 
-        const query = userId ? { userId } : {};
+        const isAdmin = auth.session.user.role === "admin";
+        const sessionUserId = auth.session.user.id;
+
+        let query: Record<string, any> = {};
+        if (isAdmin) {
+            // Admin can query any user's orders or all orders
+            query = userIdParam ? { userId: userIdParam } : {};
+        } else {
+            // Non-admin can only query their own orders
+            query = { userId: sessionUserId };
+            if (userIdParam && userIdParam !== sessionUserId) {
+                return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+            }
+        }
 
         const orders = await Order.find(query).sort({ createdAt: -1 });
 

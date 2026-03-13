@@ -49,7 +49,7 @@ export default function AdminSidebar() {
                     </Link>
                     <Link
                         href="/admin"
-                        className="flex items-center gap-2 text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+                        className="flex items-center gap-2 text-2xl font-black bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
                     >
                         <Image src="/logo.png" alt="Localu Logo" width={32} height={32} className="object-contain" priority />
                         LOCALU

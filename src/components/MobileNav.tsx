@@ -30,7 +30,7 @@ export default function MobileNav() {
                             key={item.label}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center justify-center gap-1 w-full h-full transition-colors",
+                                "relative flex flex-col items-center justify-center gap-1 w-full h-full transition-colors",
                                 isActive 
                                     ? "text-blue-600 dark:text-blue-400" 
                                     : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"

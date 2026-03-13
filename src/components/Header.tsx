@@ -1,27 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, LogOut, User as UserIcon, ShieldAlert, Package, Store, Sun, Moon } from "lucide-react";
+import { ShoppingCart, LogOut, User as UserIcon, ShieldAlert, Package, Sun, Moon } from "lucide-react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import * as motion from "framer-motion/client";
 import { useSession, signOut } from "next-auth/react";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 export default function Header({ onCartClick }: { onCartClick: () => void }) {
     const { cart } = useCart();
     const { data: session } = useSession();
     const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
-    const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => setMounted(true), []);
+    const { resolvedTheme, setTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md shadow-sm">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <div className="container mx-auto flex h-16 items-center justify-between px-3 sm:px-4">
                 <Link
                     href="/"
                     className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -36,12 +33,12 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             priority
                         />
                     </div>
-                    <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                    <span className="text-xl sm:text-2xl font-black tracking-tight bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
                         LOCALU
                     </span>
                 </Link>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                     {session ? (
                         <div className="flex items-center gap-2 mr-2">
                             {session.user.role === "admin" && (
@@ -74,22 +71,34 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             </button>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2 mr-2">
-                            <Link href="/login" className="text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors px-2">
-                                Log in
+                        <>
+                            {/* Mobile: keep header compact */}
+                            <Link
+                                href="/login"
+                                className="sm:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
+                                title="Log in"
+                            >
+                                <UserIcon className="w-5 h-5" />
                             </Link>
-                            <Link href="/signup" className="text-sm font-bold bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors shadow-md">
-                                Sign up
-                            </Link>
-                        </div>
+
+                            {/* >= sm: show full auth CTAs */}
+                            <div className="hidden sm:flex items-center gap-2 mr-2">
+                                <Link href="/login" className="text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors px-2">
+                                    Log in
+                                </Link>
+                                <Link href="/signup" className="text-sm font-bold bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors shadow-md whitespace-nowrap">
+                                    Sign up
+                                </Link>
+                            </div>
+                        </>
                     )}
-                    {mounted && (
+                    {resolvedTheme && (
                         <button
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            onClick={() => setTheme(isDark ? "light" : "dark")}
                             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
                             title="Toggle Theme"
                         >
-                            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                         </button>
                     )}
                     <button

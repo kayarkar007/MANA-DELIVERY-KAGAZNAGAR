@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
+import { requireAdmin } from "@/lib/routeAuth";
 
 export async function GET(req: Request) {
     try {
+        const auth = await requireAdmin();
+        if ("response" in auth) return auth.response;
+
         await connectToDatabase();
 
         const sevenDaysAgo = new Date();
