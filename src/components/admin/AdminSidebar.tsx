@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CopyPlus, LayoutDashboard, ShoppingCart, FileText, ArrowLeft, Menu, X } from "lucide-react";
+import { CopyPlus, LayoutDashboard, ShoppingCart, FileText, ArrowLeft, Menu, X, Users, Tag } from "lucide-react";
 import PendingOrderBadge from "@/components/admin/PendingOrderBadge";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,8 @@ export default function AdminSidebar() {
         { label: "Categories", href: "/admin/categories", icon: CopyPlus },
         { label: "Products", href: "/admin/products", icon: ShoppingCart },
         { label: "Orders", href: "/admin/orders", icon: FileText, badge: <PendingOrderBadge /> },
+        { label: "Promo Codes", href: "/admin/promo", icon: Tag },
+        { label: "Users", href: "/admin/users", icon: Users },
     ];
 
     return (

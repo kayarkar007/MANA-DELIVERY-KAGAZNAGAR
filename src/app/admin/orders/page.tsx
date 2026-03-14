@@ -7,6 +7,7 @@ import Link from "next/link";
 
 export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
+    const [riders, setRiders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -22,9 +23,48 @@ export default function AdminOrdersPage() {
             .catch(() => setLoading(false));
     };
 
+    const fetchRiders = () => {
+        fetch("/api/admin/riders")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setRiders(data.data);
+                }
+            })
+            .catch(() => {});
+    };
+
     useEffect(() => {
         fetchOrders();
+        fetchRiders();
     }, []);
+
+    const handleRiderAssign = async (orderId: string, riderId: string) => {
+        setUpdatingId(orderId);
+        try {
+            const res = await fetch(`/api/orders/${orderId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ riderId })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success("Rider assigned!");
+                fetchOrders();
+
+                if (data.riderWhatsappUrl) {
+                    window.open(data.riderWhatsappUrl, "_blank");
+                }
+            } else {
+                toast.error(data.error || "Failed to assign rider");
+            }
+        } catch (error) {
+            toast.error("An error occurred");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
 
     const handleStatusUpdate = async (orderId: string, newStatus: string) => {
         setUpdatingId(orderId);
@@ -82,6 +122,7 @@ export default function AdminOrdersPage() {
                                 <th className="p-4 pl-6 font-bold">Order Details</th>
                                 <th className="p-4 font-bold hidden md:table-cell">Customer</th>
                                 <th className="p-4 font-bold">Amount</th>
+                                <th className="p-4 font-bold">Rider</th>
                                 <th className="p-4 font-bold">Status Action</th>
                             </tr>
                         </thead>
@@ -135,6 +176,28 @@ export default function AdminOrdersPage() {
                                                 </span>
                                             )}
                                         </div>
+                                    </td>
+
+                                    <td className="p-4 align-top">
+                                        <div className="relative inline-block w-40">
+                                            <select
+                                                value={order.riderId || ""}
+                                                onChange={(e) => handleRiderAssign(order._id, e.target.value)}
+                                                disabled={updatingId === order._id || ["delivered", "cancelled"].includes(order.status)}
+                                                className="appearance-none w-full border border-gray-200 dark:border-gray-700 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer outline-none transition-all disabled:opacity-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/50 focus:border-blue-500"
+                                            >
+                                                <option value="">Unassigned</option>
+                                                {riders.map((rider) => (
+                                                    <option key={rider._id} value={rider._id}>{rider.name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                                        </div>
+                                        {order.deliveryStatus && (
+                                            <p className="text-[10px] font-black uppercase text-blue-600 mt-1">
+                                                {order.deliveryStatus.replace('_', ' ')}
+                                            </p>
+                                        )}
                                     </td>
 
                                     <td className="p-4 align-top">

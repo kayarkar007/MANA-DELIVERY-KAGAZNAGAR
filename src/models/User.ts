@@ -9,8 +9,13 @@ const UserSchema = new mongoose.Schema(
         address: { type: String },
         role: {
             type: String,
-            enum: ["user", "admin"],
+            enum: ["user", "admin", "rider"],
             default: "user",
+        },
+        currentLocation: {
+            latitude: { type: Number },
+            longitude: { type: Number },
+            updatedAt: { type: Date }
         },
         walletBalance: { type: Number, default: 0 }
     },

@@ -1,9 +1,10 @@
-import { ArrowRight, LayoutDashboard, Navigation } from "lucide-react";
+import { ArrowRight, LayoutDashboard, Navigation, Users } from "lucide-react";
 import Link from "next/link";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
+import User from "@/models/User";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,8 @@ async function getStats() {
     const processingOrders = allOrders.filter(o => o.status === "processing").length;
     const shippedOrders = allOrders.filter(o => o.status === "shipped").length;
 
+    const usersCount = await User.countDocuments();
+
     return {
         ordersCount,
         productsCount,
@@ -33,7 +36,8 @@ async function getStats() {
         totalRevenue,
         pendingOrders,
         processingOrders,
-        shippedOrders
+        shippedOrders,
+        usersCount,
     };
 }
 
@@ -148,6 +152,21 @@ export default async function AdminDashboard() {
                     </div>
                     <Link
                         href="/admin/promo"
+                        className="mt-6 flex items-center justify-between text-blue-600 dark:text-blue-400 font-bold hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                    >
+                        Manage <ArrowRight className="w-5 h-5" />
+                    </Link>
+                </div>
+
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-sm mb-2">Registered Users</p>
+                        <h2 className="text-4xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <Users className="w-8 h-8 text-blue-500" /> {stats.usersCount}
+                        </h2>
+                    </div>
+                    <Link
+                        href="/admin/users"
                         className="mt-6 flex items-center justify-between text-blue-600 dark:text-blue-400 font-bold hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
                     >
                         Manage <ArrowRight className="w-5 h-5" />
