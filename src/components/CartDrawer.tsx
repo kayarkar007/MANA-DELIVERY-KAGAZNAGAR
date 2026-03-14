@@ -34,11 +34,11 @@ export default function CartDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white dark:bg-gray-900 shadow-2xl dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col"
+                        className="fixed inset-y-0 right-0 z-50 w-full max-w-full sm:max-w-sm bg-white dark:bg-gray-900 shadow-2xl dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col"
                     >
-                        <div className="flex items-center justify-between p-5 border-b dark:border-gray-800">
-                            <h2 className="text-xl font-bold flex items-center gap-2 dark:text-white">
-                                <ShoppingBag className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Your Cart
+                        <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 border-b dark:border-gray-800">
+                            <h2 className="text-base sm:text-lg md:text-xl font-bold flex items-center gap-2 dark:text-white">
+                                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 shrink-0" /> Your Cart
                             </h2>
                             <button
                                 onClick={onClose}
@@ -48,7 +48,7 @@ export default function CartDrawer({
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4">
                             {cart.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                                     <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-full mb-4">
@@ -107,7 +107,7 @@ export default function CartDrawer({
                         </div>
 
                         {cart.length > 0 && (
-                            <div className="p-5 bg-white dark:bg-gray-900 border-t dark:border-gray-800 rounded-t-3xl shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.5)]">
+                            <div className="p-3 sm:p-4 md:p-5 bg-white dark:bg-gray-900 border-t dark:border-gray-800 rounded-t-2xl sm:rounded-t-3xl shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.5)]">
                                 <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 font-medium mb-4">
                                     <div className="flex justify-between">
                                         <span>Subtotal</span>

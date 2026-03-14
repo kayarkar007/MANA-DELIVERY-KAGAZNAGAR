@@ -82,7 +82,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
 
     return (
         <motion.div
-            className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6"
             initial="hidden"
             animate="show"
             variants={{
@@ -103,9 +103,9 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                             hidden: { opacity: 0, y: 20 },
                             show: { opacity: 1, y: 0 }
                         }}
-                        className="flex flex-col justify-between bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-100 dark:hover:border-blue-900 transition-all duration-300 group"
+                        className="flex flex-col justify-between bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-100 dark:hover:border-blue-900 transition-all duration-300 group"
                     >
-                        <div className="relative w-full h-48 overflow-hidden bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+                        <div className="relative w-full h-40 sm:h-44 md:h-48 overflow-hidden bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
                             <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product._id); }}
                                 className="absolute top-3 right-3 z-10 p-2 bg-white/80 dark:bg-gray-950/80 backdrop-blur rounded-full hover:bg-white dark:hover:bg-gray-900 transition-colors shadow-sm"
@@ -126,7 +126,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                                 </div>
                             )}
                         </div>
-                        <div className="p-6 flex flex-col justify-between flex-grow">
+                        <div className="p-3 sm:p-4 md:p-6 flex flex-col justify-between grow">
                             <div>
                                 <div className="flex justify-between items-start gap-4">
                                     <h3 className="font-bold text-base md:text-xl text-gray-900 dark:text-white leading-tight">

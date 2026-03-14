@@ -33,17 +33,17 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-900 p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 relative transition-colors duration-300">
+        <div className="bg-white dark:bg-gray-900 p-5 sm:p-6 md:p-8 lg:p-10 rounded-2xl sm:rounded-3xl md:rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 relative transition-colors duration-300">
             <Link
                 href="/"
-                className="absolute top-8 left-8 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 dark:text-gray-400"
+                className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 dark:text-gray-400"
             >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
 
-            <div className="text-center mb-10 mt-6">
-                <h2 className="text-3xl font-black text-gray-900 dark:text-white">Welcome Back</h2>
-                <p className="text-gray-500 dark:text-gray-400 font-medium mt-2">Sign in to your account</p>
+            <div className="text-center mb-6 sm:mb-8 md:mb-10 mt-4 sm:mt-6">
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Welcome Back</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium mt-1 sm:mt-2 text-sm sm:text-base">Sign in to your account</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">

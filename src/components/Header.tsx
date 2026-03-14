@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, LogOut, User as UserIcon, ShieldAlert, Package, Sun, Moon } from "lucide-react";
 import Image from "next/image";
@@ -14,7 +15,13 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
     const { data: session } = useSession();
     const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
     const { resolvedTheme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => setMounted(true), []);
+
     const isDark = resolvedTheme === "dark";
+    // Render a single icon until mounted so server and client HTML match (avoids hydration mismatch)
+    const ThemeIcon = mounted && isDark ? Sun : Moon;
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md shadow-sm">
@@ -92,15 +99,14 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             </div>
                         </>
                     )}
-                    {resolvedTheme && (
-                        <button
-                            onClick={() => setTheme(isDark ? "light" : "dark")}
-                            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
-                            title="Toggle Theme"
-                        >
-                            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        </button>
-                    )}
+                    {/* Same icon (Moon) on server and before mount; switch to Sun/Moon after mount */}
+                    <button
+                        onClick={() => setTheme(isDark ? "light" : "dark")}
+                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+                        title="Toggle Theme"
+                    >
+                        <ThemeIcon className="w-5 h-5" />
+                    </button>
                     <button
                         onClick={onCartClick}
                         className="relative flex items-center justify-center rounded-full p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"

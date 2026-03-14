@@ -237,18 +237,18 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-6 sm:py-8 md:py-10 lg:py-12 px-3 sm:px-4 md:px-6 lg:px-8 font-sans transition-colors duration-300">
             <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
             <div className="max-w-3xl mx-auto">
-                <Link href="/" className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-6 font-medium">
+                <Link href="/" className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4 sm:mb-6 font-medium text-sm sm:text-base">
                     <ArrowLeft className="w-4 h-4" /> Back to Shopping
                 </Link>
 
-                <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-8">Checkout</h1>
+                <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-6 sm:mb-8">Checkout</h1>
 
-                <div className="grid md:grid-cols-2 gap-8">
-                    {/* Delivery Form */}
-                    <div className="bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-800 h-fit transition-colors">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                    {/* Delivery Form — mobile first */}
+                    <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl md:rounded-4xl shadow-sm border border-gray-100 dark:border-gray-800 h-fit transition-colors">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Delivery Details</h2>
 
                         <form onSubmit={handlePlaceOrder} className="space-y-5">
@@ -388,8 +388,8 @@ export default function CheckoutPage() {
                         </form>
                     </div>
 
-                    {/* Order Summary */}
-                    <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-gray-100 h-fit">
+                    {/* Order Summary — mobile first */}
+                    <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl md:rounded-4xl shadow-sm border border-gray-100 dark:border-gray-800 h-fit">
                         <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
                         <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2">
