@@ -9,6 +9,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import { motion } from "framer-motion";
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -19,7 +20,7 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(true);
     const [placingOrder, setPlacingOrder] = useState(false);
     const [locating, setLocating] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi">("cod");
+    const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi" | "wallet">("cod");
     const [transactionId, setTransactionId] = useState("");
 
     const [promoCode, setPromoCode] = useState("");
@@ -103,6 +104,15 @@ export default function CheckoutPage() {
             }
         );
     };
+
+    // ✅ Bug Fix: Check loading first to avoid cart-empty flash during profile fetch
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     if (!cart.length) {
         return (
@@ -228,250 +238,273 @@ export default function CheckoutPage() {
         await submitOrder(paymentMethod, paymentMethod === "upi" ? transactionId : undefined);
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            </div>
-        );
-    }
+    // (loading check moved above cart-empty check)
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-6 sm:py-8 md:py-10 lg:py-12 px-3 sm:px-4 md:px-6 lg:px-8 font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-white dark:bg-slate-950 py-10 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 md:px-8 font-sans transition-colors duration-300">
             <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-            <div className="max-w-3xl mx-auto">
-                <Link href="/" className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4 sm:mb-6 font-medium text-sm sm:text-base">
-                    <ArrowLeft className="w-4 h-4" /> Back to Shopping
+            <div className="max-w-6xl mx-auto space-y-12">
+                <Link href="/" className="inline-flex items-center gap-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all mb-4 font-black uppercase tracking-widest text-xs">
+                    <ArrowLeft className="w-4 h-4" /> Return to store
                 </Link>
 
-                <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-6 sm:mb-8">Checkout</h1>
+                <div className="space-y-2">
+                    <h1 className="text-4xl sm:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        Secure <br />
+                        <span className="text-gradient">Checkout.</span>
+                    </h1>
+                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest pt-2">
+                        Complete your order in <span className="text-blue-600">60 seconds</span>
+                    </p>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-                    {/* Delivery Form — mobile first */}
-                    <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl md:rounded-4xl shadow-sm border border-gray-100 dark:border-gray-800 h-fit transition-colors">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Delivery Details</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    {/* Delivery Form */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="glass-card p-8 md:p-12 border-white/20 premium-shadow rounded-[3rem] space-y-10">
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                                <MapPin className="w-6 h-6 text-blue-600" /> Delivery Details
+                            </h2>
 
-                        <form onSubmit={handlePlaceOrder} className="space-y-5">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    <User className="w-4 h-4" /> Full Name
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={form.name}
-                                    onChange={e => setForm({ ...form, name: e.target.value })}
-                                    className="w-full border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl flex-1 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/40 focus:border-blue-500 outline-none transition-all font-medium bg-gray-50 dark:bg-gray-800"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    <Phone className="w-4 h-4" /> WhatsApp Number
-                                </label>
-                                <input
-                                    type="tel"
-                                    required
-                                    value={form.whatsapp}
-                                    onChange={e => setForm({ ...form, whatsapp: e.target.value })}
-                                    className="w-full border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl flex-1 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/40 focus:border-blue-500 outline-none transition-all font-medium bg-gray-50 dark:bg-gray-800"
-                                />
-                            </div>
-
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                                        <MapPin className="w-4 h-4" /> Delivery Address
-                                    </label>
-                                    <button
-                                        type="button"
-                                        onClick={handleLocate}
-                                        disabled={locating}
-                                        className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50 transition-colors bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full"
-                                    >
-                                        {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
-                                        {locating ? "Locating..." : "Auto Locate"}
-                                    </button>
-                                </div>
-                                <textarea
-                                    required
-                                    rows={3}
-                                    value={form.address}
-                                    onChange={e => setForm({ ...form, address: e.target.value })}
-                                    placeholder="Enter your full building and street address..."
-                                    className="w-full border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl flex-1 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/40 focus:border-blue-500 outline-none transition-all font-medium bg-gray-50 dark:bg-gray-800 resize-none"
-                                />
-                            </div>
-
-                            {/* Payment Method Section */}
-                            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Payment Method</h3>
-
-                                {walletBalance > 0 && (
-                                    <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 p-4 rounded-xl flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                            <div>
-                                                <p className="font-bold text-gray-900 dark:text-white text-sm">Localu Wallet Balance</p>
-                                                <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">Available: ₹{walletBalance.toFixed(2)}</p>
-                                            </div>
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" className="sr-only peer" checked={useWallet} onChange={() => setUseWallet(!useWallet)} />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <form onSubmit={handlePlaceOrder} className="space-y-8">
+                                <div className="grid md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">
+                                            <User className="w-3 h-3" /> Receiver Name
                                         </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={form.name}
+                                            onChange={e => setForm({ ...form, name: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-2xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 outline-none transition-all font-black text-lg shadow-inner"
+                                        />
                                     </div>
-                                )}
 
-                                {finalTotal > 0 && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                    <div className="space-y-4">
+                                        <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">
+                                            <Phone className="w-3 h-3" /> WhatsApp
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={form.whatsapp}
+                                            onChange={e => setForm({ ...form, whatsapp: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-2xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 outline-none transition-all font-black text-lg shadow-inner"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between px-2">
+                                        <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            <MapPin className="w-3 h-3" /> Shipping Address
+                                        </label>
                                         <button
                                             type="button"
-                                            onClick={() => setPaymentMethod("cod")}
-                                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${paymentMethod === "cod" ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-blue-300 dark:hover:border-blue-700"}`}
+                                            onClick={handleLocate}
+                                            disabled={locating}
+                                            className="text-[10px] font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-4 py-2 rounded-full transition-all border border-blue-100 dark:border-blue-900/30 active:scale-95 disabled:opacity-50"
                                         >
-                                            <Banknote className="w-6 h-6 mb-2" />
-                                            <span className="font-bold text-sm text-center">Cash on Delivery</span>
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod("upi")}
-                                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${paymentMethod === "upi" ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-blue-300 dark:hover:border-blue-700"}`}
-                                        >
-                                            <CreditCard className="w-6 h-6 mb-2" />
-                                            <span className="font-bold text-sm text-center">Manual UPI (0% Fee)</span>
+                                            {locating ? <Loader2 className="w-3 h-3 animate-spin" /> : <LocateFixed className="w-3 h-3" />}
+                                            {locating ? "PINNING..." : "AUTO DETECT"}
                                         </button>
                                     </div>
-                                )}
+                                    <textarea
+                                        required
+                                        rows={3}
+                                        value={form.address}
+                                        onChange={e => setForm({ ...form, address: e.target.value })}
+                                        placeholder="Flat, Building, Street..."
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-3xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 outline-none transition-all font-bold text-md shadow-inner resize-none"
+                                    />
+                                </div>
 
-                                {paymentMethod === "upi" && (
-                                    <div className="bg-gray-50 p-6 rounded-2xl border border-blue-100 animate-in fade-in zoom-in-95 duration-300">
-                                        <p className="text-sm text-gray-600 mb-4 text-center font-medium">Scan the QR code below using any UPI app (GPay, PhonePe, Paytm) to pay <strong className="text-blue-600">₹{finalTotal.toFixed(2)}</strong>.</p>
+                                {/* Payment Method Section */}
+                                <div className="pt-10 border-t border-slate-100 dark:border-slate-800 space-y-8">
+                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                                        <CreditCard className="w-6 h-6 text-blue-600" /> Payment
+                                    </h3>
 
-                                        <div className="flex justify-center mb-6">
-                                            <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-200">
-                                                {/* Replace with actual UPI ID of the owner */}
-                                                <img
-                                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=7659989336@jupiteraxis&pn=LocaluDelivery&am=${finalTotal.toFixed(2)}&cu=INR`}
-                                                    alt="UPI QR Code"
-                                                    className="w-40 h-40 object-contain"
+                                    {walletBalance > 0 && (
+                                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-blue-500/30 text-white group cursor-pointer" onClick={() => setUseWallet(!useWallet)}>
+                                            <div className="flex items-center gap-6">
+                                                <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform">
+                                                    <Wallet className="w-8 h-8" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-xl">Apply Wallet</p>
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Balance: ₹{walletBalance.toFixed(0)}</p>
+                                                </div>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                                <input type="checkbox" className="sr-only peer" checked={useWallet} onChange={() => setUseWallet(!useWallet)} />
+                                                <div className="w-16 h-8 bg-black/20 backdrop-blur-sm rounded-full peer peer-checked:after:translate-x-8 after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-white/40 ring-2 ring-white/10"></div>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {finalTotal > 0 && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPaymentMethod("cod")}
+                                                className={`group flex items-center gap-6 p-8 rounded-[2rem] border-2 transition-all duration-300 ${paymentMethod === "cod" ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-white shadow-xl shadow-blue-500/10" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 hover:border-slate-200"}`}
+                                            >
+                                                <div className={`p-4 rounded-2xl transition-all ${paymentMethod === "cod" ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-200"}`}>
+                                                    <Banknote className="w-8 h-8" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="font-black text-lg block">Cash</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Pay on Arrival</span>
+                                                </div>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setPaymentMethod("upi")}
+                                                className={`group flex items-center gap-6 p-8 rounded-[2rem] border-2 transition-all duration-300 ${paymentMethod === "upi" ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-white shadow-xl shadow-blue-500/10" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 hover:border-slate-200"}`}
+                                            >
+                                                <div className={`p-4 rounded-2xl transition-all ${paymentMethod === "upi" ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-200"}`}>
+                                                    <CreditCard className="w-8 h-8" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="font-black text-lg block">UPI Transfer</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Instant & Manual</span>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {paymentMethod === "upi" && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="bg-slate-900 text-white p-10 rounded-[3rem] border border-white/10 shadow-2xl space-y-8"
+                                        >
+                                            <p className="text-sm text-slate-400 text-center font-bold tracking-tight px-10">Scan to pay <strong className="text-white text-2xl font-black block mt-2">₹{finalTotal.toFixed(0)}</strong></p>
+
+                                            <div className="flex justify-center">
+                                                <div className="p-6 bg-white rounded-[2.5rem] shadow-2xl ring-8 ring-white/5 border-4 border-white">
+                                                    <img
+                                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${process.env.NEXT_PUBLIC_UPI_ID || '7659989336@jupiteraxis'}&pn=LocaluDelivery&am=${finalTotal.toFixed(2)}&cu=INR`}
+                                                        alt="UPI QR Code"
+                                                        className="w-48 h-48 object-contain"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 block">
+                                                    Transaction ID (UTR)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required={paymentMethod === "upi"}
+                                                    value={transactionId}
+                                                    onChange={e => setTransactionId(e.target.value)}
+                                                    placeholder="12 digit UTR number"
+                                                    className="w-full bg-slate-800 border border-white/10 text-white p-6 rounded-2xl focus:ring-4 focus:ring-blue-600/40 focus:border-blue-600 outline-none transition-all font-black text-center text-xl uppercase tracking-widest placeholder:opacity-20 shadow-inner"
                                                 />
                                             </div>
-                                        </div>
+                                        </motion.div>
+                                    )}
+                                </div>
 
-                                        <div>
-                                            <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                                                Transaction ID (UTR Number)
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required={paymentMethod === "upi"}
-                                                value={transactionId}
-                                                onChange={e => setTransactionId(e.target.value)}
-                                                placeholder="e.g. 312345678901"
-                                                className="w-full border border-gray-200 text-gray-900 p-3 rounded-xl flex-1 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium bg-white"
-                                            />
-                                            <p className="text-xs text-gray-500 mt-2">Enter the 12-digit transaction ID after successful payment.</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={placingOrder}
-                                className="w-full mt-4 bg-blue-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-70 shadow-lg shadow-blue-600/20"
-                            >
-                                {placingOrder ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Order"}
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    disabled={placingOrder}
+                                    className="w-full h-20 bg-blue-600 text-white font-black rounded-3xl flex items-center justify-center gap-4 hover:bg-blue-700 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-70 shadow-[0_25px_60px_-15px_rgba(37,99,235,0.4)] uppercase tracking-[0.2em] text-lg"
+                                >
+                                    {placingOrder ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Finalize Order <ArrowLeft className="w-5 h-5 rotate-180" /></>}
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
-                    {/* Order Summary — mobile first */}
-                    <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl md:rounded-4xl shadow-sm border border-gray-100 dark:border-gray-800 h-fit">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+                    {/* Order Summary */}
+                    <div className="space-y-8 h-fit lg:sticky lg:top-24">
+                        <div className="glass-card p-10 border-white/20 premium-shadow rounded-[3rem] space-y-10">
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                                <Tag className="w-5 h-5 text-blue-600" /> Summary
+                            </h2>
 
-                        <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2">
-                            {cart.map((item) => (
-                                <div key={item.productId} className="flex justify-between items-center bg-gray-50 p-3 rounded-xl">
-                                    <div className="flex-1">
-                                        <div className="font-bold text-gray-900">{item.name}</div>
-                                        <div className="text-sm text-gray-500">Qty: {item.quantity} × ₹{item.price}</div>
+                            <div className="space-y-6 max-h-[40vh] overflow-y-auto pr-4 custom-scrollbar">
+                                {cart.map((item) => (
+                                    <div key={item.productId} className="flex justify-between items-center group">
+                                        <div className="flex-1 space-y-1">
+                                            <div className="font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{item.name}</div>
+                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Qty: {item.quantity} × ₹{item.price}</div>
+                                        </div>
+                                        <div className="font-black text-slate-900 dark:text-white text-lg">
+                                            ₹{(item.price * item.quantity).toFixed(0)}
+                                        </div>
                                     </div>
-                                    <div className="font-bold text-gray-900">
-                                        ₹{(item.price * item.quantity).toFixed(2)}
-                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="space-y-4 text-xs font-black text-slate-400 uppercase tracking-widest border-t border-slate-100 dark:border-slate-800 pt-8">
+                                <div className="flex justify-between">
+                                    <span>Subtotal</span>
+                                    <span className="text-slate-900 dark:text-slate-300">₹{pricing.subtotal.toFixed(0)}</span>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="flex justify-between">
+                                    <span>Extras (Tax/Fees)</span>
+                                    <span className="text-slate-900 dark:text-slate-300">₹{(pricing.deliveryFee + pricing.platformFee + pricing.tax).toFixed(0)}</span>
+                                </div>
+                                
+                                <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            disabled={!!appliedPromo}
+                                            value={appliedPromo ? appliedPromo.code : promoCode}
+                                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                            placeholder="Promo Code"
+                                            className="flex-1 bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 p-4 rounded-xl uppercase focus:ring-2 focus:ring-blue-100 outline-none font-black text-xs tracking-widest"
+                                        />
+                                        {appliedPromo ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setAppliedPromo(null); setPromoCode(""); }}
+                                                className="px-6 bg-rose-50 text-rose-600 font-black rounded-xl uppercase text-[10px] tracking-widest hover:bg-rose-100 transition-colors"
+                                            >
+                                                Remove
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                disabled={applyingPromo || !promoCode.trim()}
+                                                onClick={handleApplyPromo}
+                                                className="px-6 bg-slate-900 text-white font-black rounded-xl uppercase text-[10px] tracking-widest hover:bg-black disabled:opacity-50 transition-colors"
+                                            >
+                                                {applyingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                                            </button>
+                                        )}
+                                    </div>
+                                    {appliedPromo && (
+                                        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] font-black text-emerald-500 mt-2 px-2 uppercase tracking-tight">
+                                            Promo applied: -₹{appliedPromo.discountAmount.toFixed(0)}
+                                        </motion.p>
+                                    )}
+                                </div>
 
-                        <div className="space-y-3 text-sm text-gray-500 font-medium border-t pt-6 mb-6">
-                            <div className="flex justify-between">
-                                <span>Subtotal</span>
-                                <span className="text-gray-800">₹{pricing.subtotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Delivery Fee</span>
-                                <span className="text-gray-800">₹{pricing.deliveryFee.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Platform Fee</span>
-                                <span className="text-gray-800">₹{pricing.platformFee.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Tax (5%)</span>
-                                <span className="text-gray-800">₹{pricing.tax.toFixed(2)}</span>
-                            </div>
-                        </div>
-
-                        {/* Promo Code Input */}
-                        <div className="mb-6">
-                            <div className="flex gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    disabled={!!appliedPromo}
-                                    value={appliedPromo ? appliedPromo.code : promoCode}
-                                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                                    placeholder="Enter Promo Code"
-                                    className="flex-1 border border-gray-200 p-3 rounded-xl uppercase focus:ring-2 focus:ring-blue-100 outline-none"
-                                />
-                                {appliedPromo ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => { setAppliedPromo(null); setPromoCode(""); }}
-                                        className="px-4 bg-red-50 text-red-600 font-bold rounded-xl whitespace-nowrap"
-                                    >
-                                        Remove
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        disabled={applyingPromo || !promoCode.trim()}
-                                        onClick={handleApplyPromo}
-                                        className="px-6 bg-gray-900 text-white font-bold rounded-xl whitespace-nowrap hover:bg-gray-800 disabled:opacity-50"
-                                    >
-                                        {applyingPromo ? <Loader2 className="w-5 h-5 animate-spin" /> : "Apply"}
-                                    </button>
+                                {useWallet && walletUsed > 0 && (
+                                    <div className="flex justify-between items-center text-sm font-black text-blue-600 pt-2">
+                                        <span className="normal-case">Wallet Usage</span>
+                                        <span>-₹{walletUsed.toFixed(0)}</span>
+                                    </div>
                                 )}
                             </div>
-                            {appliedPromo && (
-                                <p className="text-xs font-bold text-green-600 flex items-center gap-1">
-                                    <Tag className="w-3.5 h-3.5" /> Promo applied: -₹{appliedPromo.discountAmount.toFixed(2)}
-                                </p>
-                            )}
-                        </div>
 
-                        {useWallet && walletUsed > 0 && (
-                            <div className="flex justify-between items-center text-sm font-bold text-blue-600 mb-2">
-                                <span>Wallet Applied</span>
-                                <span>-₹{walletUsed.toFixed(2)}</span>
+                            <div className="flex justify-between items-end pt-8 border-t border-slate-950/5 dark:border-white/5">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Amount</p>
+                                    <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                                        <span className="text-blue-600 italic">₹</span><span className="text-gradient">{finalTotal.toFixed(0)}</span>
+                                    </span>
+                                </div>
                             </div>
-                        )}
-
-                        <div className="flex justify-between items-center font-black text-2xl pt-4 border-t text-gray-900">
-                            <span>Total</span>
-                            <span className="text-blue-600">₹{finalTotal.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
