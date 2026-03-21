@@ -72,7 +72,7 @@ export default function AdminOrdersPage() {
     const statusColor: Record<string, string> = {
         delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
         cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-        shipped: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+        shipped: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         processing: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
         pending: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     };
@@ -80,7 +80,7 @@ export default function AdminOrdersPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center p-16">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-red-600 dark:text-red-400" />
             </div>
         );
     }
@@ -94,7 +94,7 @@ export default function AdminOrdersPage() {
                     <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Track and update customer delivery statuses.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm">
+                    <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm">
                         <Package className="w-4 h-4" /> {orders.length} Total
                     </div>
                     <button
@@ -118,7 +118,7 @@ export default function AdminOrdersPage() {
                             <div key={order._id} className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
                                 {/* Order ID + Date */}
                                 <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg">
+                                    <span className="text-xs font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg">
                                         #{order._id.slice(-6).toUpperCase()}
                                     </span>
                                     <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function AdminOrdersPage() {
                                     <a
                                         href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
                                         target="_blank"
-                                        className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1.5 rounded-lg"
+                                        className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2.5 py-1.5 rounded-lg"
                                     >
                                         <MapPin className="w-3 h-3" /> Map
                                     </a>
@@ -170,7 +170,7 @@ export default function AdminOrdersPage() {
                                             value={order.riderId || ""}
                                             onChange={(e) => handleRiderAssign(order._id, e.target.value)}
                                             disabled={updatingId === order._id || ["delivered", "cancelled"].includes(order.status)}
-                                            className="appearance-none w-full border border-gray-200 dark:border-gray-700 font-bold text-sm px-4 py-2.5 rounded-xl cursor-pointer outline-none transition-all disabled:opacity-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                                            className="appearance-none w-full border border-gray-200 dark:border-gray-700 font-bold text-sm px-4 py-2.5 rounded-xl cursor-pointer outline-none transition-all disabled:opacity-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500"
                                         >
                                             <option value="">Unassigned</option>
                                             {riders.map((rider) => (
@@ -180,7 +180,7 @@ export default function AdminOrdersPage() {
                                         <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
                                     </div>
                                     {order.deliveryStatus && (
-                                        <p className="text-[10px] font-black uppercase text-blue-600 mt-1">
+                                        <p className="text-[10px] font-black uppercase text-red-600 mt-1">
                                             {order.deliveryStatus.replace(/_/g, " ")}
                                         </p>
                                     )}
@@ -197,7 +197,7 @@ export default function AdminOrdersPage() {
                                             className={`appearance-none w-full border font-bold text-sm px-4 py-2.5 rounded-xl cursor-pointer outline-none transition-all disabled:opacity-50
                                                 ${order.status === "delivered" ? "bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400" :
                                                     order.status === "cancelled" ? "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400" :
-                                                        "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"}`}
+                                                        "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500"}`}
                                         >
                                             <option value="pending">🟡 Pending</option>
                                             <option value="processing">📦 Processing</option>
@@ -230,7 +230,7 @@ export default function AdminOrdersPage() {
                                         <tr key={order._id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
                                             <td className="p-4 pl-6 align-top">
                                                 <div className="flex items-center gap-3 mb-2">
-                                                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg">
+                                                    <span className="text-xs font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg">
                                                         #{order._id.slice(-6).toUpperCase()}
                                                     </span>
                                                     <span className="text-xs font-bold text-gray-400 dark:text-gray-500">
@@ -249,7 +249,7 @@ export default function AdminOrdersPage() {
                                                 <a
                                                     href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
                                                     target="_blank"
-                                                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md"
+                                                    className="inline-flex items-center gap-1 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded-md"
                                                 >
                                                     <MapPin className="w-3 h-3" /> View Map
                                                 </a>
@@ -272,7 +272,7 @@ export default function AdminOrdersPage() {
                                                         value={order.riderId || ""}
                                                         onChange={(e) => handleRiderAssign(order._id, e.target.value)}
                                                         disabled={updatingId === order._id || ["delivered", "cancelled"].includes(order.status)}
-                                                        className="appearance-none w-full border border-gray-200 dark:border-gray-700 font-bold text-xs px-3 py-2.5 rounded-xl cursor-pointer outline-none disabled:opacity-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                                                        className="appearance-none w-full border border-gray-200 dark:border-gray-700 font-bold text-xs px-3 py-2.5 rounded-xl cursor-pointer outline-none disabled:opacity-50 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500"
                                                     >
                                                         <option value="">Unassigned</option>
                                                         {riders.map((rider) => (
@@ -282,7 +282,7 @@ export default function AdminOrdersPage() {
                                                     <ChevronDown className="absolute right-2 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
                                                 </div>
                                                 {order.deliveryStatus && (
-                                                    <p className="text-[10px] font-black uppercase text-blue-600 mt-1">
+                                                    <p className="text-[10px] font-black uppercase text-red-600 mt-1">
                                                         {order.deliveryStatus.replace(/_/g, " ")}
                                                     </p>
                                                 )}
@@ -296,7 +296,7 @@ export default function AdminOrdersPage() {
                                                         className={`appearance-none w-full border font-bold text-xs px-3 py-2.5 rounded-xl cursor-pointer outline-none disabled:opacity-50
                                                             ${order.status === "delivered" ? "bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400" :
                                                                 order.status === "cancelled" ? "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400" :
-                                                                    "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"}`}
+                                                                    "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500"}`}
                                                     >
                                                         <option value="pending">🟡 Pending</option>
                                                         <option value="processing">📦 Processing</option>

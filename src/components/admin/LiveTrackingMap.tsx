@@ -58,7 +58,7 @@ export default function LiveTrackingMap() {
         return () => clearInterval(interval);
     }, []);
 
-    if (loading) return <div className="h-[600px] flex items-center justify-center bg-gray-50 rounded-3xl border border-gray-200"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
+    if (loading) return <div className="h-[600px] flex items-center justify-center bg-gray-50 rounded-3xl border border-gray-200"><Loader2 className="w-8 h-8 animate-spin text-red-600" /></div>;
 
     const center: [number, number] = orders.length > 0
         ? [orders[0].lat, orders[0].lng]
@@ -83,7 +83,7 @@ export default function LiveTrackingMap() {
                             <Popup className="rounded-2xl shadow-xl border-0 p-0 m-0 custom-popup">
                                 <div className="p-2 min-w-[220px]">
                                     <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
-                                        <div className="bg-blue-50 p-2 rounded-full"><Package className="w-5 h-5 text-blue-600" /></div>
+                                        <div className="bg-red-50 p-2 rounded-full"><Package className="w-5 h-5 text-red-600" /></div>
                                         <h3 className="font-bold text-gray-900 text-base">{order.customerName}</h3>
                                     </div>
                                     <div className="space-y-2 text-sm mb-4">
@@ -106,7 +106,7 @@ export default function LiveTrackingMap() {
                 <h4 className="font-bold text-sm text-gray-900 mb-3 border-b border-gray-100 pb-2">Live Map Legend</h4>
                 <div className="space-y-3 text-xs font-bold text-gray-700">
                     <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-white shadow-sm ring-1 ring-black/5"></div> Pending</div>
-                    <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-sm ring-1 ring-black/5"></div> Processing</div>
+                    <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-sm ring-1 ring-black/5"></div> Processing</div>
                     <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-purple-500 border-2 border-white shadow-sm ring-1 ring-black/5"></div> Shipped (On the way)</div>
                 </div>
                 <div className="mt-4 pt-2 border-t border-gray-50 font-medium text-[10px] text-gray-400 text-right flex items-center justify-end gap-1">

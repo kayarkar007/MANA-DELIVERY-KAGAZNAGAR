@@ -86,7 +86,7 @@ function ResetPasswordForm() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 outline-none transition-all font-medium"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-medium"
                     placeholder="••••••••"
                 />
                 {password && (
@@ -118,7 +118,7 @@ function ResetPasswordForm() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={`w-full bg-white dark:bg-gray-800 border ${confirmPassword && !passwordsMatch ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 dark:border-gray-700 focus:ring-blue-100'} text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 outline-none transition-all font-medium`}
+                    className={`w-full bg-white dark:bg-gray-800 border ${confirmPassword && !passwordsMatch ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 dark:border-gray-700 focus:ring-red-100'} text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 outline-none transition-all font-medium`}
                     placeholder="••••••••"
                 />
                 {confirmPassword && !passwordsMatch && (
@@ -129,7 +129,7 @@ function ResetPasswordForm() {
             <button
                 type="submit"
                 disabled={loading || !isPasswordStrong || !passwordsMatch}
-                className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save New Password"}
             </button>
@@ -148,7 +148,7 @@ export default function ResetPasswordPage() {
             </Link>
 
             <div className="text-center mb-8 mt-6">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
                     <ShieldCheck className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white">New Password</h2>

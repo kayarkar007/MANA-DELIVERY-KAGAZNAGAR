@@ -63,7 +63,7 @@ export default async function SearchPage({
                             Results for <span className="text-gradient">"{query}"</span>
                         </h1>
                         <div className="flex items-center gap-3">
-                            <span className="bg-blue-600 text-white px-4 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                            <span className="bg-red-600 text-white px-4 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20">
                                 {results.length} Matches Found
                             </span>
                         </div>
@@ -80,7 +80,7 @@ export default async function SearchPage({
                             We couldn't track down any items matching "{query}". <br/>
                             Try checking your spelling or using more generic terms.
                         </p>
-                        <Link href="/" className="inline-block bg-blue-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-blue-700 transition-all uppercase tracking-widest text-xs shadow-xl shadow-blue-500/40">
+                        <Link href="/" className="inline-block bg-red-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-red-700 transition-all uppercase tracking-widest text-xs shadow-xl shadow-red-500/40">
                             Continue Browsing
                         </Link>
                     </div>
@@ -93,7 +93,7 @@ export default async function SearchPage({
 
                                 <div className="space-y-4">
                                     <h3 className="font-black text-slate-900 dark:text-white text-[10px] tracking-[0.2em] uppercase opacity-40">Display Priority</h3>
-                                    <select name="sort" defaultValue={resolvedParams.sort || ""} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 dark:text-white rounded-2xl p-4 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 outline-none text-xs font-black uppercase tracking-widest transition-all">
+                                    <select name="sort" defaultValue={resolvedParams.sort || ""} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 dark:text-white rounded-2xl p-4 focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/20 outline-none text-xs font-black uppercase tracking-widest transition-all">
                                         <option value="">Sort by Relevance</option>
                                         <option value="price_asc">Price: Lowest First</option>
                                         <option value="price_desc">Price: Highest First</option>
@@ -105,12 +105,12 @@ export default async function SearchPage({
                                     <div className="flex items-center gap-3">
                                         <div className="relative flex-1">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-[10px]">₹</span>
-                                            <input type="number" name="minPrice" placeholder="Min" defaultValue={resolvedParams.minPrice || ""} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 dark:text-white rounded-2xl py-4 pl-8 pr-4 outline-none text-xs font-black transition-all focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20" />
+                                            <input type="number" name="minPrice" placeholder="Min" defaultValue={resolvedParams.minPrice || ""} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 dark:text-white rounded-2xl py-4 pl-8 pr-4 outline-none text-xs font-black transition-all focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/20" />
                                         </div>
                                         <span className="text-slate-300">-</span>
                                         <div className="relative flex-1">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-[10px]">₹</span>
-                                            <input type="number" name="maxPrice" placeholder="Max" defaultValue={resolvedParams.maxPrice || ""} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 dark:text-white rounded-2xl py-4 pl-8 pr-4 outline-none text-xs font-black transition-all focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20" />
+                                            <input type="number" name="maxPrice" placeholder="Max" defaultValue={resolvedParams.maxPrice || ""} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 dark:text-white rounded-2xl py-4 pl-8 pr-4 outline-none text-xs font-black transition-all focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/20" />
                                         </div>
                                     </div>
                                 </div>
@@ -131,7 +131,7 @@ export default async function SearchPage({
                         <div className="w-full lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             {results.map((product: any, idx: number) => (
                                 <div key={product._id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                                    <div className="glass-card p-6 md:p-8 border-white/20 premium-shadow rounded-[3rem] group hover:border-blue-500/30 transition-all overflow-hidden flex flex-col h-full bg-white dark:bg-slate-900/20">
+                                    <div className="glass-card p-6 md:p-8 border-white/20 premium-shadow rounded-[3rem] group hover:border-red-500/30 transition-all overflow-hidden flex flex-col h-full bg-white dark:bg-slate-900/20">
                                         <div className="relative aspect-square w-full rounded-[2.25rem] overflow-hidden mb-8 bg-slate-50 dark:bg-slate-950 shadow-inner">
                                             {product.image ? (
                                                 <Image
@@ -153,13 +153,13 @@ export default async function SearchPage({
                                         </div>
                                         
                                         <div className="flex-1 flex flex-col">
-                                            <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">{product.name}</h3>
+                                            <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-2 line-clamp-1 group-hover:text-red-600 transition-colors">{product.name}</h3>
                                             <p className="text-xs text-slate-400 font-bold mb-8 line-clamp-2 leading-relaxed opacity-60 italic">{product.description || "Fresh local essentials delivered."}</p>
 
                                             <div className="mt-auto flex items-center justify-between gap-4">
                                                 <div className="flex flex-col">
                                                     <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-                                                        <span className="text-blue-600 text-sm italic mr-1 font-black">₹</span>{product.price}
+                                                        <span className="text-red-600 text-sm italic mr-1 font-black">₹</span>{product.price}
                                                     </div>
                                                     {product.originalPrice && product.originalPrice > product.price && (
                                                         <span className="text-[10px] text-rose-500 line-through font-black tracking-widest opacity-80 decoration-2">₹{product.originalPrice}</span>

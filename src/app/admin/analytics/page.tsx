@@ -30,7 +30,7 @@ export default function AdminAnalytics() {
     if (loading) {
         return (
             <div className="flex min-h-[200px] sm:min-h-[240px] items-center justify-center">
-                <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 animate-spin text-red-600" />
             </div>
         );
     }
@@ -40,7 +40,7 @@ export default function AdminAnalytics() {
     return (
         <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-in fade-in">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2 sm:gap-4">
-                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 shrink-0" />
+                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 shrink-0" />
                 Store Analytics
             </h1>
 

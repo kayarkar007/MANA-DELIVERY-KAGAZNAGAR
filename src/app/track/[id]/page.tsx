@@ -238,20 +238,20 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                     <motion.div 
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center gap-2 text-blue-600 font-black text-[10px] uppercase tracking-[0.3em] mb-4"
+                        className="flex items-center gap-2 text-red-600 font-black text-[10px] uppercase tracking-[0.3em] mb-4"
                     >
-                        <span className="w-10 h-[2px] bg-blue-600 rounded-full" /> Live Tracking
+                        <span className="w-10 h-[2px] bg-red-600 rounded-full" /> Live Tracking
                     </motion.div>
                     <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                         Track Your <br />
                         <span className="text-gradient">Happiness.</span>
                     </h1>
                     <p className="text-slate-500 font-black uppercase text-[10px] tracking-widest pt-2">
-                        Order <span className="text-blue-600">#{order._id.slice(-6).toUpperCase()}</span>
+                        Order <span className="text-red-600">#{order._id.slice(-6).toUpperCase()}</span>
                     </p>
                 </div>
                 <div className="glass-card p-6 flex items-center gap-4 premium-shadow border-white/20 animate-float">
-                    <div className="bg-blue-600 text-white p-3 rounded-2xl shadow-lg shadow-blue-500/30">
+                    <div className="bg-red-600 text-white p-3 rounded-2xl shadow-lg shadow-red-500/30">
                         <Clock className="w-6 h-6" />
                     </div>
                     <div>
@@ -286,7 +286,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                             </MapContainer>
                         )}
                         <div className="absolute top-6 left-6 z-10 glass-card px-4 py-2 flex items-center gap-2 border-white/20">
-                            <Navigation className="w-4 h-4 text-blue-600 animate-pulse" />
+                            <Navigation className="w-4 h-4 text-red-600 animate-pulse" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Live Updates</span>
                         </div>
                     </div>
@@ -295,7 +295,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                 <div className="space-y-6 md:space-y-8">
                     <div className="glass-card p-5 sm:p-8 md:p-10 border-white/20 premium-shadow rounded-3xl md:rounded-[3rem]">
                         <h3 className="font-black text-slate-900 dark:text-white mb-10 uppercase text-xs tracking-[0.2em] flex items-center gap-2">
-                             Journey <span className="w-2 h-2 rounded-full bg-blue-600" />
+                             Journey <span className="w-2 h-2 rounded-full bg-red-600" />
                         </h3>
                         <div className="space-y-12">
                             {[
@@ -316,7 +316,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                                     <div key={step.status} className="flex gap-6 items-start">
                                         <div className="relative flex flex-col items-center">
                                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${
-                                                active ? 'bg-blue-600 border-blue-600 text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] scale-110' :
+                                                active ? 'bg-red-600 border-red-600 text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] scale-110' :
                                                 isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-300'
                                             }`}>
                                                 <step.icon className={`w-5 h-5 ${active ? 'animate-pulse' : ''}`} />
@@ -326,14 +326,14 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                                             )}
                                         </div>
                                         <div className="pt-2">
-                                            <p className={`text-sm font-black uppercase tracking-widest transition-colors duration-500 ${active ? 'text-blue-600' : isCompleted ? 'text-slate-900 dark:text-white' : 'text-slate-300'}`}>
+                                            <p className={`text-sm font-black uppercase tracking-widest transition-colors duration-500 ${active ? 'text-red-600' : isCompleted ? 'text-slate-900 dark:text-white' : 'text-slate-300'}`}>
                                                 {step.label}
                                             </p>
                                             {active && (
                                                 <motion.p 
                                                     initial={{ opacity: 0 }}
                                                     animate={{ opacity: 1 }}
-                                                    className="text-[10px] font-bold text-blue-600/60 mt-1 uppercase"
+                                                    className="text-[10px] font-bold text-red-600/60 mt-1 uppercase"
                                                 >
                                                     Current Status
                                                 </motion.p>
@@ -352,7 +352,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                         {/* Interactive Toggle */}
                         <div className="flex items-center justify-between mb-6 relative z-10 cursor-pointer" onClick={() => setSupportOpen(!supportOpen)}>
                             <div className="flex items-center gap-4">
-                                <div className="bg-white/10 dark:bg-slate-900/10 p-3 rounded-2xl group-hover:bg-blue-600 transition-colors group-hover:text-white">
+                                <div className="bg-white/10 dark:bg-slate-900/10 p-3 rounded-2xl group-hover:bg-red-600 transition-colors group-hover:text-white">
                                     <MessageSquare className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -393,7 +393,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                                     <button 
                                         type="submit" 
                                         disabled={supportSending}
-                                        className="w-full bg-blue-600 text-white p-4 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                        className="w-full bg-red-600 text-white p-4 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2 hover:bg-red-700 transition-colors disabled:opacity-50"
                                     >
                                         {supportSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Submit Ticket</>}
                                     </button>

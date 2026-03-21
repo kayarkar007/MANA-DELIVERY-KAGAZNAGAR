@@ -64,7 +64,7 @@ export default function AddToCartButton({ product }: { product: any }) {
                     icon: '🛍️'
                 });
             }}
-            className="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg hover:shadow-blue-600/20 active:scale-95 transform whitespace-nowrap"
+            className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-md hover:shadow-lg hover:shadow-red-600/20 active:scale-95 transform whitespace-nowrap"
         >
             Add
         </motion.button>

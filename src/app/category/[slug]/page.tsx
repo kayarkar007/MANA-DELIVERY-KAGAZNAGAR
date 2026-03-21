@@ -31,7 +31,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
             <div className="relative pt-6 pb-12 overflow-hidden">
                 {/* Decorative Background Element */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
                 
                 <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-[0.9] mb-6">
                     {categoryName} <span className="text-gradient">Collection</span>

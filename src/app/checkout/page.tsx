@@ -131,7 +131,7 @@ export default function CheckoutPage() {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Cart is Empty</h2>
                     <p className="text-gray-500 mb-6">Looks like you haven't added any items to your cart yet.</p>
-                    <Link href="/" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-700 transition-colors">
+                    <Link href="/" className="inline-block bg-red-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-red-700 transition-colors">
                         Start Shopping
                     </Link>
                 </div>
@@ -263,7 +263,7 @@ export default function CheckoutPage() {
                         <span className="text-gradient">Checkout.</span>
                     </h1>
                     <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest pt-2">
-                        Complete your order in <span className="text-blue-600">60 seconds</span>
+                        Complete your order in <span className="text-red-600">60 seconds</span>
                     </p>
                 </div>
 
@@ -272,7 +272,7 @@ export default function CheckoutPage() {
                     <div className="lg:col-span-2 space-y-6 lg:space-y-8">
                         <div className="glass-card p-5 sm:p-8 md:p-12 border-white/20 premium-shadow rounded-3xl md:rounded-[3rem] space-y-8 md:space-y-10">
                             <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
-                                <MapPin className="w-6 h-6 text-blue-600" /> Delivery Details
+                                <MapPin className="w-6 h-6 text-red-600" /> Delivery Details
                             </h2>
 
                             <form onSubmit={handlePlaceOrder} className="space-y-8">
@@ -286,7 +286,7 @@ export default function CheckoutPage() {
                                             required
                                             value={form.name}
                                             onChange={e => setForm({ ...form, name: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-2xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 outline-none transition-all font-black text-lg shadow-inner"
+                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-2xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/20 focus:border-red-500 outline-none transition-all font-black text-lg shadow-inner"
                                         />
                                     </div>
 
@@ -299,7 +299,7 @@ export default function CheckoutPage() {
                                             required
                                             value={form.whatsapp}
                                             onChange={e => setForm({ ...form, whatsapp: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-2xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 outline-none transition-all font-black text-lg shadow-inner"
+                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-2xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/20 focus:border-red-500 outline-none transition-all font-black text-lg shadow-inner"
                                         />
                                     </div>
                                 </div>
@@ -323,7 +323,7 @@ export default function CheckoutPage() {
                                                 type="button"
                                                 onClick={handleLocate}
                                                 disabled={locating}
-                                                className="text-[10px] font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 sm:px-4 py-2 rounded-full transition-all border border-blue-100 dark:border-blue-900/30 active:scale-95 disabled:opacity-50"
+                                                className="text-[10px] font-black text-red-600 dark:text-red-400 flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 sm:px-4 py-2 rounded-full transition-all border border-red-100 dark:border-red-900/30 active:scale-95 disabled:opacity-50"
                                             >
                                                 {locating ? <Loader2 className="w-3 h-3 animate-spin" /> : <LocateFixed className="w-3 h-3" />}
                                                 {locating ? "PINNING..." : "AUTO DETECT"}
@@ -336,7 +336,7 @@ export default function CheckoutPage() {
                                         value={form.address}
                                         onChange={e => setForm({ ...form, address: e.target.value })}
                                         placeholder="Flat, Building, Street..."
-                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-3xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 outline-none transition-all font-bold text-md shadow-inner resize-none"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white p-6 rounded-3xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/20 focus:border-red-500 outline-none transition-all font-bold text-md shadow-inner resize-none"
                                     />
                                 </div>
 
@@ -369,11 +369,11 @@ export default function CheckoutPage() {
                                 {/* Payment Method Section */}
                                 <div className="pt-10 border-t border-slate-100 dark:border-slate-800 space-y-8">
                                     <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
-                                        <CreditCard className="w-6 h-6 text-blue-600" /> Payment
+                                        <CreditCard className="w-6 h-6 text-red-600" /> Payment
                                     </h3>
 
                                     {walletBalance > 0 && (
-                                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-blue-500/30 text-white group cursor-pointer" onClick={() => setUseWallet(!useWallet)}>
+                                        <div className="bg-gradient-to-r from-red-600 to-red-700 p-8 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-red-500/30 text-white group cursor-pointer" onClick={() => setUseWallet(!useWallet)}>
                                             <div className="flex items-center gap-6">
                                                 <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform">
                                                     <Wallet className="w-8 h-8" />
@@ -450,7 +450,7 @@ export default function CheckoutPage() {
                                                     value={transactionId}
                                                     onChange={e => setTransactionId(e.target.value)}
                                                     placeholder="12 digit UTR number"
-                                                    className="w-full bg-slate-800 border border-white/10 text-white p-6 rounded-2xl focus:ring-4 focus:ring-blue-600/40 focus:border-blue-600 outline-none transition-all font-black text-center text-xl uppercase tracking-widest placeholder:opacity-20 shadow-inner"
+                                                    className="w-full bg-slate-800 border border-white/10 text-white p-6 rounded-2xl focus:ring-4 focus:ring-red-600/40 focus:border-red-600 outline-none transition-all font-black text-center text-xl uppercase tracking-widest placeholder:opacity-20 shadow-inner"
                                                 />
                                             </div>
                                         </motion.div>
@@ -460,7 +460,7 @@ export default function CheckoutPage() {
                                 <button
                                     type="submit"
                                     disabled={placingOrder}
-                                    className="w-full h-20 bg-blue-600 text-white font-black rounded-3xl flex items-center justify-center gap-4 hover:bg-blue-700 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-70 shadow-[0_25px_60px_-15px_rgba(37,99,235,0.4)] uppercase tracking-[0.2em] text-lg"
+                                    className="w-full h-20 bg-red-600 text-white font-black rounded-3xl flex items-center justify-center gap-4 hover:bg-red-700 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-70 shadow-[0_25px_60px_-15px_rgba(37,99,235,0.4)] uppercase tracking-[0.2em] text-lg"
                                 >
                                     {placingOrder ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Finalize Order <ArrowLeft className="w-5 h-5 rotate-180" /></>}
                                 </button>
@@ -472,14 +472,14 @@ export default function CheckoutPage() {
                     <div className="space-y-6 lg:space-y-8 h-fit lg:sticky lg:top-24">
                         <div className="glass-card p-6 sm:p-8 md:p-10 border-white/20 premium-shadow rounded-3xl md:rounded-[3rem] space-y-8 md:space-y-10">
                             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
-                                <Tag className="w-5 h-5 text-blue-600" /> Summary
+                                <Tag className="w-5 h-5 text-red-600" /> Summary
                             </h2>
 
                             <div className="space-y-6 max-h-[40vh] overflow-y-auto pr-4 custom-scrollbar">
                                 {cart.map((item) => (
                                     <div key={item.productId} className="flex justify-between items-center group">
                                         <div className="flex-1 space-y-1">
-                                            <div className="font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{item.name}</div>
+                                            <div className="font-black text-slate-900 dark:text-white group-hover:text-red-600 transition-colors">{item.name}</div>
                                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Qty: {item.quantity} × ₹{item.price}</div>
                                         </div>
                                         <div className="font-black text-slate-900 dark:text-white text-lg">
@@ -513,7 +513,7 @@ export default function CheckoutPage() {
                                             value={appliedPromo ? appliedPromo.code : promoCode}
                                             onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                                             placeholder="Promo Code"
-                                            className="flex-1 bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 p-4 rounded-xl uppercase focus:ring-2 focus:ring-blue-100 outline-none font-black text-xs tracking-widest"
+                                            className="flex-1 bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 p-4 rounded-xl uppercase focus:ring-2 focus:ring-red-100 outline-none font-black text-xs tracking-widest"
                                         />
                                         {appliedPromo ? (
                                             <button
@@ -542,7 +542,7 @@ export default function CheckoutPage() {
                                 </div>
 
                                 {useWallet && walletUsed > 0 && (
-                                    <div className="flex justify-between items-center text-sm font-black text-blue-600 pt-2">
+                                    <div className="flex justify-between items-center text-sm font-black text-red-600 pt-2">
                                         <span className="normal-case">Wallet Usage</span>
                                         <span>-₹{walletUsed.toFixed(0)}</span>
                                     </div>
@@ -553,7 +553,7 @@ export default function CheckoutPage() {
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Amount</p>
                                     <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
-                                        <span className="text-blue-600 italic">₹</span><span className="text-gradient">{finalTotal.toFixed(0)}</span>
+                                        <span className="text-red-600 italic">₹</span><span className="text-gradient">{finalTotal.toFixed(0)}</span>
                                     </span>
                                 </div>
                             </div>
@@ -574,7 +574,7 @@ export default function CheckoutPage() {
                         >
                             <div className="p-8 pb-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                                 <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
-                                    <MapPin className="w-6 h-6 text-blue-600" /> Select Address
+                                    <MapPin className="w-6 h-6 text-red-600" /> Select Address
                                 </h3>
                                 <button type="button" onClick={() => setSelectingAddress(false)} className="w-10 h-10 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors font-black">
                                     ✕
@@ -590,7 +590,7 @@ export default function CheckoutPage() {
                                             setSelectingAddress(false);
                                             toast.success(`Selected ${addr.label} address`);
                                         }}
-                                        className="w-full text-left p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all focus:outline-none"
+                                        className="w-full text-left p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all focus:outline-none"
                                     >
                                         <span className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest leading-none mb-3 inline-block">
                                             {addr.label}

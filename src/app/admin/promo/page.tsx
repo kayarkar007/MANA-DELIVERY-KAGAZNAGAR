@@ -35,14 +35,14 @@ export default function AdminPromoPage() {
         if (res.ok) fetchPromos();
     };
 
-    const inputCls = "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl font-medium outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full text-sm";
+    const inputCls = "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl font-medium outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 w-full text-sm";
 
-    if (loading) return <div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
+    if (loading) return <div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-red-600" /></div>;
 
     return (
         <div className="space-y-6">
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                <Tag className="w-7 h-7 text-blue-600 dark:text-blue-400" /> Manage Promo Codes
+                <Tag className="w-7 h-7 text-red-600 dark:text-red-400" /> Manage Promo Codes
             </h1>
 
             {/* Create Form */}
@@ -69,7 +69,7 @@ export default function AdminPromoPage() {
                         />
                     </div>
                     <button disabled={isCreating} type="submit"
-                        className="w-full sm:w-auto bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 px-6 py-3 hover:bg-blue-700 transition text-sm">
+                        className="w-full sm:w-auto bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 px-6 py-3 hover:bg-red-700 transition text-sm">
                         {isCreating ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-4 h-4" /> Create Code</>}
                     </button>
                 </form>
@@ -90,7 +90,7 @@ export default function AdminPromoPage() {
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
-                            <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-wider uppercase mb-1 pr-10">{p.code}</h3>
+                            <h3 className="text-xl font-black text-red-600 dark:text-red-400 tracking-wider uppercase mb-1 pr-10">{p.code}</h3>
                             <p className="text-gray-900 dark:text-gray-100 font-bold mb-3 text-base border-b dark:border-gray-800 pb-3">
                                 {p.discountType === "percentage" ? `${p.discountValue}% OFF` : `₹${p.discountValue} FLAT OFF`}
                             </p>

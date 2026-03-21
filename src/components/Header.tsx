@@ -97,7 +97,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             {/* Mobile: keep header compact */}
                             <Link
                                 href="/login"
-                                className="sm:hidden p-3 rounded-full hover:bg-blue-500/10 text-slate-600 dark:text-slate-300 transition-colors"
+                                className="sm:hidden p-3 rounded-full hover:bg-red-500/10 text-slate-600 dark:text-slate-300 transition-colors"
                                 title="Log in"
                             >
                                 <UserIcon className="w-6 h-6" />

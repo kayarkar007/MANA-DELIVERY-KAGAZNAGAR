@@ -58,7 +58,7 @@ function VerifyEmailForm() {
                     maxLength={6}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} // strictly numbers
-                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 text-center tracking-[0.5em] text-2xl rounded-xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 outline-none transition-all font-black"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 text-center tracking-[0.5em] text-2xl rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-black"
                     placeholder="------"
                 />
             </div>
@@ -66,7 +66,7 @@ function VerifyEmailForm() {
             <button
                 type="submit"
                 disabled={loading || otp.length !== 6}
-                className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify Account"}
             </button>
@@ -88,7 +88,7 @@ export default function VerifyEmailPage() {
             </Link>
 
             <div className="text-center mb-8 mt-6">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
                     <MailCheck className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white">Verify your Email</h2>

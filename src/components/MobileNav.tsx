@@ -120,17 +120,17 @@ export default function MobileNav() {
                             href={item.href}
                             className={cn(
                                 "relative flex flex-col items-center justify-center gap-1.5 w-full h-full transition-all duration-500",
-                                isActive ? "text-blue-600 dark:text-blue-400 -translate-y-2" : "text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                                isActive ? "text-red-600 dark:text-red-400 -translate-y-2" : "text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                             )}
                         >
-                            <div className={cn("p-2 rounded-2xl transition-all duration-500", isActive && "bg-blue-600 text-white shadow-lg shadow-blue-500/40")}>
+                            <div className={cn("p-2 rounded-2xl transition-all duration-500", isActive && "bg-red-600 text-white shadow-lg shadow-red-500/40")}>
                                 <Icon className="w-6 h-6" />
                             </div>
                             <span className={cn("text-[9px] font-black uppercase tracking-[0.1em] transition-all", isActive ? "opacity-100" : "opacity-60")}>
                                 {item.label}
                             </span>
                             {isActive && (
-                                <motion.div layoutId="nav-dot" className="absolute -bottom-1 w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400 shadow-[0_0_10px_#2563eb]" />
+                                <motion.div layoutId="nav-dot" className="absolute -bottom-1 w-1 h-1 rounded-full bg-red-600 dark:bg-red-400 shadow-[0_0_10px_#2563eb]" />
                             )}
                         </Link>
                     );

@@ -192,7 +192,7 @@ export default function RiderDashboard() {
             {/* Rider Header */}
             <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-blue-600 rounded-xl flex items-center justify-center">
+                    <div className="w-7 h-7 bg-red-600 rounded-xl flex items-center justify-center">
                         <Navigation className="w-4 h-4 text-white" />
                     </div>
                     <span className="font-black text-gray-900 dark:text-white text-lg">Rider Panel</span>
@@ -257,7 +257,7 @@ export default function RiderDashboard() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
                 <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-between">
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Active Tasks</p>
-                    <p className="text-4xl font-black text-blue-600 tracking-tighter">{orders.length}</p>
+                    <p className="text-4xl font-black text-red-600 tracking-tighter">{orders.length}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-between">
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Completed Today</p>
@@ -268,10 +268,10 @@ export default function RiderDashboard() {
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 relative z-10">Earned Today</p>
                     <p className="text-4xl font-black text-purple-600 tracking-tighter relative z-10"><span className="text-xl mr-1">₹</span>{statsData.earningsToday}</p>
                 </div>
-                <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-5 rounded-3xl shadow-lg shadow-blue-500/20 flex flex-col justify-between text-white overflow-hidden relative group">
+                <div className="bg-gradient-to-br from-indigo-500 to-red-600 p-5 rounded-3xl shadow-lg shadow-red-500/20 flex flex-col justify-between text-white overflow-hidden relative group">
                     <div className="absolute top-0 right-0 bg-white/10 w-24 h-24 rounded-full -translate-y-12 translate-x-12 group-hover:scale-125 transition-transform duration-700" />
-                    <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-2 relative z-10">Total Extracted</p>
-                    <p className="text-4xl font-black tracking-tighter relative z-10"><span className="text-xl mr-1 font-sans text-blue-200">₹</span>{statsData.totalEarnings}</p>
+                    <p className="text-[10px] font-black text-red-100 uppercase tracking-widest mb-2 relative z-10">Total Extracted</p>
+                    <p className="text-4xl font-black tracking-tighter relative z-10"><span className="text-xl mr-1 font-sans text-red-200">₹</span>{statsData.totalEarnings}</p>
                 </div>
             </div>
 
@@ -285,7 +285,7 @@ export default function RiderDashboard() {
                         <p className="text-gray-500 max-w-xs mx-auto">Assignments will appear here automatically when admin links you to an order.</p>
                         <button 
                             onClick={() => fetchOrders()}
-                            className="mt-8 text-blue-600 font-bold flex items-center gap-2 hover:underline"
+                            className="mt-8 text-red-600 font-bold flex items-center gap-2 hover:underline"
                         >
                             <RotateCcw className="w-4 h-4" /> Refresh Status
                         </button>
@@ -296,25 +296,25 @@ export default function RiderDashboard() {
                         
                         return (
                         <div key={order._id} className={`bg-white dark:bg-gray-900 rounded-[2.5rem] p-6 shadow-xl border overflow-hidden relative transition-all ${
-                            isNew ? "border-blue-500 ring-4 ring-blue-500/10" : "border-gray-100 dark:border-gray-800"
+                            isNew ? "border-red-500 ring-4 ring-red-500/10" : "border-gray-100 dark:border-gray-800"
                         }`}>
                             {isNew && (
-                                <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 animate-pulse" />
+                                <div className="absolute top-0 left-0 w-full h-1 bg-red-500 animate-pulse" />
                             )}
                             <div className="absolute top-0 right-0 p-6">
                                 <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${
                                     order.deliveryStatus === 'delivered' ? 'bg-green-100 text-green-700' :
-                                    order.deliveryStatus === 'assigned' ? 'bg-blue-600 text-white animate-bounce' :
-                                    order.deliveryStatus === 'accepted' ? 'bg-blue-100 text-blue-700' :
+                                    order.deliveryStatus === 'assigned' ? 'bg-red-600 text-white animate-bounce' :
+                                    order.deliveryStatus === 'accepted' ? 'bg-red-100 text-red-700' :
                                     order.deliveryStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-blue-100 text-blue-700'
+                                    'bg-red-100 text-red-700'
                                 }`}>
                                     {order.deliveryStatus.replace('_', ' ')}
                                 </span>
                             </div>
 
                             <div className="mb-6">
-                                <p className="text-xs font-bold text-blue-600 uppercase mb-1">Order #{order._id.slice(-6).toUpperCase()}</p>
+                                <p className="text-xs font-bold text-red-600 uppercase mb-1">Order #{order._id.slice(-6).toUpperCase()}</p>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">{order.customerName}</h3>
                                 <p className="text-gray-500 text-sm">{order.customerPhone}</p>
                             </div>
@@ -330,7 +330,7 @@ export default function RiderDashboard() {
                                         <a 
                                             href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`} 
                                             target="_blank" 
-                                            className="text-blue-600 text-xs font-bold hover:underline mt-1 inline-block"
+                                            className="text-red-600 text-xs font-bold hover:underline mt-1 inline-block"
                                         >
                                             Open in Google Maps
                                         </a>
@@ -358,7 +358,7 @@ export default function RiderDashboard() {
                                     <>
                                         <button
                                             onClick={() => updateOrderStatus(order._id, "accepted")}
-                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 transition-all text-white font-black text-sm"
+                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-red-600 hover:bg-red-700 transition-all text-white font-black text-sm"
                                         >
                                             <CheckCircle className="w-5 h-5" /> Accept Order
                                         </button>
@@ -378,9 +378,9 @@ export default function RiderDashboard() {
                                         <button
                                             onClick={() => updateOrderStatus(order._id, "picked_up")}
                                             disabled={order.deliveryStatus !== "accepted"}
-                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all border border-transparent hover:border-blue-200 disabled:opacity-40 font-black text-sm"
+                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all border border-transparent hover:border-red-200 disabled:opacity-40 font-black text-sm"
                                         >
-                                            <Package className="w-5 h-5 text-blue-500" /> Picked Up
+                                            <Package className="w-5 h-5 text-red-500" /> Picked Up
                                         </button>
 
                                         <button
@@ -401,7 +401,7 @@ export default function RiderDashboard() {
                                                         maxLength={4}
                                                         value={deliveryPinInputs[order._id] || ""}
                                                         onChange={(e) => setDeliveryPinInputs(prev => ({ ...prev, [order._id]: e.target.value.replace(/\D/g, '') }))}
-                                                        className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-center text-2xl font-black tracking-[0.5em] outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all"
+                                                        className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-center text-2xl font-black tracking-[0.5em] outline-none focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 transition-all"
                                                     />
                                                     <button
                                                         onClick={() => updateOrderStatus(order._id, "delivered", deliveryPinInputs[order._id])}

@@ -117,7 +117,7 @@ export default async function Home() {
               >
                 <Link
                   href={`/category/${category.slug}`}
-                  className="block group relative overflow-hidden rounded-[2.5rem] aspect-[4/5] glass-card premium-shadow transition-all duration-700 hover:-translate-y-2 hover:shadow-blue-500/10 h-full"
+                  className="block group relative overflow-hidden rounded-[2.5rem] aspect-[4/5] glass-card premium-shadow transition-all duration-700 hover:-translate-y-2 hover:shadow-red-500/10 h-full"
                 >
                   <div className="absolute inset-0 z-0 overflow-hidden">
                     {category.image ? (
@@ -131,7 +131,7 @@ export default async function Home() {
                       />
                     ) : (
                       <div className={`absolute inset-0 bg-gradient-to-br ${
-                        category.type === "service" ? "from-indigo-500 to-purple-600" : "from-blue-500 to-emerald-400"
+                        category.type === "service" ? "from-indigo-500 to-purple-600" : "from-red-500 to-emerald-400"
                       }`} />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />

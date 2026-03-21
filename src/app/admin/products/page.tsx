@@ -43,18 +43,18 @@ export default function AdminProducts() {
         if (res.ok) fetchData();
     };
 
-    const inputCls = "w-full bg-white dark:bg-gray-800 border dark:border-gray-700 p-3.5 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-sm";
+    const inputCls = "w-full bg-white dark:bg-gray-800 border dark:border-gray-700 p-3.5 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none transition-all font-medium text-sm";
 
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-wrap justify-between items-center gap-3 bg-white dark:bg-gray-900 p-5 rounded-[2rem] border dark:border-gray-800 shadow-sm">
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                    <ShoppingCart className="text-blue-600 dark:text-blue-400 w-7 h-7" /> Products
+                    <ShoppingCart className="text-red-600 dark:text-red-400 w-7 h-7" /> Products
                 </h1>
                 <button
                     onClick={() => { setIsAdding(!isAdding); if (isAdding) setEditingId(null); }}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 text-sm"
+                    className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/30 text-sm"
                 >
                     {isAdding ? "Cancel" : <><Plus className="w-4 h-4" /> Add Product</>}
                 </button>
@@ -100,7 +100,7 @@ export default function AdminProducts() {
             )}
 
             {loading ? (
-                <div className="py-16 flex justify-center"><Loader2 className="w-10 h-10 animate-spin text-blue-600 dark:text-blue-400" /></div>
+                <div className="py-16 flex justify-center"><Loader2 className="w-10 h-10 animate-spin text-red-600 dark:text-red-400" /></div>
             ) : products.length === 0 ? (
                 <div className="bg-white dark:bg-gray-900 rounded-3xl p-12 text-center border dark:border-gray-800 text-gray-500 dark:text-gray-400">No products found.</div>
             ) : (
@@ -122,7 +122,7 @@ export default function AdminProducts() {
                                     <p className="text-green-600 dark:text-green-400 font-bold text-sm">₹{p.price} <span className="text-gray-400 font-medium">/ {p.unit}</span></p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.categorySlug}</p>
                                     <div className="flex gap-2 mt-3">
-                                        <button onClick={() => handleEdit(p)} className="flex items-center gap-1 text-xs px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg font-bold">
+                                        <button onClick={() => handleEdit(p)} className="flex items-center gap-1 text-xs px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-bold">
                                             <Pencil className="w-3 h-3" /> Edit
                                         </button>
                                         <button onClick={() => handleDelete(p._id)} className="flex items-center gap-1 text-xs px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-bold">
@@ -163,7 +163,7 @@ export default function AdminProducts() {
                                                 </span>
                                             </td>
                                             <td className="p-5 text-right space-x-2">
-                                                <button onClick={() => handleEdit(p)} className="text-sm px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg font-bold transition-colors">Edit</button>
+                                                <button onClick={() => handleEdit(p)} className="text-sm px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg font-bold transition-colors">Edit</button>
                                                 <button onClick={() => handleDelete(p._id)} className="text-sm px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg font-bold transition-colors">Delete</button>
                                             </td>
                                         </tr>

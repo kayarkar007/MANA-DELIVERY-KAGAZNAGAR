@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: {
     }
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden font-sans selection:bg-blue-200 dark:selection:bg-blue-900">
+        <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden font-sans selection:bg-red-200 dark:selection:bg-red-900">
             <AdminSidebar />
 
             {/* Main Content — pt-14 offsets mobile top bar, pb-20 offsets mobile bottom nav */}

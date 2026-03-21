@@ -72,7 +72,7 @@ export default function SearchBar() {
                 placeholder="Search products..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-white/20 dark:bg-slate-900/40 backdrop-blur-3xl text-slate-900 dark:text-white border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] py-3.5 sm:py-6 pl-10 sm:pl-14 pr-14 sm:pr-36 focus:outline-none focus:ring-4 sm:focus:ring-8 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 focus:border-blue-500/50 transition-all font-black shadow-2xl hover:shadow-blue-500/10 placeholder:text-slate-400 placeholder:italic placeholder:font-bold tracking-tight text-sm sm:text-base"
+                className="w-full bg-white/20 dark:bg-slate-900/40 backdrop-blur-3xl text-slate-900 dark:text-white border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] py-3.5 sm:py-6 pl-10 sm:pl-14 pr-14 sm:pr-36 focus:outline-none focus:ring-4 sm:focus:ring-8 focus:ring-red-100/50 dark:focus:ring-red-900/20 focus:border-red-500/50 transition-all font-black shadow-2xl hover:shadow-red-500/10 placeholder:text-slate-400 placeholder:italic placeholder:font-bold tracking-tight text-sm sm:text-base"
             />
             <button
                 type="submit"
@@ -94,7 +94,7 @@ export default function SearchBar() {
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Recommended for you</p>
                     </div>
                     {loading ? (
-                        <div className="flex items-center justify-center p-12 text-blue-600">
+                        <div className="flex items-center justify-center p-12 text-red-600">
                             <Loader2 className="w-8 h-8 animate-spin" />
                         </div>
                     ) : results.length > 0 ? (
@@ -120,7 +120,7 @@ export default function SearchBar() {
                                             </div>
                                         </div>
                                         <div className="text-xl font-black text-slate-900 dark:text-white">
-                                            <span className="text-blue-600 text-sm italic mr-1">₹</span>{product.price}
+                                            <span className="text-red-600 text-sm italic mr-1">₹</span>{product.price}
                                         </div>
                                     </Link>
                                 </li>

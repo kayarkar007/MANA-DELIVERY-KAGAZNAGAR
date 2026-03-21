@@ -162,7 +162,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
 
                         <div className="p-6 md:p-8 flex flex-col h-full">
                             <div className="mb-4">
-                                <h3 className="font-black text-xl md:text-2xl text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                <h3 className="font-black text-xl md:text-2xl text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                                     {product.name}
                                 </h3>
 
@@ -244,7 +244,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                                                 style: { borderRadius: '1rem', border: 'none', background: '#0f172a', color: '#fff' }
                                             });
                                         }}
-                                        className="px-8 py-3.5 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:shadow-blue-500/50 transition-all uppercase tracking-widest text-xs"
+                                        className="px-8 py-3.5 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-500/30 hover:bg-red-700 hover:shadow-red-500/50 transition-all uppercase tracking-widest text-xs"
                                     >
                                         Add to Cart
                                     </motion.button>

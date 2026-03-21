@@ -38,7 +38,7 @@ export default function CartDrawer({
                     >
                         <div className="flex items-center justify-between p-6 md:p-8 border-b border-white/10">
                             <h2 className="text-xl md:text-2xl font-black flex items-center gap-3 text-slate-900 dark:text-white uppercase tracking-tight">
-                                <ShoppingBag className="w-6 h-6 text-blue-600 dark:text-blue-400" /> Your Cart
+                                <ShoppingBag className="w-6 h-6 text-red-600 dark:text-red-400" /> Your Cart
                             </h2>
                             <button
                                 onClick={onClose}
@@ -81,7 +81,7 @@ export default function CartDrawer({
                                             className="group flex flex-col gap-4 p-5 bg-white/40 dark:bg-slate-800/40 border border-white/10 rounded-[1.5rem] shadow-sm hover:shadow-xl transition-all duration-300"
                                         >
                                             <div className="flex justify-between items-start">
-                                                <span className="font-black text-slate-900 dark:text-white text-lg leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                <span className="font-black text-slate-900 dark:text-white text-lg leading-tight group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                                                     {item.name}
                                                 </span>
                                                 <span className="font-black text-slate-900 dark:text-white text-lg shrink-0">
@@ -139,7 +139,7 @@ export default function CartDrawer({
                                     onClick={(e) => {
                                         onClose();
                                     }}
-                                    className="w-full h-16 flex justify-center items-center bg-blue-600 text-white font-black rounded-2xl shadow-2xl shadow-blue-500/40 hover:bg-blue-700 hover:scale-[1.02] transform transition-all active:scale-95 uppercase tracking-widest text-sm"
+                                    className="w-full h-16 flex justify-center items-center bg-red-600 text-white font-black rounded-2xl shadow-2xl shadow-red-500/40 hover:bg-red-700 hover:scale-[1.02] transform transition-all active:scale-95 uppercase tracking-widest text-sm"
                                 >
                                     Complete Checkout
                                 </Link>

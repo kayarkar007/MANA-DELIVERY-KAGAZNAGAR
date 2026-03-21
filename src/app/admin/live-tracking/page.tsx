@@ -10,8 +10,8 @@ export default function LiveTrackingPage() {
     return (
         <div className="space-y-6 animate-in fade-in">
             <div className="flex items-center gap-4 border-b border-gray-100 pb-6 mb-8">
-                <div className="p-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl shadow-sm border border-blue-50">
-                    <Navigation className="w-8 h-8 text-blue-600" />
+                <div className="p-4 bg-gradient-to-br from-red-100 to-indigo-100 rounded-3xl shadow-sm border border-red-50">
+                    <Navigation className="w-8 h-8 text-red-600" />
                 </div>
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight">Live Delivery Map</h1>

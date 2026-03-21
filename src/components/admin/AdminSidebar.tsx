@@ -33,7 +33,7 @@ export default function AdminSidebar() {
         <>
             {/* ─── MOBILE TOP BAR (< lg) ─── */}
             <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-sm">
-                <Link href="/admin" className="flex items-center gap-2 font-black text-lg bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <Link href="/admin" className="flex items-center gap-2 font-black text-lg bg-linear-to-r from-red-600 to-indigo-600 bg-clip-text text-transparent">
                     <Image src="/logo.png" alt="Localu" width={26} height={26} className="object-contain" priority />
                     LOCALU <span className="text-gray-400 font-medium text-xs ml-1">Admin</span>
                 </Link>
@@ -77,7 +77,7 @@ export default function AdminSidebar() {
                                 className={cn(
                                     "flex items-center gap-3 p-3.5 rounded-2xl font-bold transition-colors text-sm",
                                     isActive(item.href)
-                                        ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                                        ? "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400"
                                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                                 )}
                             >
@@ -89,7 +89,7 @@ export default function AdminSidebar() {
                 <div className="p-4 border-t dark:border-gray-800">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold text-sm">A</div>
+                            <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center text-red-700 dark:text-red-400 font-bold text-sm">A</div>
                             <div>
                                 <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">Admin User</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate w-32">admin@localu.com</p>
@@ -117,10 +117,10 @@ export default function AdminSidebar() {
                             href={item.href}
                             className={cn(
                                 "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-colors relative",
-                                active ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
+                                active ? "text-red-600 dark:text-red-400" : "text-gray-400 dark:text-gray-500"
                             )}
                         >
-                            {active && <div className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-b-full" />}
+                            {active && <div className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-red-600 dark:bg-red-400 rounded-b-full" />}
                             <Icon className="w-5 h-5" />
                             <span className="truncate max-w-full px-1">{item.label}</span>
                             {item.badge && (

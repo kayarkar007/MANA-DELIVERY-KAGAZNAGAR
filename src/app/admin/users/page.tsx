@@ -33,14 +33,14 @@ export default function AdminUsersPage() {
     const roleIcon = (role: string) => {
         if (role === "admin") return <ShieldAlert className="w-3.5 h-3.5 text-red-500" />;
         if (role === "rider") return <Package className="w-3.5 h-3.5 text-emerald-500" />;
-        return <User className="w-3.5 h-3.5 text-blue-500" />;
+        return <User className="w-3.5 h-3.5 text-red-500" />;
     };
 
     const roleBadgeCls = (role: string) => {
         const s: Record<string, string> = {
             admin: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
             rider: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-            user: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+            user: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         };
         return s[role] || s.user;
     };
@@ -51,7 +51,7 @@ export default function AdminUsersPage() {
             <div className="flex flex-wrap justify-between items-center gap-3 bg-white dark:bg-gray-900 p-5 rounded-[2rem] border dark:border-gray-800 shadow-sm">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                        <Users className="text-blue-600 dark:text-blue-400 w-7 h-7" /> User Management
+                        <Users className="text-red-600 dark:text-red-400 w-7 h-7" /> User Management
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">{users.length} registered users</p>
                 </div>
@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
             </div>
 
             {loading ? (
-                <div className="py-16 flex justify-center"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>
+                <div className="py-16 flex justify-center"><Loader2 className="w-10 h-10 animate-spin text-red-600" /></div>
             ) : users.length === 0 ? (
                 <div className="bg-white dark:bg-gray-900 rounded-3xl p-12 text-center border dark:border-gray-800 text-gray-500 dark:text-gray-400">No users found.</div>
             ) : (
@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
                             <div key={user._id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 space-y-3">
                                 {/* Avatar + Name + Role */}
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 dark:text-blue-400 font-black text-sm flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-700 dark:text-red-400 font-black text-sm flex-shrink-0">
                                         {user.name?.charAt(0)?.toUpperCase()}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -90,12 +90,12 @@ export default function AdminUsersPage() {
 
                                 {/* Role Changer */}
                                 {updating === user._id ? (
-                                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                                    <Loader2 className="w-5 h-5 animate-spin text-red-600" />
                                 ) : (
                                     <select
                                         value={user.role}
                                         onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                                        className="w-full text-sm font-bold bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                                        className="w-full text-sm font-bold bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-red-500 outline-none cursor-pointer"
                                     >
                                         <option value="user">👤 User</option>
                                         <option value="rider">🛵 Rider</option>
@@ -122,7 +122,7 @@ export default function AdminUsersPage() {
                                         <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                             <td className="p-5">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 dark:text-blue-400 font-black text-sm">{user.name?.charAt(0)?.toUpperCase()}</div>
+                                                    <div className="w-9 h-9 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-700 dark:text-red-400 font-black text-sm">{user.name?.charAt(0)?.toUpperCase()}</div>
                                                     <span className="font-black text-gray-900 dark:text-white">{user.name}</span>
                                                 </div>
                                             </td>
@@ -136,9 +136,9 @@ export default function AdminUsersPage() {
                                             <td className="p-5 text-gray-500 dark:text-gray-400 text-sm font-medium">{new Date(user.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
                                             <td className="p-5">
                                                 {updating === user._id ? (
-                                                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                                                    <Loader2 className="w-5 h-5 animate-spin text-red-600" />
                                                 ) : (
-                                                    <select value={user.role} onChange={(e) => handleRoleChange(user._id, e.target.value)} className="text-sm font-bold bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
+                                                    <select value={user.role} onChange={(e) => handleRoleChange(user._id, e.target.value)} className="text-sm font-bold bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none cursor-pointer">
                                                         <option value="user">User</option>
                                                         <option value="rider">Rider</option>
                                                         <option value="admin">Admin</option>

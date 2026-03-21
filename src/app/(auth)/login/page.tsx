@@ -61,7 +61,7 @@ export default function LoginPage() {
                         required
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 outline-none transition-all font-medium"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-medium"
                         placeholder="you@example.com"
                     />
                 </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 <div>
                     <div className="flex justify-between items-center mb-2">
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Password</label>
-                        <Link href="/forgot-password" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        <Link href="/forgot-password" className="text-sm font-bold text-red-600 dark:text-red-400 hover:underline">
                             Forgot Password?
                         </Link>
                     </div>
@@ -78,7 +78,7 @@ export default function LoginPage() {
                         required
                         value={form.password}
                         onChange={(e) => setForm({ ...form, password: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 outline-none transition-all font-medium"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-medium"
                         placeholder="••••••••"
                     />
                 </div>
@@ -86,7 +86,7 @@ export default function LoginPage() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
                 </button>
@@ -94,7 +94,7 @@ export default function LoginPage() {
 
             <p className="text-center mt-8 text-gray-500 dark:text-gray-400 font-medium">
                 Don't have an account?{" "}
-                <Link href="/signup" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">
+                <Link href="/signup" className="text-red-600 dark:text-red-400 font-bold hover:underline">
                     Sign up here
                 </Link>
             </p>
