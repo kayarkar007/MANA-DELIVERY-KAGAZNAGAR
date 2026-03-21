@@ -395,9 +395,9 @@ export default function CheckoutPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => setPaymentMethod("cod")}
-                                                className={`group flex items-center gap-4 sm:gap-6 p-5 sm:p-8 rounded-3xl md:rounded-[2rem] border-2 transition-all duration-300 ${paymentMethod === "cod" ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-white shadow-xl shadow-blue-500/10" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 hover:border-slate-200"}`}
+                                                className={`group flex items-center gap-4 sm:gap-6 p-5 sm:p-8 rounded-3xl md:rounded-[2rem] border-2 transition-all duration-300 ${paymentMethod === "cod" ? "border-red-600 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-white shadow-xl shadow-red-500/10" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 hover:border-slate-200"}`}
                                             >
-                                                <div className={`p-4 rounded-2xl transition-all ${paymentMethod === "cod" ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-200"}`}>
+                                                <div className={`p-4 rounded-2xl transition-all ${paymentMethod === "cod" ? "bg-red-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-200"}`}>
                                                     <Banknote className="w-8 h-8" />
                                                 </div>
                                                 <div className="text-left">
@@ -409,9 +409,9 @@ export default function CheckoutPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => setPaymentMethod("upi")}
-                                                className={`group flex items-center gap-4 sm:gap-6 p-5 sm:p-8 rounded-3xl md:rounded-[2rem] border-2 transition-all duration-300 ${paymentMethod === "upi" ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-white shadow-xl shadow-blue-500/10" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 hover:border-slate-200"}`}
+                                                className={`group flex items-center gap-4 sm:gap-6 p-5 sm:p-8 rounded-3xl md:rounded-[2rem] border-2 transition-all duration-300 ${paymentMethod === "upi" ? "border-red-600 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-white shadow-xl shadow-red-500/10" : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 hover:border-slate-200"}`}
                                             >
-                                                <div className={`p-4 rounded-2xl transition-all ${paymentMethod === "upi" ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-200"}`}>
+                                                <div className={`p-4 rounded-2xl transition-all ${paymentMethod === "upi" ? "bg-red-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-200"}`}>
                                                     <CreditCard className="w-8 h-8" />
                                                 </div>
                                                 <div className="text-left">
@@ -433,7 +433,7 @@ export default function CheckoutPage() {
                                             <div className="flex justify-center">
                                                 <div className="p-6 bg-white rounded-[2.5rem] shadow-2xl ring-8 ring-white/5 border-4 border-white">
                                                     <img
-                                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${process.env.NEXT_PUBLIC_UPI_ID || '7659989336@jupiteraxis'}&pn=LocaluDelivery&am=${finalTotal.toFixed(2)}&cu=INR`}
+                                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${process.env.NEXT_PUBLIC_UPI_ID || 'manishreddy6002@ptyes'}&pn=ManaDelivery&am=${finalTotal.toFixed(2)}&cu=INR`}
                                                         alt="UPI QR Code"
                                                         className="w-48 h-48 object-contain"
                                                     />

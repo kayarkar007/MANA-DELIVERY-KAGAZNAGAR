@@ -43,8 +43,8 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             priority
                         />
                     </motion.div>
-                    <span className="text-lg sm:text-2xl md:text-3xl font-black tracking-tighter text-gradient">
-                        LOCALU
+                    <span className="text-lg sm:text-2xl md:text-2xl font-black tracking-tighter text-gradient">
+                        MANA DELIVERY
                     </span>
                 </Link>
 
@@ -77,7 +77,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             </div>
                             <Link
                                 href="/profile"
-                                className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all duration-300 border border-blue-500/20 shadow-lg shadow-blue-500/20"
+                                className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all duration-300 border border-red-500/20 shadow-lg shadow-red-500/20"
                                 title="My Orders"
                             >
                                 <Package className="w-4 h-4" />
@@ -105,7 +105,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
 
                             {/* >= sm: show full auth CTAs */}
                             <div className="hidden sm:flex items-center gap-3 mr-3">
-                                <Link href="/login" className="text-sm font-black text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors px-3 uppercase tracking-widest">
+                                <Link href="/login" className="text-sm font-black text-slate-600 dark:text-slate-400 hover:text-red-600 transition-colors px-3 uppercase tracking-widest">
                                     Log in
                                 </Link>
                                 <Link href="/signup" className="text-sm font-black bg-slate-950 dark:bg-white text-white dark:text-slate-950 px-6 py-2.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-950/20 uppercase tracking-widest">
@@ -127,7 +127,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                     <button
                         onClick={onCartClick}
                         aria-label="Open Shopping Cart"
-                        className="relative flex items-center justify-center rounded-full p-2.5 bg-blue-600 text-white hover:bg-blue-700 hover:scale-110 active:scale-90 transition-all shadow-lg shadow-blue-600/30"
+                        className="relative flex items-center justify-center rounded-full p-2.5 bg-red-600 text-white hover:bg-red-700 hover:scale-110 active:scale-90 transition-all shadow-lg shadow-red-600/30"
                     >
                         <ShoppingCart className="h-5 w-5" />
                         {itemCount > 0 && (

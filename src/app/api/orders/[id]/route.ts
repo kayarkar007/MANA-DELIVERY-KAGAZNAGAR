@@ -108,7 +108,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             const rider = await User.findById(riderId);
             if (rider && rider.whatsapp) {
                 const orderId = updatedOrder._id.toString().slice(-6).toUpperCase();
-                const riderMsg = `Hi ${rider.name}, you have been assigned a new Localu order #${orderId}. Please visit your dashboard to accept: ${process.env.NEXTAUTH_URL}/rider`;
+                const riderMsg = `Hi ${rider.name}, you have been assigned a new Mana Delivery order #${orderId}. Please visit your dashboard to accept: ${process.env.NEXTAUTH_URL}/rider`;
                 const cleanRiderPhone = rider.whatsapp.replace(/\D/g, '');
                 const finalRiderPhone = cleanRiderPhone.length === 10 ? `91${cleanRiderPhone}` : cleanRiderPhone;
                 riderWhatsappUrl = `https://wa.me/${finalRiderPhone}?text=${encodeURIComponent(riderMsg)}`;
@@ -120,11 +120,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             const orderId = updatedOrder._id.toString().slice(-6).toUpperCase();
 
             if (status === "processing") {
-                message = `Hi ${updatedOrder.customerName}, your Localu order #${orderId} is now being processed. We will notify you once it's shipped!`;
+                message = `Hi ${updatedOrder.customerName}, your Mana Delivery order #${orderId} is now being processed. We will notify you once it's shipped!`;
             } else if (status === "shipped") {
-                message = `Hi ${updatedOrder.customerName}, your Localu order #${orderId} has been shipped and is on its way to you!`;
+                message = `Hi ${updatedOrder.customerName}, your Mana Delivery order #${orderId} has been shipped and is on its way to you!`;
             } else if (status === "delivered") {
-                message = `Hi ${updatedOrder.customerName}, your Localu order #${orderId} has been delivered. Thank you for shopping with us!`;
+                message = `Hi ${updatedOrder.customerName}, your Mana Delivery order #${orderId} has been delivered. Thank you for shopping with us!`;
             }
 
             const cleanPhone = updatedOrder.customerPhone.replace(/\D/g, ''); // Remove non-digits

@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         // 6. Send OTP Email
         const html = `
             <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                <h2 style="color: #2563eb;">Welcome to LocalU Delivery!</h2>
+                <h2 style="color: #dc2626;">Welcome to Mana Delivery!</h2>
                 <p>Hi ${name},</p>
                 <p>Thank you for signing up. To complete your registration and secure your account, please use the verification code below:</p>
                 <div style="background-color: #f3f4f6; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
@@ -56,12 +56,12 @@ export async function POST(req: Request) {
                 </div>
                 <p>This code will expire in 10 minutes.</p>
                 <p>If you did not create this account, please ignore this email.</p>
-                <p>Best regards,<br/>The LocalU Team</p>
+                <p>Best regards,<br/>The Mana Delivery Team</p>
             </div>
         `;
         
         // We do not await this heavily or block if email fails, but it's good to try
-        await sendEmail(email, "Verify your LocalU Account", html);
+        await sendEmail(email, "Verify your Mana Delivery Account", html);
 
         return NextResponse.json(
             { success: true, message: "User registered successfully! Please verify OTP.", email },

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User, Phone, MapPin, Package, LogOut, Loader2, ArrowLeft, CheckCircle2, Truck, Clock, Wallet, Star, Heart, Navigation, ChevronRight } from "lucide-react";
+import { User, Phone, MapPin, Package, LogOut, Loader2, ArrowLeft, CheckCircle2, Truck, Clock, Wallet, Star, Heart, Navigation, ChevronRight, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -208,7 +208,7 @@ export default function ProfilePage() {
                     >
                         <div className="glass-card p-10 border-white/20 premium-shadow rounded-[3.5rem] text-center sticky top-24">
                             <div className="relative inline-block mb-6">
-                                <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-blue-400 text-white rounded-[2.5rem] flex items-center justify-center mx-auto text-5xl font-black shadow-2xl shadow-blue-500/40">
+                                <div className="w-32 h-32 bg-gradient-to-br from-red-600 to-rose-400 text-white rounded-[2.5rem] flex items-center justify-center mx-auto text-5xl font-black shadow-2xl shadow-red-500/40">
                                     {session?.user?.name?.charAt(0)}
                                 </div>
                                 <div className="absolute -bottom-2 -right-2 bg-emerald-500 w-10 h-10 rounded-2xl border-4 border-white dark:border-slate-900 flex items-center justify-center shadow-lg">
@@ -220,15 +220,15 @@ export default function ProfilePage() {
                             <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-10">{session?.user?.email}</p>
 
                             <div className="space-y-4 text-left">
-                                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-800/50 group hover:border-blue-200 transition-colors">
+                                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-800/50 group hover:border-red-200 transition-colors">
                                     <div className="flex items-center gap-4 mb-2">
-                                        <div className="bg-blue-600 text-white p-2.5 rounded-2xl">
+                                        <div className="bg-red-600 text-white p-2.5 rounded-2xl">
                                             <Wallet className="w-5 h-5" />
                                         </div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Localu Wallet</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mana Wallet</p>
                                     </div>
                                     <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
-                                        <span className="text-blue-600 text-xl italic mr-1">₹</span>
+                                        <span className="text-red-600 text-xl italic mr-1">₹</span>
                                         <span className="text-gradient">{profile?.walletBalance?.toFixed(0) || "0"}</span>
                                     </p>
                                 </div>
@@ -240,6 +240,15 @@ export default function ProfilePage() {
                                         </p>
                                         <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
                                             {profile?.whatsapp || "NOT LINKED"}
+                                        </p>
+                                    </div>
+                                    <div className="p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-rose-500/10 shadow-lg shadow-rose-500/5 relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-linear-to-r from-red-600/10 to-rose-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-2 flex items-center gap-2 relative z-10">
+                                            <ShieldAlert className="w-3 h-3" /> 24/7 Support Desk
+                                        </p>
+                                        <p className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight relative z-10">
+                                            +91 9494378247
                                         </p>
                                     </div>
                                     <div className="p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800/50 relative">

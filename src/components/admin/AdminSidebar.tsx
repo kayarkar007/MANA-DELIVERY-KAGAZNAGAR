@@ -153,10 +153,10 @@ export default function AdminSidebar() {
                     </Link>
                     <Link
                         href="/admin"
-                        className="flex items-center gap-2 text-2xl font-black bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+                        className="flex items-center gap-2 text-xl font-black bg-linear-to-r from-red-600 to-rose-600 bg-clip-text text-transparent"
                     >
-                        <Image src="/logo.png" alt="Localu Logo" width={32} height={32} className="object-contain" priority />
-                        LOCALU
+                        <Image src="/logo.png" alt="Mana Delivery Logo" width={32} height={32} className="object-contain" priority />
+                        MANA DELIVERY
                     </Link>
                 </div>
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -169,8 +169,8 @@ export default function AdminSidebar() {
                                 className={cn(
                                     "flex items-center gap-3 p-4 rounded-2xl font-bold transition-colors",
                                     isActive(item.href)
-                                        ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                                        : "text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-gray-800 hover:text-blue-700 dark:hover:text-blue-400"
+                                        ? "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                                        : "text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-gray-800 hover:text-red-700 dark:hover:text-red-400"
                                 )}
                             >
                                 <Icon className="w-5 h-5" /> {item.label} {item.badge}
@@ -181,10 +181,10 @@ export default function AdminSidebar() {
                 <div className="p-4 border-t dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold">A</div>
+                            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center text-red-700 dark:text-red-400 font-bold">A</div>
                             <div>
-                                <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">Admin User</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate w-32">admin@localu.com</p>
+                                <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">Mana Admin</p>
+                                <p className="text-xs text-red-500 dark:text-red-400 font-black truncate w-32">+91 9494378247</p>
                             </div>
                         </div>
                         <button 

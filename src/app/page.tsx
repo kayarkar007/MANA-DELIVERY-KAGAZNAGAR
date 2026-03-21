@@ -57,9 +57,9 @@ export default async function Home() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400 font-black uppercase tracking-[0.2em] text-[10px] sm:text-xs mb-8 backdrop-blur-xl border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.2)]"
+            className="px-4 py-1.5 rounded-full bg-red-500/10 text-red-500 font-black uppercase tracking-[0.2em] text-[10px] sm:text-xs mb-8 backdrop-blur-xl border border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
           >
-            Localu Hyperlocal
+            Mana Delivery
           </motion.span>
           
           <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] mb-8 max-w-4xl drop-shadow-2xl">
@@ -87,7 +87,7 @@ export default async function Home() {
           <motion.a
             href="/search"
             whileHover={{ x: 5 }}
-            className="group flex items-center gap-2 text-blue-600 font-black text-sm sm:text-base uppercase tracking-wider"
+            className="group flex items-center gap-2 text-red-600 font-black text-sm sm:text-base uppercase tracking-wider"
           >
             Explore All <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </motion.a>

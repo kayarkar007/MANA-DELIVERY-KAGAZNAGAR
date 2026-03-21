@@ -10,23 +10,23 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
-  title: "Localu - Hyperlocal Delivery",
-  description: "Get everything delivered to your door.",
+  title: "Mana Delivery - Hyperlocal",
+  description: "Get everything delivered with Mana Delivery.",
   manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
   },
   openGraph: {
-    title: "Localu",
+    title: "Mana Delivery",
     description: "Get everything delivered to your door.",
-    siteName: "Localu",
+    siteName: "Mana Delivery",
     images: [
       {
         url: "/logo.png",
         width: 800,
         height: 600,
-        alt: "Localu Logo",
+        alt: "Mana Delivery Logo",
       },
     ],
     locale: "en_IN",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Localu",
+    title: "Mana Delivery",
   },
   formatDetection: {
     telephone: false,

@@ -38,7 +38,7 @@ export default function FloatingCart({ onCartClick }: { onCartClick: () => void 
             onClick={onCartClick}
             aria-label="Open Floating Cart"
             style={{ willChange: "transform, opacity" }}
-            className="fixed bottom-24 md:bottom-8 right-6 md:right-10 z-50 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_20px_50px_rgba(37,99,235,0.4)] hover:bg-blue-700 transition-all border border-white/20 backdrop-blur-lg"
+            className="fixed bottom-24 md:bottom-8 right-6 md:right-10 z-50 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-600 text-white shadow-[0_20px_50px_rgba(220,38,38,0.4)] hover:bg-red-700 transition-all border border-white/20 backdrop-blur-lg"
         >
             <ShoppingCart className="h-7 w-7" />
             {itemCount > 0 && (
