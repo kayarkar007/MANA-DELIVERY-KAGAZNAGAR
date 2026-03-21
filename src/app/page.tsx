@@ -41,7 +41,7 @@ export default async function Home() {
       >
         <div className="absolute inset-0 z-0 scale-105 animate-float opacity-40">
           <Image
-            src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=40&w=1200"
+            src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=40&w=1200&v=avif_opt2"
             alt="Hero Background"
             fill
             quality={40}
