@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   description: "Get everything delivered with Mana Delivery.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logo2.png",
+    apple: "/logo2.png",
   },
   openGraph: {
     title: "Mana Delivery",
@@ -23,8 +23,8 @@ export const metadata: Metadata = {
     siteName: "Mana Delivery",
     images: [
       {
-        url: "/logo.png",
-        width: 800,
+        url: "/logo2.png",
+        width: 1200,
         height: 600,
         alt: "Mana Delivery Logo",
       },

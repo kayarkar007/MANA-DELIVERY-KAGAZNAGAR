@@ -34,7 +34,7 @@ export default function AdminSidebar() {
             {/* ─── MOBILE TOP BAR (< lg) ─── */}
             <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-sm">
                 <Link href="/admin" className="flex items-center gap-2 font-black text-lg bg-linear-to-r from-red-600 to-indigo-600 bg-clip-text text-transparent">
-                    <Image src="/logo.png" alt="Localu" width={26} height={26} className="object-contain" priority />
+                    <Image src="/logo2.png" alt="Localu" width={26} height={26} className="object-contain" priority />
                     LOCALU <span className="text-gray-400 font-medium text-xs ml-1">Admin</span>
                 </Link>
                 <button
@@ -155,7 +155,7 @@ export default function AdminSidebar() {
                         href="/admin"
                         className="flex items-center gap-2 text-xl font-black bg-linear-to-r from-red-600 to-rose-600 bg-clip-text text-transparent"
                     >
-                        <Image src="/logo.png" alt="Mana Delivery Logo" width={32} height={32} className="object-contain" priority />
+                        <Image src="/logo2.png" alt="Mana Delivery Logo" width={32} height={32} className="object-contain" priority />
                         MANA DELIVERY
                     </Link>
                 </div>

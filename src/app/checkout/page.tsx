@@ -116,7 +116,7 @@ export default function CheckoutPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
                 <div className="animate-pulse flex items-center justify-center p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800">
-                    <img src="/logo.png" alt="Loading Localu..." className="w-12 h-12 sm:w-16 sm:h-16 object-contain drop-shadow-xl" />
+                    <img src="/logo2.png" alt="Loading Localu..." className="w-12 h-12 sm:w-16 sm:h-16 object-contain drop-shadow-xl" />
                 </div>
             </div>
         );

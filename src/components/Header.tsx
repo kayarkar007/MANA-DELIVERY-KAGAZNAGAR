@@ -35,7 +35,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                         className="flex items-center justify-center p-1.5 sm:p-2 bg-white/10 rounded-xl sm:rounded-2xl shadow-inner border border-white/20"
                     >
                         <Image
-                            src="/logo.png"
+                            src="/logo2.png"
                             alt="Localu Logo"
                             width={32}
                             height={32}
