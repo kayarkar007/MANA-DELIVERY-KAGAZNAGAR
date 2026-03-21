@@ -16,8 +16,8 @@ export default async function AdminLayout({ children }: {
         <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden font-sans selection:bg-blue-200 dark:selection:bg-blue-900">
             <AdminSidebar />
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12 relative">
+            {/* Main Content — pt-14 offsets mobile top bar, pb-20 offsets mobile bottom nav */}
+            <main className="flex-1 overflow-y-auto pt-14 lg:pt-0 pb-20 lg:pb-0 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12 relative">
                 <div className="max-w-6xl mx-auto w-full">{children}</div>
             </main>
         </div>

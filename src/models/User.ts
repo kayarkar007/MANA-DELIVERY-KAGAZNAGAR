@@ -23,7 +23,12 @@ const UserSchema = new mongoose.Schema(
             longitude: { type: Number },
             updatedAt: { type: Date }
         },
-        walletBalance: { type: Number, default: 0 }
+        walletBalance: { type: Number, default: 0 },
+        isVerified: { type: Boolean, default: false },
+        verifyOtp: { type: String },
+        verifyOtpExpiry: { type: Date },
+        resetToken: { type: String },
+        resetTokenExpiry: { type: Date }
     },
     { timestamps: true }
 );

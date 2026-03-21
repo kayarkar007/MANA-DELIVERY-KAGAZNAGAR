@@ -50,21 +50,24 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
 
                 <div className="flex items-center gap-2 sm:gap-5">
                     {session ? (
-                        <div className="flex items-center gap-2 mr-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mr-1 sm:mr-2">
                             {session.user.role === "admin" && (
                                 <Link
                                     href="/admin"
-                                    className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-500/10 text-red-500 text-xs font-black hover:bg-red-500 hover:text-white transition-all duration-300 border border-red-500/20 shadow-lg shadow-red-500/20"
+                                    className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-red-500/10 text-red-500 text-[10px] sm:text-xs font-black hover:bg-red-500 hover:text-white transition-all duration-300 border border-red-500/20 shadow-lg shadow-red-500/20"
                                 >
-                                    <ShieldAlert className="w-4 h-4" /> Admin Panel
+                                    <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                                    <span className="hidden xs:inline">Admin</span>
+                                    <span className="hidden sm:inline"> Panel</span>
                                 </Link>
                             )}
                             {session.user.role === "rider" && (
                                 <Link
                                     href="/rider"
-                                    className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-black hover:bg-emerald-500 hover:text-white transition-all duration-300 border border-emerald-500/20 shadow-lg shadow-emerald-500/20"
+                                    className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] sm:text-xs font-black hover:bg-emerald-500 hover:text-white transition-all duration-300 border border-emerald-500/20 shadow-lg shadow-emerald-500/20"
                                 >
-                                    <Package className="w-4 h-4" /> Rider Dashboard
+                                    <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                                    <span className="hidden xs:inline">Rider</span>
                                 </Link>
                             )}
                             <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner">
@@ -82,10 +85,10 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             </Link>
                             <button
                                 onClick={() => signOut()}
-                                className="p-2.5 rounded-full hover:bg-red-500/10 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all duration-300"
+                                className="p-2 sm:p-2.5 rounded-full hover:bg-red-500/10 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all duration-300"
                                 title="Sign Out"
                             >
-                                <LogOut className="w-5 h-5" />
+                                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                         </div>
                     ) : (

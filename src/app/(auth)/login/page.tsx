@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -27,7 +27,14 @@ export default function LoginPage() {
             setLoading(false);
         } else {
             toast.success("Welcome back!");
-            router.push("/");
+            const session = await getSession();
+            if (session?.user?.role === "admin") {
+                router.push("/admin");
+            } else if (session?.user?.role === "rider") {
+                router.push("/rider");
+            } else {
+                router.push("/");
+            }
             router.refresh(); // Refresh to catch server-side layout changes
         }
     };
@@ -60,7 +67,12 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Password</label>
+                        <Link href="/forgot-password" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                            Forgot Password?
+                        </Link>
+                    </div>
                     <input
                         type="password"
                         required

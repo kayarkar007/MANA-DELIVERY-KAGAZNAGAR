@@ -6,9 +6,21 @@ import CartDrawer from "./CartDrawer";
 import FloatingCart from "./FloatingCart";
 import MobileNav from "./MobileNav";
 import { CartProvider } from "@/context/CartContext";
+import { usePathname } from "next/navigation";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const pathname = usePathname();
+
+    // Admin and Rider pages have their own layout — skip customer chrome
+    const isAdminRoute = pathname?.startsWith("/admin");
+    const isRiderRoute = pathname?.startsWith("/rider");
+    const isSpecialRoute = isAdminRoute || isRiderRoute;
+
+    if (isSpecialRoute) {
+        // No customer header, no cart, no mobile nav — just the page content
+        return <>{children}</>;
+    }
 
     return (
         <CartProvider>

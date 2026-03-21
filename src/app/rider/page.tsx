@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Package, MapPin, Truck, CheckCircle, Navigation, Loader2, PowerOff, Power, Bell, XCircle, RotateCcw, ShieldAlert, WifiOff, Activity } from "lucide-react";
+import { Package, MapPin, Truck, CheckCircle, Navigation, Loader2, PowerOff, Power, Bell, XCircle, RotateCcw, ShieldAlert, WifiOff, Activity, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RiderDashboard() {
@@ -14,9 +14,10 @@ export default function RiderDashboard() {
     const [isSharingLocation, setIsSharingLocation] = useState(false);
     const [watchId, setWatchId] = useState<number | null>(null);
     const [lastOrderIds, setLastOrderIds] = useState<Set<string>>(new Set());
-    const [statsData, setStatsData] = useState({ completedToday: 0 });
+    const [statsData, setStatsData] = useState({ completedToday: 0, earningsToday: 0, totalEarnings: 0, totalCompleted: 0 });
     const [isOnline, setIsOnline] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [deliveryPinInputs, setDeliveryPinInputs] = useState<Record<string, string>>({});
 
     const playNotificationSound = () => {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -152,12 +153,12 @@ export default function RiderDashboard() {
         toast.info("Location sharing stopped");
     };
 
-    const updateOrderStatus = async (orderId: string, deliveryStatus: string) => {
+    const updateOrderStatus = async (orderId: string, deliveryStatus: string, deliveryOtp?: string) => {
         try {
             const res = await fetch("/api/rider/orders", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderId, deliveryStatus })
+                body: JSON.stringify({ orderId, deliveryStatus, deliveryOtp })
             });
             const data = await res.json();
             if (data.success) {
@@ -187,7 +188,32 @@ export default function RiderDashboard() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
+        <div className="min-h-screen">
+            {/* Rider Header */}
+            <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 bg-blue-600 rounded-xl flex items-center justify-center">
+                        <Navigation className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="font-black text-gray-900 dark:text-white text-lg">Rider Panel</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    {isOnline ? (
+                        <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg">● Online</span>
+                    ) : (
+                        <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg">● Offline</span>
+                    )}
+                    <button
+                        onClick={() => signOut({ callbackUrl: "/login" })}
+                        className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition"
+                        title="Sign Out"
+                    >
+                        <LogOut className="w-4 h-4" />
+                    </button>
+                </div>
+            </header>
+
+        <div className="max-w-2xl mx-auto px-4 py-6 pb-8">
             {!isOnline && (
                 <div className="bg-red-600 text-white text-center py-2 px-4 rounded-xl mb-6 flex items-center justify-center gap-2 animate-bounce">
                     <WifiOff className="w-4 h-4" />
@@ -195,10 +221,10 @@ export default function RiderDashboard() {
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div className="flex items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                             Dashboard
                             <button 
                                 onClick={() => fetchOrders()}
@@ -208,12 +234,12 @@ export default function RiderDashboard() {
                                 <RotateCcw className="w-4 h-4" />
                             </button>
                         </h1>
-                        <p className="text-gray-500 dark:text-gray-400">Welcome back, {session?.user.name}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Welcome back, {session?.user.name}</p>
                     </div>
                 </div>
                 <button
                     onClick={isSharingLocation ? stopLocationSharing : startLocationSharing}
-                    className={`flex items-center gap-3 px-6 py-4 rounded-3xl font-black transition-all shadow-lg ${
+                    className={`w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-4 rounded-3xl font-black transition-all shadow-lg ${
                         isSharingLocation 
                         ? "bg-red-50 text-red-600 border-2 border-red-100 dark:bg-red-900/10 dark:border-red-900/30"
                         : "bg-green-50 text-green-600 border-2 border-green-100 dark:bg-green-900/10 dark:border-green-900/30"
@@ -228,21 +254,24 @@ export default function RiderDashboard() {
             </div>
 
             {/* Stats Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white dark:bg-gray-900 p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Active Tasks</p>
-                    <p className="text-2xl font-black text-blue-600">{orders.length}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Active Tasks</p>
+                    <p className="text-4xl font-black text-blue-600 tracking-tighter">{orders.length}</p>
                 </div>
-                <div className="bg-white dark:bg-gray-900 p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Completed Today</p>
-                    <p className="text-2xl font-black text-green-600">{statsData.completedToday}</p>
+                <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Completed Today</p>
+                    <p className="text-4xl font-black text-emerald-600 tracking-tighter">{statsData.completedToday}</p>
                 </div>
-                <div className="bg-white dark:bg-gray-900 p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm hidden sm:block">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Duty Status</p>
-                    <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${isSharingLocation ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
-                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{isSharingLocation ? 'Live Tracking' : 'Offline'}</p>
-                    </div>
+                <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col justify-between overflow-hidden relative group">
+                    <div className="absolute -right-4 -bottom-4 bg-purple-50 dark:bg-purple-900/20 w-16 h-16 rounded-full group-hover:scale-150 transition-transform duration-500" />
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 relative z-10">Earned Today</p>
+                    <p className="text-4xl font-black text-purple-600 tracking-tighter relative z-10"><span className="text-xl mr-1">₹</span>{statsData.earningsToday}</p>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-5 rounded-3xl shadow-lg shadow-blue-500/20 flex flex-col justify-between text-white overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 bg-white/10 w-24 h-24 rounded-full -translate-y-12 translate-x-12 group-hover:scale-125 transition-transform duration-700" />
+                    <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-2 relative z-10">Total Extracted</p>
+                    <p className="text-4xl font-black tracking-tighter relative z-10"><span className="text-xl mr-1 font-sans text-blue-200">₹</span>{statsData.totalEarnings}</p>
                 </div>
             </div>
 
@@ -323,52 +352,74 @@ export default function RiderDashboard() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {/* Action Buttons — full-width on mobile */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                                 {order.deliveryStatus === "assigned" ? (
                                     <>
                                         <button
                                             onClick={() => updateOrderStatus(order._id, "accepted")}
-                                            className="col-span-1 flex flex-col items-center justify-center p-4 rounded-3xl bg-blue-600 hover:bg-blue-700 transition-all text-white group"
+                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 transition-all text-white font-black text-sm"
                                         >
-                                            <CheckCircle className="w-6 h-6 mb-2" />
-                                            <span className="text-[10px] font-black uppercase">Accept</span>
+                                            <CheckCircle className="w-5 h-5" /> Accept Order
                                         </button>
                                         <button
                                             onClick={() => updateOrderStatus(order._id, "declined")}
-                                            className="col-span-1 flex flex-col items-center justify-center p-4 rounded-3xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 text-red-600 transition-all group"
+                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 text-red-600 font-black text-sm transition-all"
                                         >
-                                            <XCircle className="w-6 h-6 mb-2" />
-                                            <span className="text-[10px] font-black uppercase">Decline</span>
+                                            <XCircle className="w-5 h-5" /> Decline
                                         </button>
                                     </>
+                                ) : order.deliveryStatus === "declined" ? (
+                                    <div className="col-span-full bg-red-50 dark:bg-red-900/10 rounded-2xl p-4 text-center">
+                                        <p className="text-red-600 dark:text-red-400 font-bold text-sm">❌ You declined this order. Admin will reassign.</p>
+                                    </div>
                                 ) : (
                                     <>
                                         <button
                                             onClick={() => updateOrderStatus(order._id, "picked_up")}
                                             disabled={order.deliveryStatus !== "accepted"}
-                                            className="flex flex-col items-center justify-center p-4 rounded-3xl bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all border border-transparent hover:border-blue-200 disabled:opacity-50 group px-2"
+                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all border border-transparent hover:border-blue-200 disabled:opacity-40 font-black text-sm"
                                         >
-                                            <Package className="w-6 h-6 mb-2 text-gray-400 group-hover:text-blue-500" />
-                                            <span className="text-[10px] font-black uppercase text-gray-500 group-hover:text-blue-600">Picked Up</span>
+                                            <Package className="w-5 h-5 text-blue-500" /> Picked Up
                                         </button>
-                                        
+
                                         <button
                                             onClick={() => updateOrderStatus(order._id, "out_for_delivery")}
                                             disabled={order.deliveryStatus !== "picked_up"}
-                                            className="flex flex-col items-center justify-center p-4 rounded-3xl bg-gray-50 dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-all border border-transparent hover:border-orange-200 disabled:opacity-50 group px-2"
+                                            className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-all border border-transparent hover:border-orange-200 disabled:opacity-40 font-black text-sm"
                                         >
-                                            <Truck className="w-6 h-6 mb-2 text-gray-400 group-hover:text-orange-500" />
-                                            <span className="text-[10px] font-black uppercase text-gray-500 group-hover:text-orange-600">Out for Delivery</span>
+                                            <Truck className="w-5 h-5 text-orange-500" /> Out for Delivery
                                         </button>
-                                        
-                                        <button
-                                            onClick={() => updateOrderStatus(order._id, "delivered")}
-                                            disabled={order.deliveryStatus !== "out_for_delivery"}
-                                            className="flex flex-col items-center justify-center p-4 rounded-3xl bg-gray-50 dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-900/30 transition-all border border-transparent hover:border-green-200 disabled:opacity-50 group px-2"
-                                        >
-                                            <CheckCircle className="w-6 h-6 mb-2 text-gray-400 group-hover:text-green-500" />
-                                            <span className="text-[10px] font-black uppercase text-gray-500 group-hover:text-green-600">Delivered</span>
-                                        </button>
+
+                                        {order.deliveryStatus === "out_for_delivery" ? (
+                                            <div className="sm:col-span-2 mt-2 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                                <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Ask Customer for 4-Digit Delivery PIN</label>
+                                                <div className="flex flex-col sm:flex-row gap-3">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="----" 
+                                                        maxLength={4}
+                                                        value={deliveryPinInputs[order._id] || ""}
+                                                        onChange={(e) => setDeliveryPinInputs(prev => ({ ...prev, [order._id]: e.target.value.replace(/\D/g, '') }))}
+                                                        className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-center text-2xl font-black tracking-[0.5em] outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all"
+                                                    />
+                                                    <button
+                                                        onClick={() => updateOrderStatus(order._id, "delivered", deliveryPinInputs[order._id])}
+                                                        disabled={!deliveryPinInputs[order._id] || deliveryPinInputs[order._id].length !== 4}
+                                                        className="px-8 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white transition-all font-black text-sm shadow-xl shadow-green-500/30 disabled:opacity-40 flex items-center justify-center gap-2"
+                                                    >
+                                                        <CheckCircle className="w-5 h-5" /> Verify & Deliver
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                disabled
+                                                className="sm:col-span-2 flex items-center justify-center gap-3 py-4 rounded-2xl bg-green-50 dark:bg-green-900/20 text-green-700/50 dark:text-green-400/50 transition-all font-black text-sm opacity-50 cursor-not-allowed"
+                                            >
+                                                <CheckCircle className="w-5 h-5" /> Mark Delivered
+                                            </button>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -377,6 +428,7 @@ export default function RiderDashboard() {
                     })
                 )}
             </div>
+        </div>
         </div>
     );
 }

@@ -4,7 +4,12 @@ import Link from "next/link";
 import { ShoppingBag, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import * as motion from "framer-motion/client";
-import SearchBar from "@/components/SearchBar";
+import dynamic from "next/dynamic";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+const SearchBar = dynamic(() => import("@/components/SearchBar"));
+const RoleBanner = dynamic(() => import("@/components/RoleBanner"));
 
 // Revalidate the page every 10 seconds or force dynamic
 export const revalidate = 0;
@@ -22,9 +27,11 @@ async function getCategories() {
 
 export default async function Home() {
   const categories = await getCategories();
+  const session = await getServerSession(authOptions);
 
   return (
     <div className="space-y-16">
+      <RoleBanner role={session?.user?.role} />
       {/* Hero — mobile first: compact on small, scale up on sm/md/lg */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -37,6 +44,7 @@ export default async function Home() {
             src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=2000"
             alt="Hero Background"
             fill
+            sizes="(max-width: 768px) 100vw, 100vw"
             className="object-cover mix-blend-soft-light"
             priority
           />
@@ -116,6 +124,7 @@ export default async function Home() {
                         src={category.image}
                         alt={category.name}
                         fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                         className="object-cover transition-transform duration-1000 group-hover:scale-115"
                       />
                     ) : (

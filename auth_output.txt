@@ -1,0 +1,29 @@
+﻿
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] ΓÇ║ tests\auth.spec.ts:4:9 ΓÇ║ Authentication Security Flow ΓÇ║ Should automatically block weak passwords and enforce regex pattern
+[1A[2K  1) [chromium] ΓÇ║ tests\auth.spec.ts:4:9 ΓÇ║ Authentication Security Flow ΓÇ║ Should automatically block weak passwords and enforce regex pattern 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[placeholder="Full Name"]')[22m
+
+
+      10 |
+      11 |         // Fill non-password details
+    > 12 |         await page.fill('input[placeholder="Full Name"]', 'Playwright Tester');
+         |                    ^
+      13 |         await page.fill('input[placeholder="Email Address"]', 'playwright@localu.com');
+      14 |         await page.fill('input[placeholder="WhatsApp Number"]', '9876543210');
+      15 |
+        at C:\Users\PAVAN KALYAN\OneDrive\Desktop\LOCALU DELIVERY APP\tests\auth.spec.ts:12:20
+
+    Error Context: test-results\auth-Authentication-Securi-354ad-s-and-enforce-regex-pattern-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] ΓÇ║ tests\auth.spec.ts:4:9 ΓÇ║ Authentication Security Flow ΓÇ║ Should automatically block weak passwords and enforce regex pattern 
+
+[36m  Serving HTML report at http://localhost:9323. Press Ctrl+C to quit.[39m

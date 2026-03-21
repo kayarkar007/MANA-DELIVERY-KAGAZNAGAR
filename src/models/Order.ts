@@ -33,6 +33,7 @@ export interface IOrder extends Document {
         longitude: number;
     };
     deliveryStatus: "pending" | "assigned" | "accepted" | "declined" | "picked_up" | "out_for_delivery" | "delivered" | "cancelled";
+    deliveryOtp?: string;
     estimatedDeliveryTime?: Date;
     createdAt: Date;
     updatedAt: Date;
@@ -83,9 +84,16 @@ const OrderSchema: Schema = new Schema(
             enum: ["pending", "assigned", "accepted", "declined", "picked_up", "out_for_delivery", "delivered", "cancelled"],
             default: "pending"
         },
+        deliveryOtp: { type: String },
         estimatedDeliveryTime: { type: Date }
     },
     { timestamps: true }
 );
+
+// Indexes for Order Retrieval Speed
+OrderSchema.index({ userId: 1, createdAt: -1 });
+OrderSchema.index({ riderId: 1, deliveryStatus: 1 });
+OrderSchema.index({ deliveryStatus: 1 });
+OrderSchema.index({ createdAt: -1 });
 
 export default mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);

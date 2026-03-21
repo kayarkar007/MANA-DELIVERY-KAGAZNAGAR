@@ -340,6 +340,12 @@ export default function ProfilePage() {
                                                 </div>
                                                 
                                                 <div className="flex flex-col items-end gap-2">
+                                                    {order.deliveryOtp && !isCancelled && order.status !== 'delivered' && order.deliveryStatus !== 'delivered' && (
+                                                        <div className="mb-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-800 text-right">
+                                                            <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">Delivery PIN</p>
+                                                            <p className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-[0.2em] leading-none">{order.deliveryOtp}</p>
+                                                        </div>
+                                                    )}
                                                     <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                                                         <span className="text-blue-600 text-xl italic mr-1">₹</span>{order.total}
                                                     </p>

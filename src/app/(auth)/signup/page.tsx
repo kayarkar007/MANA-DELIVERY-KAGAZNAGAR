@@ -3,17 +3,37 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
 
 export default function SignupPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [form, setForm] = useState({ name: "", email: "", whatsapp: "", password: "" });
+    const [form, setForm] = useState({ name: "", email: "", whatsapp: "", password: "", confirmPassword: "" });
+
+    // Strong Password Checker
+    const isLengthValid = form.password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(form.password);
+    const hasLowerCase = /[a-z]/.test(form.password);
+    const hasNumber = /[0-9]/.test(form.password);
+    const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
+    const isPasswordStrong = isLengthValid && hasUpperCase && hasLowerCase && hasNumber && hasSymbol;
+    const passwordsMatch = form.password === form.confirmPassword;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isPasswordStrong) {
+            toast.error("Please ensure your password meets all security requirements.");
+            return;
+        }
+
+        if (!passwordsMatch) {
+            toast.error("Passwords do not match.");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -31,24 +51,10 @@ export default function SignupPage() {
                 return;
             }
 
-            toast.success("Account created! Logging you in...");
-
-            // Automatically sign in upon successful registration
-            const loginRes = await signIn("credentials", {
-                redirect: false,
-                email: form.email,
-                password: form.password,
-            });
-
-            if (loginRes?.error) {
-                toast.error("Failed to auto-login. Please login manually.");
-                router.push("/login");
-            } else {
-                router.push("/");
-                router.refresh();
-            }
-
-         
+            toast.success("Account created! Please check your email for the verification code.");
+            
+            // Redirect to OTP Verification page
+            router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
         } catch (error) {
             toast.error("Something went wrong");
             setLoading(false);
@@ -107,22 +113,56 @@ export default function SignupPage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Secure Password</label>
                     <input
                         type="password"
                         required
-                        minLength={6}
                         value={form.password}
                         onChange={(e) => setForm({ ...form, password: e.target.value })}
                         className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 outline-none transition-all font-medium"
-                        placeholder="At least 6 characters"
+                        placeholder="••••••••"
                     />
+                    {form.password && (
+                        <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-1.5 text-xs font-semibold">
+                            <p className="flex items-center gap-2">
+                                {isLengthValid ? <Check className="w-3.5 h-3.5 text-green-500" /> : <X className="w-3.5 h-3.5 text-gray-400" />} 
+                                <span className={isLengthValid ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}>At least 8 characters</span>
+                            </p>
+                            <p className="flex items-center gap-2">
+                                {(hasUpperCase && hasLowerCase) ? <Check className="w-3.5 h-3.5 text-green-500" /> : <X className="w-3.5 h-3.5 text-gray-400" />} 
+                                <span className={(hasUpperCase && hasLowerCase) ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}>Uppercase & Lowercase letters</span>
+                            </p>
+                            <p className="flex items-center gap-2">
+                                {hasNumber ? <Check className="w-3.5 h-3.5 text-green-500" /> : <X className="w-3.5 h-3.5 text-gray-400" />} 
+                                <span className={hasNumber ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}>At least 1 number</span>
+                            </p>
+                            <p className="flex items-center gap-2">
+                                {hasSymbol ? <Check className="w-3.5 h-3.5 text-green-500" /> : <X className="w-3.5 h-3.5 text-gray-400" />} 
+                                <span className={hasSymbol ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}>At least 1 special character (!@#$)</span>
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
+                    <input
+                        type="password"
+                        required
+                        value={form.confirmPassword}
+                        onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                        className={`w-full bg-white dark:bg-gray-800 border ${form.confirmPassword && !passwordsMatch ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 dark:border-gray-700 focus:ring-blue-100'} text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 outline-none transition-all font-medium`}
+                        placeholder="••••••••"
+                    />
+                    {form.confirmPassword && !passwordsMatch && (
+                        <p className="text-red-500 text-xs font-bold mt-2">Passwords do not match.</p>
+                    )}
                 </div>
 
                 <button
                     type="submit"
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+                    disabled={loading || !isPasswordStrong || !passwordsMatch}
+                    className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
                 >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign Up"}
                 </button>

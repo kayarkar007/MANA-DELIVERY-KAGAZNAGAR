@@ -25,4 +25,9 @@ const ProductSchema: Schema = new Schema(
     { timestamps: true }
 );
 
+// Indexes for performance optimization
+ProductSchema.index({ name: "text", categorySlug: 1 });
+ProductSchema.index({ inStock: 1 });
+ProductSchema.index({ price: 1 });
+
 export default mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);

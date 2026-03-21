@@ -1,0 +1,170 @@
+﻿
+> hyperlocal-app@0.1.0 build
+> next build
+
+node.exe : ΓÜá Warning: Next.js inferred 
+your workspace root, but it may not be 
+correct.
+At C:\Program Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecifie 
+   d: (ΓÜá Warning: Ne...not be correct.  
+  :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeComma 
+   ndError
+ 
+ We detected multiple lockfiles and 
+selected the directory of C:\Users\PAVAN 
+KALYAN\package-lock.json as the root 
+directory.
+ To silence this warning, set 
+`turbopack.root` in your Next.js config, 
+or consider removing one of the lockfiles 
+if it's not needed.
+   See https://nextjs.org/docs/app/api-ref
+erence/config/next-config-js/turbopack#roo
+t-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\PAVAN 
+KALYAN\OneDrive\Desktop\LOCALU DELIVERY 
+APP\package-lock.json
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ┬╖ optimizePackageImports
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 2 
+errors:
+./OneDrive/Desktop/LOCALU DELIVERY 
+APP/src/app/page.tsx:9:19
+Ecmascript file had an error
+[0m [90m  7 |[39m [36mimport[39m 
+dynamic [36mfrom[39m 
+[32m"next/dynamic"[39m[33m;[39m
+ [90m  8 |[39m
+[31m[1m>[22m[39m[90m  9 |[39m 
+[36mconst[39m [33mSearchBar[39m 
+[33m=[39m dynamic(() [33m=>[39m [36mi
+mport[39m([32m"@/components/SearchBar"[
+39m)[33m,[39m { ssr[33m:[39m 
+[36mfalse[39m })[33m;[39m
+ [90m    |[39m                   [31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 10 |[39m [36mconst[39m 
+[33mRoleBanner[39m [33m=[39m 
+dynamic(() [33m=>[39m [36mimport[39m(
+[32m"@/components/RoleBanner"[39m)[33m,
+[39m { ssr[33m:[39m [36mfalse[39m 
+})[33m;[39m
+ [90m 11 |[39m
+ [90m 12 |[39m [90m// Revalidate the 
+page every 10 seconds or force 
+dynamic[39m[0m
+
+`ssr: false` is not allowed with 
+`next/dynamic` in Server Components. 
+Please move it into a Client Component.
+
+
+./OneDrive/Desktop/LOCALU DELIVERY 
+APP/src/app/page.tsx:10:20
+Ecmascript file had an error
+[0m [90m  8 |[39m
+ [90m  9 |[39m [36mconst[39m 
+[33mSearchBar[39m [33m=[39m 
+dynamic(() [33m=>[39m [36mimport[39m(
+[32m"@/components/SearchBar"[39m)[33m,[
+39m { ssr[33m:[39m [36mfalse[39m 
+})[33m;[39m
+[31m[1m>[22m[39m[90m 10 |[39m 
+[36mconst[39m [33mRoleBanner[39m 
+[33m=[39m dynamic(() [33m=>[39m [36mi
+mport[39m([32m"@/components/RoleBanner"
+[39m)[33m,[39m { ssr[33m:[39m 
+[36mfalse[39m })[33m;[39m
+ [90m    |[39m                    [31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m
+ [90m 11 |[39m
+ [90m 12 |[39m [90m// Revalidate the 
+page every 10 seconds or force 
+dynamic[39m
+ [90m 13 |[39m [36mexport[39m 
+[36mconst[39m revalidate [33m=[39m 
+[35m0[39m[33m;[39m[0m
+
+`ssr: false` is not allowed with 
+`next/dynamic` in Server Components. 
+Please move it into a Client Component.
+
+
+    at <unknown> 
+(./OneDrive/Desktop/LOCALU DELIVERY 
+APP/src/app/page.tsx:9:19)
+    at <unknown> 
+(./OneDrive/Desktop/LOCALU DELIVERY 
+APP/src/app/page.tsx:10:20)

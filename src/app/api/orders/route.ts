@@ -95,6 +95,10 @@ Address: ${address}
 Google Maps: https://www.google.com/maps?q=${latitude},${longitude}`;
         }
 
+        // Generate a 4-digit secure delivery PIN (0-cost verification)
+        const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
+        const deliveryOtp = generateOTP();
+
         const order = await Order.create({
             type,
             userId: body.userId,
@@ -119,6 +123,7 @@ Google Maps: https://www.google.com/maps?q=${latitude},${longitude}`;
             latitude,
             longitude,
             deliveryStatus: "pending",
+            deliveryOtp,
         });
 
         const finalWhatsappText = whatsappText +

@@ -138,8 +138,30 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
 
     useEffect(() => {
         fetchOrder();
-        const interval = setInterval(fetchOrder, 10000); // Polling every 10 seconds
-        return () => clearInterval(interval);
+
+        // 100% Free Live Tracking using Server-Sent Events (SSE)
+        const eventSource = new EventSource(`/api/orders/${orderId}/track`);
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                setOrder((prev: any) => {
+                    const nextOrder = { ...prev, ...data };
+                    calculateETA(nextOrder);
+                    return nextOrder;
+                });
+            } catch (err) {
+                console.error("SSE Parsing Error:", err);
+            }
+        };
+
+        eventSource.onerror = () => {
+             // Silently reconnect typical for SSE
+        };
+
+        return () => {
+            eventSource.close();
+        };
     }, [orderId]);
 
     const calculateETA = (orderData: any) => {
