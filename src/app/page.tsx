@@ -41,9 +41,10 @@ export default async function Home() {
       >
         <div className="absolute inset-0 z-0 scale-105 animate-float opacity-40">
           <Image
-            src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=2000"
+            src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=60&w=1200"
             alt="Hero Background"
             fill
+            quality={60}
             sizes="(max-width: 768px) 100vw, 100vw"
             className="object-cover mix-blend-soft-light"
             priority
@@ -124,6 +125,7 @@ export default async function Home() {
                         src={category.image}
                         alt={category.name}
                         fill
+                        quality={50}
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                         className="object-cover transition-transform duration-1000 group-hover:scale-115"
                       />
