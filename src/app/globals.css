@@ -3,8 +3,8 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
-  --primary: #2563eb;
-  --primary-glow: rgba(37, 99, 235, 0.15);
+  --primary: #dc2626;
+  --primary-glow: rgba(220, 38, 38, 0.15);
   --card-bg: rgba(255, 255, 255, 0.8);
   --glass-border: rgba(255, 255, 255, 0.2);
 }
@@ -12,8 +12,8 @@
 .dark {
   --background: #020617;
   --foreground: #f8fafc;
-  --primary: #3b82f6;
-  --primary-glow: rgba(59, 130, 246, 0.2);
+  --primary: #ef4444;
+  --primary-glow: rgba(239, 68, 68, 0.2);
   --card-bg: rgba(15, 23, 42, 0.8);
   --glass-border: rgba(255, 255, 255, 0.1);
 }
@@ -48,7 +48,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #be123c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
