@@ -99,7 +99,17 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
     useEffect(() => {
         if (!order) return;
 
+        const playNotificationSound = () => {
+            try {
+                const audio = new Audio('/notification.mp3');
+                audio.play().catch(() => {});
+            } catch (e) {}
+        };
+
+        let statusChanged = false;
+
         if (prevStatusRef.current && prevStatusRef.current !== order.status) {
+            statusChanged = true;
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("Order Update", {
                     body: `Your order is now ${order.status.replace('_', ' ')}!`,
@@ -109,12 +119,17 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
         }
 
         if (prevDeliveryStatusRef.current && prevDeliveryStatusRef.current !== order.deliveryStatus) {
+            statusChanged = true;
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("Delivery Update", {
                     body: `Delivery status updated to ${order.deliveryStatus.replace('_', ' ')}!`,
                     icon: "/logo.png"
                 });
             }
+        }
+
+        if (statusChanged) {
+            playNotificationSound();
         }
 
         prevStatusRef.current = order.status;
