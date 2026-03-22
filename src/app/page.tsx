@@ -85,7 +85,7 @@ export default async function Home() {
             <p className="text-slate-500 dark:text-slate-400 font-medium mt-2 text-base sm:text-lg">Fresh essentials and expert services, just for you.</p>
           </div>
           <motion.a
-            href="/search"
+            href="#categories"
             whileHover={{ x: 5 }}
             className="group flex items-center gap-2 text-red-600 font-black text-sm sm:text-base uppercase tracking-wider"
           >

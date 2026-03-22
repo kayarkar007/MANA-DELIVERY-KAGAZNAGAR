@@ -28,7 +28,13 @@ export async function POST(req: Request) {
         user.resetTokenExpiry = resetTokenExpiry;
         await user.save();
 
-        const resetLink = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+        // In Vercel, use VERCEL_PROJECT_PRODUCTION_URL or VERCEL_URL if NEXTAUTH_URL is empty
+        const baseUrl = process.env.NEXTAUTH_URL || 
+                       (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 
+                       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
+        
+        const resetLink = `${baseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
 
         const html = `
             <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">

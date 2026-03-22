@@ -9,6 +9,12 @@ if (process.env.NODE_ENV === "production" && !nextAuthSecret) {
     throw new Error("NEXTAUTH_SECRET is required in production");
 }
 
+// In production on Vercel, NEXTAUTH_URL is often omitted in favor of VERCEL_URL
+const isVercel = process.env.VERCEL === "1";
+if (!process.env.NEXTAUTH_URL && !isVercel && process.env.NODE_ENV === "production") {
+    console.warn("⚠️ NEXTAUTH_URL is not set. This may cause issues with authentication redirects.");
+}
+
 export const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({

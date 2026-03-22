@@ -94,7 +94,7 @@ const categories = [
     name: "Rotis & Breads",
     slug: "rotis-breads",
     type: "product",
-    image: "https://images.unsplash.com/photo-1600628421060-909b0b84a6a1?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80",
   },
   {
     name: "Starters",
@@ -591,7 +591,7 @@ const products = [
     price: 25,
     unit: "1 piece",
     categorySlug: "rotis-breads",
-    image: "https://images.unsplash.com/photo-1600628421060-909b0b84a6a1?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80",
   },
   {
     name: "Romal Roti",
@@ -599,7 +599,7 @@ const products = [
     price: 25,
     unit: "1 piece",
     categorySlug: "rotis-breads",
-    image: "https://images.unsplash.com/photo-1600628421060-909b0b84a6a1?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80",
   },
   {
     name: "Butter Nan",
@@ -607,7 +607,7 @@ const products = [
     price: 45,
     unit: "1 piece",
     categorySlug: "rotis-breads",
-    image: "https://images.unsplash.com/photo-1600628421060-909b0b84a6a1?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80",
   },
   {
     name: "Garlic Nan",
@@ -615,7 +615,7 @@ const products = [
     price: 75,
     unit: "1 piece",
     categorySlug: "rotis-breads",
-    image: "https://images.unsplash.com/photo-1600628421060-909b0b84a6a1?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80",
   },
   {
     name: "Special Malabar Paratha",
