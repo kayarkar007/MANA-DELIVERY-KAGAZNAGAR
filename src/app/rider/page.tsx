@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Package, MapPin, Truck, CheckCircle, Navigation, Loader2, PowerOff, Power, Bell, XCircle, RotateCcw, ShieldAlert, WifiOff, Activity, LogOut } from "lucide-react";
+import { Package, MapPin, Truck, CheckCircle, Navigation, Loader2, PowerOff, Power, XCircle, RotateCcw, WifiOff, Activity, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function RiderDashboard() {
     const { data: session, status } = useSession();
@@ -23,17 +24,13 @@ export default function RiderDashboard() {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-
         oscillator.type = "sine";
         oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.5);
-
         gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.5);
     };
@@ -50,6 +47,13 @@ export default function RiderDashboard() {
         };
     }, []);
 
+    // Redirect if not authenticated after session loads
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.replace("/login");
+        }
+    }, [status, router]);
+
     const fetchOrders = async (silent = false) => {
         if (refreshing) return;
         if (!silent) setLoading(true);
@@ -60,10 +64,7 @@ export default function RiderDashboard() {
             const data = await res.json();
             if (data.success && data.data) {
                 const currentOrderIds = new Set<string>(data.data.map((o: any) => o._id as string));
-                
-                // Only notify if there's an ID we didn't see before
                 const newOrders = data.data.filter((o: any) => !lastOrderIds.has(o._id));
-                
                 if (newOrders.length > 0 && lastOrderIds.size > 0) {
                     playNotificationSound();
                     toast.info(`New order assigned!`, {
@@ -71,7 +72,6 @@ export default function RiderDashboard() {
                         duration: 10000,
                     });
                 }
-                
                 setOrders(data.data);
                 setStatsData(data.stats);
                 setLastOrderIds(currentOrderIds);
@@ -88,7 +88,7 @@ export default function RiderDashboard() {
     useEffect(() => {
         if (session?.user.role === "rider") {
             fetchOrders();
-            const interval = setInterval(() => fetchOrders(true), 20000); 
+            const interval = setInterval(() => fetchOrders(true), 20000);
             return () => clearInterval(interval);
         }
     }, [session, lastOrderIds]);
@@ -98,7 +98,6 @@ export default function RiderDashboard() {
             toast.error("Geolocation is not supported by your browser");
             return;
         }
-
         const id = navigator.geolocation.watchPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
@@ -113,10 +112,8 @@ export default function RiderDashboard() {
                 }
             },
             (error) => {
-                console.error("Geolocation error:", { code: error.code, message: error.message });
                 let msg = "Failed to get location.";
                 let isHardError = false;
-
                 if (error.code === error.PERMISSION_DENIED) {
                     msg = "Location permission denied. Please enable GPS and allow site access.";
                     isHardError = true;
@@ -125,9 +122,7 @@ export default function RiderDashboard() {
                 } else if (error.code === error.TIMEOUT) {
                     msg = "Location request timed out. Trying to reconnect...";
                 }
-                
                 toast.error(msg, { id: "geo-error" });
-                
                 if (isHardError) {
                     setIsSharingLocation(false);
                     if (watchId !== null) {
@@ -138,7 +133,6 @@ export default function RiderDashboard() {
             },
             { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
         );
-
         setWatchId(id);
         setIsSharingLocation(true);
         toast.success("Location sharing started");
@@ -172,7 +166,21 @@ export default function RiderDashboard() {
         }
     };
 
-    if (status === "loading" || (loading && orders.length === 0)) {
+    // Full-page loading while session is being fetched (works on mobile too)
+    if (status === "loading") {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950 gap-4">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-red-100 dark:border-red-900/30">
+                    <Image src="/logo2.png" alt="Mana Delivery" width={56} height={56} className="object-contain" />
+                </div>
+                <Loader2 className="w-7 h-7 animate-spin text-red-600" />
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Loading Rider Panel...</p>
+            </div>
+        );
+    }
+
+    // Orders skeleton while data loads (after auth confirmed)
+    if (loading && orders.length === 0) {
         return (
             <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
                 <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-3xl animate-pulse" />
@@ -191,11 +199,14 @@ export default function RiderDashboard() {
         <div className="min-h-screen">
             {/* Rider Header */}
             <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-red-600 rounded-xl flex items-center justify-center">
-                        <Navigation className="w-4 h-4 text-white" />
+                <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-xl overflow-hidden flex-shrink-0">
+                        <Image src="/logo2.png" alt="Mana Delivery" width={28} height={28} className="object-contain" />
                     </div>
-                    <span className="font-black text-gray-900 dark:text-white text-lg">Rider Panel</span>
+                    <div>
+                        <span className="font-black text-gray-900 dark:text-white text-base leading-none">Mana Delivery</span>
+                        <span className="block text-[10px] font-bold text-red-500 uppercase tracking-widest leading-none">Rider Panel</span>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {isOnline ? (
@@ -270,7 +281,7 @@ export default function RiderDashboard() {
                 </div>
                 <div className="bg-gradient-to-br from-indigo-500 to-red-600 p-5 rounded-3xl shadow-lg shadow-red-500/20 flex flex-col justify-between text-white overflow-hidden relative group">
                     <div className="absolute top-0 right-0 bg-white/10 w-24 h-24 rounded-full -translate-y-12 translate-x-12 group-hover:scale-125 transition-transform duration-700" />
-                    <p className="text-[10px] font-black text-red-100 uppercase tracking-widest mb-2 relative z-10">Total Extracted</p>
+                    <p className="text-[10px] font-black text-red-100 uppercase tracking-widest mb-2 relative z-10">Total Earned</p>
                     <p className="text-4xl font-black tracking-tighter relative z-10"><span className="text-xl mr-1 font-sans text-red-200">₹</span>{statsData.totalEarnings}</p>
                 </div>
             </div>

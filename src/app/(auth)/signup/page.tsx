@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ArrowLeft, Check, X } from "lucide-react";
+import Image from "next/image";
+import { Loader2, ArrowLeft, Check, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { signIn } from "next-auth/react";
 
 export default function SignupPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [form, setForm] = useState({ name: "", email: "", whatsapp: "", password: "", confirmPassword: "" });
 
     // Strong Password Checker
@@ -70,9 +72,18 @@ export default function SignupPage() {
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
 
-            <div className="text-center mb-6 sm:mb-8 md:mb-10 mt-4 sm:mt-6">
+            {/* Logo + Brand */}
+            <div className="text-center mb-5 sm:mb-7 mt-4 sm:mt-6">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl overflow-hidden flex items-center justify-center bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-900/30">
+                        <Image src="/logo2.png" alt="Mana Delivery" width={48} height={48} className="object-contain" />
+                    </div>
+                    <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                        Mana Delivery
+                    </span>
+                </div>
                 <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Create Account</h2>
-                <p className="text-gray-500 dark:text-gray-400 font-medium mt-1 sm:mt-2 text-sm sm:text-base">Join LocalU Delivery today</p>
+                <p className="text-gray-500 dark:text-gray-400 font-medium mt-1 sm:mt-2 text-sm sm:text-base">Join Mana Delivery today</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -114,14 +125,24 @@ export default function SignupPage() {
 
                 <div>
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Secure Password</label>
-                    <input
-                        type="password"
-                        required
-                        value={form.password}
-                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                        className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-medium"
-                        placeholder="••••••••"
-                    />
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            required
+                            value={form.password}
+                            onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 pr-12 rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-medium"
+                            placeholder="••••••••"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                            tabIndex={-1}
+                        >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                    </div>
                     {form.password && (
                         <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-1.5 text-xs font-semibold">
                             <p className="flex items-center gap-2">
@@ -146,14 +167,24 @@ export default function SignupPage() {
 
                 <div>
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
-                    <input
-                        type="password"
-                        required
-                        value={form.confirmPassword}
-                        onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                        className={`w-full bg-white dark:bg-gray-800 border ${form.confirmPassword && !passwordsMatch ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 dark:border-gray-700 focus:ring-red-100'} text-gray-900 dark:text-white p-4 rounded-xl focus:ring-4 outline-none transition-all font-medium`}
-                        placeholder="••••••••"
-                    />
+                    <div className="relative">
+                        <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            required
+                            value={form.confirmPassword}
+                            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                            className={`w-full bg-white dark:bg-gray-800 border ${form.confirmPassword && !passwordsMatch ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 dark:border-gray-700 focus:ring-red-100'} text-gray-900 dark:text-white p-4 pr-12 rounded-xl focus:ring-4 outline-none transition-all font-medium`}
+                            placeholder="••••••••"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                            tabIndex={-1}
+                        >
+                            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                    </div>
                     {form.confirmPassword && !passwordsMatch && (
                         <p className="text-red-500 text-xs font-bold mt-2">Passwords do not match.</p>
                     )}

@@ -1,28 +1,52 @@
 import nodemailer from "nodemailer";
 
-export const sendEmail = async (to: string, subject: string, html: string) => {
+/**
+ * Sends an email using Gmail SMTP.
+ * Requires EMAIL_USER (your gmail) and EMAIL_PASS (Gmail App Password) in .env.local
+ *
+ * How to get Gmail App Password:
+ * 1. Go to myaccount.google.com/security
+ * 2. Enable 2-Step Verification
+ * 3. Go to App Passwords → Select "Mail" → Generate
+ * 4. Copy the 16-character password into EMAIL_PASS in .env.local
+ */
+export const sendEmail = async (to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> => {
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+
+    if (!emailUser || !emailPass || emailPass === "xxxx xxxx xxxx xxxx") {
+        console.error("❌ MAILER ERROR: EMAIL_USER or EMAIL_PASS not configured in .env.local");
+        return { success: false, error: "Email service not configured. Contact admin." };
+    }
+
     try {
-        // You will need to add these to your .env file
         const transporter = nodemailer.createTransport({
-            service: "gmail",
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false, // STARTTLS
             auth: {
-                user: process.env.EMAIL_USER || "localu.delivery@gmail.com",
-                pass: process.env.EMAIL_PASS || "your-app-password",
+                user: emailUser,
+                pass: emailPass,
+            },
+            tls: {
+                rejectUnauthorized: false,
             },
         });
 
-        const mailOptions = {
-            from: process.env.EMAIL_USER || "localu.delivery@gmail.com",
+        // Verify connection before sending
+        await transporter.verify();
+
+        const info = await transporter.sendMail({
+            from: `"Mana Delivery" <${emailUser}>`,
             to,
             subject,
             html,
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log("Email sent: " + info.response);
-        return true;
-    } catch (error) {
-        console.error("Error sending email:", error);
-        return false;
+        console.log("✅ Email sent successfully:", info.messageId);
+        return { success: true };
+    } catch (error: any) {
+        console.error("❌ Email send failed:", error.message);
+        return { success: false, error: error.message };
     }
 };

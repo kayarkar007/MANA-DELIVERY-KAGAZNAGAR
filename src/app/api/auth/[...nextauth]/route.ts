@@ -39,6 +39,11 @@ export const authOptions: AuthOptions = {
                     throw new Error("Incorrect Password");
                 }
 
+                // Block unverified accounts
+                if (!user.isVerified) {
+                    throw new Error("Please verify your email before logging in. Check your inbox for the OTP.");
+                }
+
                 return {
                     id: user._id.toString(),
                     name: user.name,
