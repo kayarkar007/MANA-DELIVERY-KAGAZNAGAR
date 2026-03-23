@@ -9,17 +9,18 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
-  title: "Mana Delivery - Hyperlocal",
-  description: "Get everything delivered with Mana Delivery.",
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://manadelivery.vercel.app"),
+  title: "Mana Delivery - #1 Delivery App in Kagaznagar",
+  description: "Order food, groceries & more online in Kagaznagar. Superfast local delivery right to your door with the Mana Delivery app. Vocal for Local!",
+  keywords: ["Mana Delivery", "Kagaznagar Food Delivery", "Grocery Delivery Kagaznagar", "Localu Delivery App", "Online shopping Kagaznagar"],
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo2.png",
-    apple: "/logo2.png",
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
   },
   openGraph: {
-    title: "Mana Delivery",
-    description: "Get everything delivered to your door.",
+    title: "Mana Delivery - Fastest Delivery in Kagaznagar",
+    description: "Order food, groceries, and services online in Kagaznagar. We deliver happiness instantly!",
     siteName: "Mana Delivery",
     images: [
       {
@@ -39,6 +40,9 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
+  },
+  verification: {
+    google: "IoKUEh7XbSc43fQ_WHPFGJVPbJ4GMjIk1TddDzo511w",
   },
 };
 
