@@ -1,11 +1,9 @@
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
-export default async function AdminLayout({ children }: {
-    children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "admin") {
@@ -13,14 +11,14 @@ export default async function AdminLayout({ children }: {
     }
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden font-sans selection:bg-red-200 dark:selection:bg-red-900">
+        <div className="flex h-screen overflow-hidden">
+            <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[24rem] bg-[radial-gradient(circle_at_top,rgba(198,40,40,0.2),transparent_42%)]" />
             <AdminSidebar />
-
-            {/* Main Content — pt-14 offsets mobile top bar, pb-20 offsets mobile bottom nav */}
-            <main className="flex-1 overflow-y-auto pt-14 lg:pt-0 pb-20 lg:pb-0 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12 relative">
-                <div className="max-w-6xl mx-auto w-full">{children}</div>
+            <main className="relative flex-1 overflow-y-auto pb-20 pt-14 lg:pb-0 lg:pt-0">
+                <div className="mx-auto w-full max-w-7xl p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10">
+                    {children}
+                </div>
             </main>
         </div>
     );
 }
-

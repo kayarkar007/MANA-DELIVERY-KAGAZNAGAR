@@ -6,21 +6,6 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Loader2, Package } from "lucide-react";
 
-// Fix leaflet default markers
-const iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
-const iconRetinaUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
-const shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
-
-const defaultIcon = L.icon({
-    iconUrl,
-    iconRetinaUrl,
-    shadowUrl,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
 // Custom icons based on status
 const createStatusIcon = (color: string) => L.divIcon({
     className: "custom-div-icon",
@@ -53,9 +38,20 @@ export default function LiveTrackingMap() {
 
     useEffect(() => {
         fetchOrders();
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchOrders, 30000);
-        return () => clearInterval(interval);
+
+        const tick = () => {
+            if (document.visibilityState === "visible") {
+                fetchOrders();
+            }
+        };
+
+        const interval = setInterval(tick, 30000);
+        document.addEventListener("visibilitychange", tick);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener("visibilitychange", tick);
+        };
     }, []);
 
     if (loading) return <div className="h-[600px] flex items-center justify-center bg-gray-50 rounded-3xl border border-gray-200"><Loader2 className="w-8 h-8 animate-spin text-red-600" /></div>;

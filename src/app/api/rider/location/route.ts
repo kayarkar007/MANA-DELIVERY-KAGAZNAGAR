@@ -30,6 +30,7 @@ export async function GET() {
             success: true,
             data: {
                 isOnDuty: Boolean(rider?.isOnDuty),
+                dutyStatus: rider?.dutyStatus || "offline",
                 currentLocation: rider?.currentLocation || null,
             },
         });
@@ -61,6 +62,7 @@ export async function POST(req: Request) {
                 updatedAt: new Date(),
             },
             isOnDuty: true,
+            dutyStatus: "on_duty",
         });
 
         await Order.updateMany(
@@ -92,6 +94,9 @@ export async function DELETE() {
 
         await User.findByIdAndUpdate(session.user.id, {
             isOnDuty: false,
+            dutyStatus: "offline",
+            currentBreakStartedAt: undefined,
+            currentShiftStartedAt: undefined,
         });
 
         return NextResponse.json({ success: true });

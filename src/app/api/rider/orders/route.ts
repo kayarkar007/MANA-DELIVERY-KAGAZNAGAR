@@ -4,7 +4,10 @@ import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import { hydrateOrderItemImages } from "@/lib/orderData";
 import { getMappedOrderStatus } from "@/lib/orderPresentation";
+import { createNotification, notifyAdmins } from "@/lib/notifications";
+import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import Order from "@/models/Order";
+import RiderShift from "@/models/RiderShift";
 
 const allowedTransitions: Record<string, string[]> = {
     assigned: ["accepted", "declined"],
@@ -102,12 +105,54 @@ export async function PATCH(req: Request) {
 
         order.deliveryStatus = deliveryStatus;
         order.status = getMappedOrderStatus(deliveryStatus, order.status) as any;
+        order.statusHistory = [
+            ...(order.statusHistory || []),
+            buildOrderHistoryEntry({
+                status: order.status,
+                deliveryStatus,
+                label: `Rider marked ${deliveryStatus.replace(/_/g, " ")}`,
+                actorRole: "rider",
+                actorId: session.user.id,
+            }),
+        ];
 
         if (estimatedDeliveryTime) {
             order.estimatedDeliveryTime = new Date(estimatedDeliveryTime);
         }
 
         await order.save();
+
+        if (deliveryStatus === "delivered") {
+            await RiderShift.findOneAndUpdate(
+                { riderId: session.user.id, status: { $in: ["active", "on_break"] } },
+                {
+                    $inc: {
+                        completedOrders: 1,
+                        earnings: Number(order.deliveryFee || 0) + Number(order.tipAmount || 0),
+                    },
+                }
+            );
+        }
+
+        if (order.userId) {
+            await createNotification({
+                recipientId: order.userId,
+                recipientRole: "user",
+                title: "Delivery Update",
+                message: `Order #${order._id.toString().slice(-6).toUpperCase()} is now ${deliveryStatus.replace(/_/g, " ")}`,
+                type: "order",
+                href: `/track/${order._id}`,
+                metadata: { orderId: order._id.toString() },
+            });
+        }
+
+        await notifyAdmins({
+            title: "Rider Status Update",
+            message: `Order #${order._id.toString().slice(-6).toUpperCase()} is now ${deliveryStatus.replace(/_/g, " ")}`,
+            type: "order",
+            href: "/admin/orders",
+            metadata: { orderId: order._id.toString() },
+        });
 
         const hydratedOrder = await hydrateOrderItemImages(order);
         return NextResponse.json({ success: true, data: hydratedOrder });

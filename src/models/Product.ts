@@ -7,6 +7,8 @@ export interface IProduct extends Document {
     unit: string;
     categorySlug: string;
     inStock: boolean;
+    stockQuantity?: number;
+    lowStockThreshold?: number;
     image?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -20,6 +22,8 @@ const ProductSchema: Schema = new Schema(
         unit: { type: String, required: true },
         categorySlug: { type: String, required: true },
         inStock: { type: Boolean, default: true },
+        stockQuantity: { type: Number, default: 10, min: 0 },
+        lowStockThreshold: { type: Number, default: 5, min: 0 },
         image: { type: String, required: false },
     },
     { timestamps: true }

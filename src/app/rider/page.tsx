@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     Activity,
     CheckCircle,
+    Coffee,
     Loader2,
     LogOut,
     MapPin,
@@ -14,6 +15,7 @@ import {
     PowerOff,
     RotateCcw,
     Truck,
+    Wallet,
     WifiOff,
     XCircle,
 } from "lucide-react";
@@ -44,6 +46,18 @@ export default function RiderDashboard() {
         totalEarnings: 0,
         totalCompleted: 0,
     });
+    const [shiftInfo, setShiftInfo] = useState<{
+        activeShift: any;
+        shifts: any[];
+        payouts: any[];
+        rider: any;
+    }>({
+        activeShift: null,
+        shifts: [],
+        payouts: [],
+        rider: null,
+    });
+    const [shiftLoading, setShiftLoading] = useState(false);
 
     const watchIdRef = useRef<number | null>(null);
     const lastOrderIdsRef = useRef<Set<string>>(new Set());
@@ -100,6 +114,48 @@ export default function RiderDashboard() {
         }
     };
 
+    const fetchShiftInfo = async () => {
+        try {
+            const res = await fetch("/api/rider/shift");
+            const data = await res.json();
+            if (data.success) {
+                setShiftInfo(data.data);
+            }
+        } catch (error) {
+            console.error("Error fetching shift info:", error);
+        }
+    };
+
+    const handleShiftAction = async (action: "start" | "break_start" | "break_end" | "end") => {
+        setShiftLoading(true);
+        try {
+            const res = await fetch("/api/rider/shift", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.error || "Failed to update shift");
+            }
+
+            await fetchShiftInfo();
+            if (action === "start") {
+                toast.success("Shift started");
+            } else if (action === "end") {
+                toast.success("Shift ended");
+            } else if (action === "break_start") {
+                toast.success("Break started");
+            } else {
+                toast.success("Back on duty");
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update shift");
+        } finally {
+            setShiftLoading(false);
+        }
+    };
+
     const stopLocationSharing = async (silent = false) => {
         if (watchIdRef.current !== null) {
             navigator.geolocation.clearWatch(watchIdRef.current);
@@ -114,6 +170,12 @@ export default function RiderDashboard() {
         } catch {
             // Best-effort only.
         }
+
+        fetch("/api/rider/shift", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "end" }),
+        }).then(() => fetchShiftInfo()).catch(() => {});
 
         if (!silent) {
             toast.info("Location sharing stopped");
@@ -178,6 +240,12 @@ export default function RiderDashboard() {
         if (!silent) {
             toast.success("Duty started. Location sharing is active.");
         }
+
+        fetch("/api/rider/shift", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "start" }),
+        }).then(() => fetchShiftInfo()).catch(() => {});
     };
 
     const updateOrderStatus = async (orderId: string, deliveryStatus: string, deliveryOtp?: string) => {
@@ -234,6 +302,7 @@ export default function RiderDashboard() {
             try {
                 const res = await fetch("/api/rider/location");
                 const data = await res.json();
+                await fetchShiftInfo();
                 const shouldResume =
                     localStorage.getItem(DUTY_STORAGE_KEY) === "true" || Boolean(data?.data?.isOnDuty);
 
@@ -252,10 +321,18 @@ export default function RiderDashboard() {
         bootstrapDutyState();
         fetchOrders();
 
-        const interval = setInterval(() => fetchOrders(true), 20000);
+        const tick = () => {
+            if (document.visibilityState === "visible") {
+                fetchOrders(true);
+            }
+        };
+
+        const interval = setInterval(tick, 25000);
+        document.addEventListener("visibilitychange", tick);
         return () => {
             isMounted = false;
             clearInterval(interval);
+            document.removeEventListener("visibilitychange", tick);
 
             if (watchIdRef.current !== null) {
                 navigator.geolocation.clearWatch(watchIdRef.current);
@@ -377,6 +454,97 @@ export default function RiderDashboard() {
                             <><Power className="w-6 h-6" /> Start Duty</>
                         )}
                     </button>
+                </div>
+
+                <div className="bg-white dark:bg-gray-900 p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm mb-8 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Shift Control</p>
+                            <p className="text-lg font-black text-gray-900 dark:text-white">
+                                {shiftInfo.activeShift
+                                    ? shiftInfo.activeShift.status === "on_break"
+                                        ? "On Break"
+                                        : "Shift Active"
+                                    : "No Active Shift"}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Total break today: {shiftInfo.activeShift?.breakMinutes || shiftInfo.rider?.totalBreakMinutes || 0} mins
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            {shiftInfo.activeShift ? (
+                                <>
+                                    {shiftInfo.activeShift.status === "on_break" ? (
+                                        <button
+                                            onClick={() => handleShiftAction("break_end")}
+                                            disabled={shiftLoading}
+                                            className="px-4 py-3 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 font-black text-sm disabled:opacity-50"
+                                        >
+                                            Resume Shift
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleShiftAction("break_start")}
+                                            disabled={shiftLoading || !isSharingLocation}
+                                            className="px-4 py-3 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 font-black text-sm disabled:opacity-50 inline-flex items-center gap-2"
+                                        >
+                                            <Coffee className="w-4 h-4" /> Start Break
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => handleShiftAction("start")}
+                                    disabled={shiftLoading || !isSharingLocation}
+                                    className="px-4 py-3 rounded-2xl bg-red-50 text-red-600 border border-red-100 font-black text-sm disabled:opacity-50"
+                                >
+                                    Start Shift
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handleShiftAction("end")}
+                                disabled={shiftLoading || !shiftInfo.activeShift}
+                                className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-black text-sm disabled:opacity-50"
+                            >
+                                End Shift
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Recent Shifts</p>
+                            {shiftInfo.shifts?.length ? (
+                                shiftInfo.shifts.slice(0, 3).map((shift: any) => (
+                                    <div key={shift._id} className="flex items-center justify-between text-sm py-2 border-b last:border-b-0 border-gray-100 dark:border-gray-700">
+                                        <span className="font-bold text-gray-700 dark:text-gray-200">
+                                            {new Date(shift.startedAt).toLocaleDateString()}
+                                        </span>
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            {shift.status} · {shift.breakMinutes || 0}m break
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No shift history yet.</p>
+                            )}
+                        </div>
+                        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Payout History</p>
+                            {shiftInfo.payouts?.length ? (
+                                shiftInfo.payouts.slice(0, 3).map((payout: any) => (
+                                    <div key={payout._id} className="flex items-center justify-between text-sm py-2 border-b last:border-b-0 border-gray-100 dark:border-gray-700">
+                                        <span className="font-bold text-gray-700 dark:text-gray-200 inline-flex items-center gap-2">
+                                            <Wallet className="w-4 h-4 text-emerald-600" /> Rs {Number(payout.amount).toFixed(0)}
+                                        </span>
+                                        <span className="text-gray-500 dark:text-gray-400">{payout.status}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No payouts recorded yet.</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         const session = await getServerSession(authOptions);
 
@@ -15,12 +15,11 @@ export async function GET(req: Request) {
         await connectToDatabase();
 
         const riders = await User.find({ role: "rider" })
-            .select("name email whatsapp isOnDuty currentLocation")
-            .sort({ isOnDuty: -1, name: 1 });
+            .select("name email whatsapp isOnDuty dutyStatus currentLocation currentShiftStartedAt")
+            .sort({ isOnDuty: -1, dutyStatus: 1, name: 1 });
 
         return NextResponse.json({ success: true, data: riders });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
-

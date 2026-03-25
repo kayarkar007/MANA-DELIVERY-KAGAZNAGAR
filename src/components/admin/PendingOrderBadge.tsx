@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function PendingOrderBadge() {
@@ -12,49 +12,58 @@ export default function PendingOrderBadge() {
             try {
                 const res = await fetch("/api/admin/orders/pending-count");
                 const data = await res.json();
-                if (data.success) {
-                    const newCount = data.count;
 
-                    // If count increased, alert the admin
-                    if (newCount > prevCountRef.current && prevCountRef.current !== 0) {
-                        toast('🔔 New Order Received!', {
-                            description: `You have ${newCount} pending orders.`,
-                            action: {
-                                label: 'View Orders',
-                                onClick: () => window.location.href = '/admin/orders',
+                if (!data.success) return;
+
+                const newCount = data.count;
+                if (newCount > prevCountRef.current && prevCountRef.current !== 0) {
+                    toast("New order received", {
+                        description: `You have ${newCount} pending orders.`,
+                        action: {
+                            label: "View orders",
+                            onClick: () => {
+                                window.location.href = "/admin/orders";
                             },
-                            duration: 10000,
-                        });
+                        },
+                        duration: 10000,
+                    });
 
-                        // Play a notification sound
-                        try {
-                            const audio = new Audio('/notification.mp3');
-                            audio.play().catch(() => {});
-                        } catch (e) {
-                            // ignore audio error
-                        }
+                    try {
+                        const audio = new Audio("/notification.mp3");
+                        audio.play().catch(() => {});
+                    } catch {
+                        // Non-blocking.
                     }
-
-                    setCount(newCount);
-                    prevCountRef.current = newCount;
                 }
-            } catch (error) {
+
+                setCount(newCount);
+                prevCountRef.current = newCount;
+            } catch {
                 console.error("Failed to fetch pending orders count");
             }
         };
 
-        // Fetch immediately on mount
         fetchCount();
 
-        // Poll every 10 seconds for faster updates
-        const interval = setInterval(fetchCount, 10000);
-        return () => clearInterval(interval);
+        const tick = () => {
+            if (document.visibilityState === "visible") {
+                fetchCount();
+            }
+        };
+
+        const interval = setInterval(tick, 20000);
+        document.addEventListener("visibilitychange", tick);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener("visibilitychange", tick);
+        };
     }, []);
 
     if (count === 0) return null;
 
     return (
-        <span className="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+        <span className="ml-auto inline-flex min-w-6 items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-black text-white shadow-sm">
             {count}
         </span>
     );

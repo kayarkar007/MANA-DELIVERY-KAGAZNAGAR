@@ -1,42 +1,42 @@
-import { ArrowRight, LayoutDashboard, Navigation, Users } from "lucide-react";
 import Link from "next/link";
+import { ArrowRight, LayoutDashboard, Navigation, Users } from "lucide-react";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
 import User from "@/models/User";
+import { formatCurrency } from "@/lib/utils";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 async function getStats() {
     await connectToDatabase();
-    const productsCount = await Product.countDocuments();
-    const categoriesCount = await Category.countDocuments();
 
-    // Fetch all orders to calculate detailed stats
-    const allOrders = await Order.find({});
-    const ordersCount = allOrders.length;
+    const [productsCount, categoriesCount, usersCount, ordersCount, revenueAgg, statusAgg] = await Promise.all([
+        Product.countDocuments(),
+        Category.countDocuments(),
+        User.countDocuments(),
+        Order.countDocuments(),
+        Order.aggregate([
+            { $match: { status: "delivered" } },
+            { $group: { _id: null, totalRevenue: { $sum: "$total" } } },
+        ]),
+        Order.aggregate([
+            { $match: { status: { $in: ["pending", "processing", "shipped"] } } },
+            { $group: { _id: "$status", count: { $sum: 1 } } },
+        ]),
+    ]);
 
-    // Calculate total revenue (only from delivered orders)
-    const totalRevenue = allOrders
-        .filter(order => order.status === "delivered")
-        .reduce((sum, order) => sum + (order.total || 0), 0);
-
-    // Count by statuses
-    const pendingOrders = allOrders.filter(o => o.status === "pending").length;
-    const processingOrders = allOrders.filter(o => o.status === "processing").length;
-    const shippedOrders = allOrders.filter(o => o.status === "shipped").length;
-
-    const usersCount = await User.countDocuments();
+    const statusCounts = Object.fromEntries(statusAgg.map((entry) => [entry._id, entry.count])) as Record<string, number>;
 
     return {
         ordersCount,
         productsCount,
         categoriesCount,
-        totalRevenue,
-        pendingOrders,
-        processingOrders,
-        shippedOrders,
+        totalRevenue: revenueAgg[0]?.totalRevenue || 0,
+        pendingOrders: statusCounts.pending || 0,
+        processingOrders: statusCounts.processing || 0,
+        shippedOrders: statusCounts.shipped || 0,
         usersCount,
     };
 }
@@ -45,113 +45,94 @@ export default async function AdminDashboard() {
     const stats = await getStats();
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-500">
-            <div className="space-y-2">
-                <h1 className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                    <div className="p-2 sm:p-3 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-2xl">
-                        <LayoutDashboard className="w-6 h-6 sm:w-8 sm:h-8" />
+        <div className="space-y-8 sm:space-y-10">
+            <section className="app-card-strong overflow-hidden px-6 py-7 sm:px-8 sm:py-9">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="space-y-4">
+                        <span className="app-kicker">Operations overview</span>
+                        <h1 className="app-title flex items-center gap-3 text-4xl text-slate-900 dark:text-white sm:text-5xl">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-600 dark:text-red-300">
+                                <LayoutDashboard className="h-6 w-6" />
+                            </span>
+                            Admin Dashboard
+                        </h1>
+                        <p className="app-subtitle max-w-2xl">
+                            Faster at-a-glance operations with cleaner hierarchy, less noise, and stats computed more efficiently on the backend.
+                        </p>
                     </div>
-                    Admin Dashboard
-                </h1>
-                <p className="text-sm sm:text-lg text-gray-500 dark:text-gray-400 font-medium pl-1 sm:pl-2">
-                    Manage your super app seamlessly. Here's what's happening today.
-                </p>
-            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                {/* Revenue Card */}
-                <div className="bg-gradient-to-br from-indigo-900 to-red-900 text-white p-5 sm:p-6 rounded-3xl border border-red-800 shadow-md flex flex-col justify-between col-span-2 relative overflow-hidden">
-                    <div className="relative z-10">
-                        <p className="text-red-200 font-bold uppercase tracking-widest text-xs mb-2">Total Revenue Generated</p>
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black">₹{stats.totalRevenue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</h2>
-                        <p className="text-red-300 text-sm mt-2">From delivered orders only</p>
+                    <div className="rounded-[1.8rem] border border-[rgba(214,160,70,0.14)] bg-[linear-gradient(135deg,#120507,#26090d_45%,#6d1016_80%,#d6a046_118%)] p-6 text-white shadow-[0_24px_60px_rgba(0,0,0,0.36)]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/65">Delivered revenue</p>
+                        <p className="mt-3 font-display text-4xl font-black">{formatCurrency(stats.totalRevenue)}</p>
+                        <p className="mt-2 text-sm text-white/70">Calculated from delivered orders only.</p>
                     </div>
-                    <Link
-                        href="/admin/analytics"
-                        className="relative z-10 mt-6 flex items-center justify-between text-white font-bold hover:text-red-200 transition-colors bg-white/10 px-4 py-3 rounded-xl border border-white/20 hover:bg-white/20 w-fit gap-4 backdrop-blur-sm text-sm"
-                    >
-                        View Analytics <ArrowRight className="w-4 h-4" />
+                </div>
+            </section>
+
+            <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                {[
+                    { label: "Pending orders", value: stats.pendingOrders, href: "/admin/orders", accent: "text-amber-600" },
+                    { label: "Processing", value: stats.processingOrders, href: "/admin/orders", accent: "text-sky-600" },
+                    { label: "Shipped", value: stats.shippedOrders, href: "/admin/orders", accent: "text-emerald-600" },
+                    { label: "Users", value: stats.usersCount, href: "/admin/users", accent: "text-slate-900 dark:text-white" },
+                ].map((card) => (
+                    <Link key={card.label} href={card.href} className="app-stat p-6">
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{card.label}</p>
+                        <p className={`mt-4 text-4xl font-black ${card.accent}`}>{card.value}</p>
+                        <div className="mt-6 inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-red-500">
+                            Open
+                            <ArrowRight className="h-4 w-4" />
+                        </div>
                     </Link>
-                    <div className="absolute right-0 bottom-0 text-white/5 transform translate-x-1/4 translate-y-1/4">
-                        <LayoutDashboard className="w-48 h-48 sm:w-64 sm:h-64" />
+                ))}
+            </section>
+
+            <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+                <div className="app-card rounded-[2rem] p-6 sm:p-8">
+                    <div className="mb-6 flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Store footprint</p>
+                            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Core catalog health</h2>
+                        </div>
+                        <Link href="/admin/categories" className="app-button app-button-secondary rounded-[1.1rem]">
+                            Manage
+                        </Link>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        {[
+                            { label: "Total orders", value: stats.ordersCount },
+                            { label: "Products", value: stats.productsCount },
+                            { label: "Categories", value: stats.categoriesCount },
+                        ].map((item) => (
+                            <div key={item.label} className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5 dark:border-slate-800/90 dark:bg-slate-950/70">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+                                <p className="mt-4 text-3xl font-black text-slate-900 dark:text-white">{item.value}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Pending Orders</p>
-                        <h2 className="text-3xl sm:text-5xl font-black text-orange-500">{stats.pendingOrders}</h2>
-                    </div>
-                    <Link href="/admin/orders" className="mt-4 sm:mt-6 flex items-center justify-between text-red-600 dark:text-red-400 font-bold hover:text-red-800 dark:hover:text-red-300 transition-colors text-sm">
-                        Action Required <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-
-                <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Total Orders</p>
-                        <h2 className="text-3xl sm:text-5xl font-black text-gray-900 dark:text-gray-100">{stats.ordersCount}</h2>
-                    </div>
-                    <Link href="/admin/orders" className="mt-4 sm:mt-6 flex items-center justify-between text-red-600 dark:text-red-400 font-bold hover:text-red-800 dark:hover:text-red-300 transition-colors text-sm">
-                        View All <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-
-                <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Total Categories</p>
-                        <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-100">{stats.categoriesCount}</h2>
-                    </div>
-                    <Link href="/admin/categories" className="mt-4 sm:mt-6 flex items-center justify-between text-red-600 dark:text-red-400 font-bold hover:text-red-800 dark:hover:text-red-300 transition-colors text-sm">
-                        Manage <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-
-                <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between relative overflow-hidden">
-                    <div className="relative z-10">
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Fleet Management</p>
-                        <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-100">Live Map</h2>
-                    </div>
-                    <Link href="/admin/live-tracking" className="relative z-10 mt-4 sm:mt-6 flex items-center justify-between text-red-600 dark:text-red-400 font-bold hover:text-red-800 dark:hover:text-red-300 transition-colors text-sm">
-                        Monitor <ArrowRight className="w-4 h-4" />
-                    </Link>
-                    <div className="absolute right-0 bottom-0 text-red-50 dark:text-red-900/10 transform translate-x-1/4 translate-y-1/4 z-0">
-                        <Navigation className="w-24 h-24 sm:w-32 sm:h-32" />
+                <div className="space-y-5">
+                    <div className="app-card rounded-[2rem] p-6">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Live operations</p>
+                        <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Fleet and support</h2>
+                        <p className="mt-3 text-sm leading-7 text-slate-500 dark:text-slate-400">
+                            Jump directly into live tracking, support tickets, or user management without scanning multiple tabs.
+                        </p>
+                        <div className="mt-6 grid gap-3">
+                            <Link href="/admin/live-tracking" className="app-button app-button-primary justify-between rounded-[1.2rem]">
+                                Fleet tracking
+                                <Navigation className="h-4 w-4" />
+                            </Link>
+                            <Link href="/admin/users" className="app-button app-button-secondary justify-between rounded-[1.2rem]">
+                                User management
+                                <Users className="h-4 w-4" />
+                            </Link>
+                        </div>
                     </div>
                 </div>
-
-                <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Total Products</p>
-                        <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-100">{stats.productsCount}</h2>
-                    </div>
-                    <Link href="/admin/products" className="mt-4 sm:mt-6 flex items-center justify-between text-red-600 dark:text-red-400 font-bold hover:text-red-800 dark:hover:text-red-300 transition-colors text-sm">
-                        Manage <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-
-                <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Promo Codes</p>
-                        <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-100">Coupons</h2>
-                    </div>
-                    <Link href="/admin/promo" className="mt-4 sm:mt-6 flex items-center justify-between text-red-600 dark:text-red-400 font-bold hover:text-red-800 dark:hover:text-red-300 transition-colors text-sm">
-                        Manage <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-
-                <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Registered Users</p>
-                        <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                            <Users className="w-7 h-7 text-red-500" /> {stats.usersCount}
-                        </h2>
-                    </div>
-                    <Link href="/admin/users" className="mt-4 sm:mt-6 flex items-center justify-between text-red-600 dark:text-red-400 font-bold hover:text-red-800 dark:hover:text-red-300 transition-colors text-sm">
-                        Manage <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-            </div>
+            </section>
         </div>
     );
 }

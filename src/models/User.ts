@@ -24,6 +24,15 @@ const UserSchema = new mongoose.Schema(
             updatedAt: { type: Date }
         },
         isOnDuty: { type: Boolean, default: false },
+        dutyStatus: {
+            type: String,
+            enum: ["offline", "on_duty", "on_break"],
+            default: "offline",
+        },
+        currentShiftStartedAt: { type: Date },
+        lastShiftEndedAt: { type: Date },
+        currentBreakStartedAt: { type: Date },
+        totalBreakMinutes: { type: Number, default: 0 },
         walletBalance: { type: Number, default: 0 },
         isVerified: { type: Boolean, default: false },
         verifyOtp: { type: String },

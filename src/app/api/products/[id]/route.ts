@@ -8,7 +8,18 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         const params = await context.params;
         const id = params.id;
         const body = await request.json();
-        const product = await Product.findByIdAndUpdate(id, body, { new: true });
+        const stockQuantity = Math.max(0, Number(body.stockQuantity) || 0);
+        const lowStockThreshold = Math.max(0, Number(body.lowStockThreshold) || 5);
+        const product = await Product.findByIdAndUpdate(
+            id,
+            {
+                ...body,
+                stockQuantity,
+                lowStockThreshold,
+                inStock: stockQuantity > 0,
+            },
+            { new: true }
+        );
         if (!product) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
         return NextResponse.json({ success: true, data: product });
     } catch (error) {
