@@ -1,15 +1,48 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
-import User from "@/models/User";
 import Order from "@/models/Order";
+import User from "@/models/User";
+
+async function getRiderSession() {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== "rider") {
+        return null;
+    }
+
+    return session;
+}
+
+export async function GET() {
+    try {
+        const session = await getRiderSession();
+
+        if (!session) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        await connectToDatabase();
+
+        const rider = await User.findById(session.user.id).select("isOnDuty currentLocation");
+        return NextResponse.json({
+            success: true,
+            data: {
+                isOnDuty: Boolean(rider?.isOnDuty),
+                currentLocation: rider?.currentLocation || null,
+            },
+        });
+    } catch (error: any) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getRiderSession();
 
-        if (!session || session.user.role !== "rider") {
+        if (!session) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
@@ -21,23 +54,22 @@ export async function POST(req: Request) {
 
         await connectToDatabase();
 
-        // Update rider's current location in User model
         await User.findByIdAndUpdate(session.user.id, {
             currentLocation: {
                 latitude,
                 longitude,
-                updatedAt: new Date()
-            }
+                updatedAt: new Date(),
+            },
+            isOnDuty: true,
         });
 
-        // Update rider location in all active orders assigned to this rider
         await Order.updateMany(
-            { riderId: session.user.id, deliveryStatus: { $in: ["assigned", "picked_up", "out_for_delivery"] } },
+            { riderId: session.user.id, deliveryStatus: { $in: ["assigned", "accepted", "picked_up", "out_for_delivery"] } },
             {
                 riderLocation: {
                     latitude,
-                    longitude
-                }
+                    longitude,
+                },
             }
         );
 
@@ -47,3 +79,24 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE() {
+    try {
+        const session = await getRiderSession();
+
+        if (!session) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        await connectToDatabase();
+
+        await User.findByIdAndUpdate(session.user.id, {
+            isOnDuty: false,
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+

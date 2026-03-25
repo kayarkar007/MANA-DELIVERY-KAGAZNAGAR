@@ -182,7 +182,8 @@ export default function CheckoutPage() {
                 productId: item.productId,
                 name: item.name,
                 price: item.price,
-                quantity: item.quantity
+                quantity: item.quantity,
+                image: item.image,
             })),
             subtotal: pricing.subtotal,
             deliveryFee: pricing.deliveryFee,

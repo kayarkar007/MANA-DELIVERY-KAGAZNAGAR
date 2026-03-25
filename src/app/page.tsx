@@ -6,7 +6,7 @@ import Image from "next/image";
 import * as motion from "framer-motion/client";
 import dynamic from "next/dynamic";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 const SearchBar = dynamic(() => import("@/components/SearchBar"));
 const RoleBanner = dynamic(() => import("@/components/RoleBanner"));
@@ -161,3 +161,4 @@ export default async function Home() {
     </div>
   );
 }
+

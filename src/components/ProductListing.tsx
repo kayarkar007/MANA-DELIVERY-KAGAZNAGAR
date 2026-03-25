@@ -239,6 +239,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                                                 name: product.name,
                                                 price: product.price,
                                                 quantity: 1,
+                                                image: product.image,
                                             });
                                             toast.success(`${product.name} added`, {
                                                 style: { borderRadius: '1rem', border: 'none', background: '#0f172a', color: '#fff' }

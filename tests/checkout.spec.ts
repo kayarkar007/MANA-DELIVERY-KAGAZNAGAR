@@ -1,21 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Core E-Commerce Cart Flow', () => {
-    test('Add item to cart and dynamically verify Cart Sidebar injection', async ({ page }) => {
+    test('Unauthenticated user is redirected to login when adding a product', async ({ page }) => {
         await page.goto('/');
 
-        // Await potential hydration or network queries
         await page.waitForTimeout(3000);
 
-        // Target the standard "Add to Cart" block usually present on product cards
         const addBtn = page.getByRole('button', { name: /Add/i }).first();
-        
-        // Test conditionally since DB products might vary locally
+
         if (await addBtn.isVisible()) {
             await addBtn.click();
-            
-            // Expected Behavior: State management triggers sliding Sidebar UI automatically
-            await expect(page.getByText(/Your Cart|Cart Items/i).first()).toBeVisible();
+            await expect(page).toHaveURL(/.*login/);
         }
     });
 

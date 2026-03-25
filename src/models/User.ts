@@ -23,6 +23,7 @@ const UserSchema = new mongoose.Schema(
             longitude: { type: Number },
             updatedAt: { type: Date }
         },
+        isOnDuty: { type: Boolean, default: false },
         walletBalance: { type: Number, default: 0 },
         isVerified: { type: Boolean, default: false },
         verifyOtp: { type: String },

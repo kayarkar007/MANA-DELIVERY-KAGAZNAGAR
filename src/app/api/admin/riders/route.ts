@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 
@@ -14,10 +14,13 @@ export async function GET(req: Request) {
 
         await connectToDatabase();
 
-        const riders = await User.find({ role: "rider" }).select("name email whatsapp");
+        const riders = await User.find({ role: "rider" })
+            .select("name email whatsapp isOnDuty currentLocation")
+            .sort({ isOnDuty: -1, name: 1 });
 
         return NextResponse.json({ success: true, data: riders });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+

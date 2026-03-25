@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import type { Session } from "next-auth";
 
 type AuthResult =
@@ -23,3 +23,4 @@ export async function requireAdmin(): Promise<AuthResult> {
   if (session.user.role !== "admin") return { response: unauthorized("Forbidden", 403) };
   return { session };
 }
+

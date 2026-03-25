@@ -3,7 +3,7 @@ import connectToDatabase from "@/lib/mongoose";
 import Wishlist from "@/models/Wishlist";
 import Product from "@/models/Product";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req: Request) {
     try {
@@ -26,3 +26,4 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+

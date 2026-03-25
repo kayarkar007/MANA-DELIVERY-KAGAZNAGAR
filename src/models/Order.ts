@@ -8,6 +8,7 @@ export interface IOrder extends Document {
         name: string;
         price: number;
         quantity: number;
+        image?: string;
     }>;
     serviceCategory?: string;
     serviceDetails?: any;
@@ -16,6 +17,7 @@ export interface IOrder extends Document {
     deliveryFee: number;
     platformFee: number;
     tax: number;
+    discountAmount?: number;
     promoCode?: string;
     walletUsed?: number;
     total: number;
@@ -49,6 +51,7 @@ const OrderSchema: Schema = new Schema(
                 name: { type: String },
                 price: { type: Number },
                 quantity: { type: Number },
+                image: { type: String },
             },
         ],
         serviceCategory: { type: String },

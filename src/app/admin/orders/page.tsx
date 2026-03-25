@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { Package, MapPin, ChevronDown, Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { getOrderItemSummary, getPrimaryOrderImage } from "@/lib/orderPresentation";
 
 export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [riders, setRiders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const onDutyRiders = riders.filter((rider) => rider.isOnDuty).length;
 
     const fetchOrders = () => {
         fetch("/api/orders")
@@ -97,6 +99,9 @@ export default function AdminOrdersPage() {
                     <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm">
                         <Package className="w-4 h-4" /> {orders.length} Total
                     </div>
+                    <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm">
+                        {onDutyRiders} Riders On Duty
+                    </div>
                     <button
                         onClick={fetchOrders}
                         className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
@@ -132,11 +137,20 @@ export default function AdminOrdersPage() {
                                 </div>
 
                                 {/* Items */}
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
-                                    {order.type === "service"
-                                        ? <span className="text-purple-600 dark:text-purple-400 font-bold">{order.serviceCategory || "Service Request"}</span>
-                                        : order.items?.map((i: any) => `${i.quantity}x ${i.name}`).join(", ")}
-                                </p>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex-shrink-0">
+                                        {getPrimaryOrderImage(order) ? (
+                                            <img src={getPrimaryOrderImage(order) || ""} alt={getOrderItemSummary(order)} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[9px] font-black uppercase text-red-500 px-1 text-center">
+                                                {order.type === "service" ? "Service" : "Order"}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                                        {getOrderItemSummary(order)}
+                                    </p>
+                                </div>
 
                                 {/* Customer + Map */}
                                 <div className="flex flex-wrap items-center gap-3">
@@ -174,7 +188,7 @@ export default function AdminOrdersPage() {
                                         >
                                             <option value="">Unassigned</option>
                                             {riders.map((rider) => (
-                                                <option key={rider._id} value={rider._id}>{rider.name}</option>
+                                                <option key={rider._id} value={rider._id}>{rider.name}{rider.isOnDuty ? " - On Duty" : " - Off Duty"}</option>
                                             ))}
                                         </select>
                                         <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -237,10 +251,19 @@ export default function AdminOrdersPage() {
                                                         {new Date(order.createdAt).toLocaleDateString()}
                                                     </span>
                                                 </div>
-                                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 pr-4">
-                                                    {order.type === "service"
-                                                        ? <span className="text-purple-600 dark:text-purple-400 font-bold">{order.serviceCategory || "Service Request"}</span>
-                                                        : order.items?.map((i: any) => `${i.quantity}x ${i.name}`).join(", ")}
+                                                <div className="flex items-start gap-3 pr-4">
+                                                    <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex-shrink-0">
+                                                        {getPrimaryOrderImage(order) ? (
+                                                            <img src={getPrimaryOrderImage(order) || ""} alt={getOrderItemSummary(order)} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[9px] font-black uppercase text-red-500 px-1 text-center">
+                                                                {order.type === "service" ? "Service" : "Order"}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                                                        {getOrderItemSummary(order)}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="p-4 align-top">
@@ -276,7 +299,7 @@ export default function AdminOrdersPage() {
                                                     >
                                                         <option value="">Unassigned</option>
                                                         {riders.map((rider) => (
-                                                            <option key={rider._id} value={rider._id}>{rider.name}</option>
+                                                            <option key={rider._id} value={rider._id}>{rider.name}{rider.isOnDuty ? " - On Duty" : " - Off Duty"}</option>
                                                         ))}
                                                     </select>
                                                     <ChevronDown className="absolute right-2 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />

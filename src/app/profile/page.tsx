@@ -7,6 +7,7 @@ import { User, Phone, MapPin, Package, LogOut, Loader2, ArrowLeft, CheckCircle2,
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { toast } from "sonner";
+import { getOrderItemSummary, getOrderMetaLabel, getPrimaryOrderImage } from "@/lib/orderPresentation";
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
@@ -27,6 +28,13 @@ export default function ProfilePage() {
     const [newAddressForm, setNewAddressForm] = useState(false);
     const [newAddress, setNewAddress] = useState({ label: "Home", address: "", lat: 17.3850, lng: 78.4867 });
     const [addressLocating, setAddressLocating] = useState(false);
+
+    const openSupportForOrder = (orderId: string) => {
+        const supportPhone = "919494378247";
+        const shortOrderId = orderId.slice(-6).toUpperCase();
+        const message = encodeURIComponent(`Hi, I need help with order #${shortOrderId}.`);
+        window.open(`https://wa.me/${supportPhone}?text=${message}`, "_blank");
+    };
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -315,6 +323,9 @@ export default function ProfilePage() {
                                     const currentStatusIndex = statusList.indexOf(order.status) !== -1 ? statusList.indexOf(order.status) : 0;
                                     const isCancelled = order.status === "cancelled";
                                     const hasReviewed = reviews.some(r => r.orderId === order._id);
+                                    const orderImage = getPrimaryOrderImage(order);
+                                    const orderSummary = getOrderItemSummary(order);
+                                    const orderMeta = getOrderMetaLabel(order);
 
                                     return (
                                         <motion.div 
@@ -361,6 +372,25 @@ export default function ProfilePage() {
                                                     <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">
                                                         {order.paymentMethod === 'upi' ? 'Secure UPI' : 'COD'} · {order.items?.length || 0} ITEMS {order.tipAmount ? `· +₹${order.tipAmount} TIP 💝` : ''}
                                                     </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-6 sm:mb-8 relative z-10">
+                                                <div className="flex items-start gap-4 p-4 sm:p-5 bg-white/70 dark:bg-slate-900/40 rounded-3xl border border-slate-100 dark:border-slate-800">
+                                                    <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex-shrink-0">
+                                                        {orderImage ? (
+                                                            <img src={orderImage} alt={orderSummary} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-red-500 px-2 text-center">
+                                                                {order.type === "service" ? "Service" : "Order"}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Order Summary</p>
+                                                        <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-snug line-clamp-2">{orderSummary}</p>
+                                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-2">{orderMeta}</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -442,7 +472,10 @@ export default function ProfilePage() {
                                                     </button>
                                                 )}
 
-                                                <button className="flex-1 min-w-[130px] bg-slate-50 dark:bg-slate-900/50 text-slate-400 h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2 border border-slate-100 dark:border-slate-800/50">
+                                                <button
+                                                    onClick={() => openSupportForOrder(order._id)}
+                                                    className="flex-1 min-w-[130px] bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-300 h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2 border border-slate-100 dark:border-slate-800/50"
+                                                >
                                                     Need Help?
                                                 </button>
                                             </div>
