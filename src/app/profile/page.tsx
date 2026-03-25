@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User, Phone, MapPin, Package, LogOut, Loader2, ArrowLeft, CheckCircle2, Truck, Clock, Wallet, Star, Heart, Navigation, ChevronRight, ShieldAlert } from "lucide-react";
+import { User, Phone, MapPin, Package, LogOut, Loader2, ArrowLeft, CheckCircle2, Truck, Clock, Wallet, Star, Heart, Navigation, ChevronRight, ShieldAlert, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { toast } from "sonner";
 import { getOrderItemSummary, getOrderMetaLabel, getPrimaryOrderImage } from "@/lib/orderPresentation";
+import { formatCurrency } from "@/lib/utils";
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
@@ -191,8 +192,8 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-                <div className="animate-pulse flex items-center justify-center p-4 sm:p-6 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex min-h-[60vh] items-center justify-center">
+                <div className="app-card animate-pulse p-4 sm:p-6">
                     <img src="/logo2.png" alt="Loading Mana Delivery..." className="w-12 h-12 sm:w-16 sm:h-16 object-contain drop-shadow-xl" />
                 </div>
             </div>
@@ -200,13 +201,13 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 py-6 sm:py-10 md:py-20 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-300">
+        <div className="py-2 sm:py-6 md:py-10">
             <div className="max-w-6xl mx-auto">
-                <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all mb-10 font-black uppercase tracking-widest text-[10px]">
+                <Link href="/" className="app-button app-button-secondary mb-6 w-fit rounded-[1.1rem] sm:mb-8">
                     <ArrowLeft className="w-4 h-4" /> Back to Store
                 </Link>
 
-                <div className="flex flex-col lg:flex-row gap-12">
+                <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
 
                     {/* Sidebar / Profile Card */}
                     <motion.div 
@@ -214,30 +215,29 @@ export default function ProfilePage() {
                         animate={{ opacity: 1, x: 0 }}
                         className="w-full lg:w-1/3"
                     >
-                        <div className="glass-card p-10 border-white/20 premium-shadow rounded-[3.5rem] text-center sticky top-24">
+                        <div className="glass-card rounded-[2.2rem] p-6 text-center lg:sticky lg:top-24 lg:rounded-[3rem] lg:p-10">
                             <div className="relative inline-block mb-6">
-                                <div className="w-32 h-32 bg-gradient-to-br from-red-600 to-rose-400 text-white rounded-[2.5rem] flex items-center justify-center mx-auto text-5xl font-black shadow-2xl shadow-red-500/40">
+                                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-[color:var(--primary)] to-[color:var(--accent)] text-4xl font-black text-white shadow-2xl shadow-red-500/30 sm:h-32 sm:w-32 sm:text-5xl">
                                     {session?.user?.name?.charAt(0)}
                                 </div>
-                                <div className="absolute -bottom-2 -right-2 bg-emerald-500 w-10 h-10 rounded-2xl border-4 border-white dark:border-slate-900 flex items-center justify-center shadow-lg">
+                                <div className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-2xl border-4 border-white bg-emerald-500 shadow-lg dark:border-slate-900 sm:h-10 sm:w-10">
                                     <CheckCircle2 className="w-5 h-5 text-white" />
                                 </div>
                             </div>
                             
-                            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter mb-1">{session?.user?.name}</h2>
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-10">{session?.user?.email}</p>
+                            <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white sm:text-3xl">{session?.user?.name}</h2>
+                            <p className="mb-6 mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 sm:mb-8">{session?.user?.email}</p>
 
                             <div className="space-y-4 text-left">
-                                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-800/50 group hover:border-red-200 transition-colors">
+                                <div className="rounded-[1.6rem] border border-slate-100 bg-slate-50 p-5 transition-colors dark:border-slate-800/50 dark:bg-slate-900/50 sm:p-6">
                                     <div className="flex items-center gap-4 mb-2">
                                         <div className="bg-red-600 text-white p-2.5 rounded-2xl">
                                             <Wallet className="w-5 h-5" />
                                         </div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mana Wallet</p>
                                     </div>
-                                    <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
-                                        <span className="text-red-600 text-xl italic mr-1">₹</span>
-                                        <span className="text-gradient">{profile?.walletBalance?.toFixed(0) || "0"}</span>
+                                    <p className="text-2xl font-black leading-none text-slate-900 dark:text-white sm:text-3xl">
+                                        <span className="text-gradient">{formatCurrency(Number(profile?.walletBalance) || 0)}</span>
                                     </p>
                                 </div>
 
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                                                 <MapPin className="w-3 h-3" /> Default Address
                                             </p>
                                             <button onClick={() => setManagingAddresses(true)} className="text-[10px] font-black text-red-600 uppercase tracking-widest hover:underline">
-                                                Manage Book
+                                                Manage
                                             </button>
                                         </div>
                                         <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
@@ -273,6 +273,22 @@ export default function ProfilePage() {
                                         </p>
                                     </div>
                                 </div>
+
+                                <Link href="/profile/wallet" className="flex items-center justify-between p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-3xl group transition-all hover:bg-red-100 dark:hover:bg-red-900/20">
+                                    <div className="flex items-center gap-4">
+                                        <Wallet className="w-6 h-6 text-red-500 group-hover:scale-125 transition-transform" />
+                                        <span className="font-black text-red-900 dark:text-red-400 uppercase tracking-widest text-xs">Wallet & Ledger</span>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5 text-red-500 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+
+                                <Link href="/profile/tickets" className="flex items-center justify-between p-6 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-3xl group transition-all hover:bg-amber-100 dark:hover:bg-amber-900/20">
+                                    <div className="flex items-center gap-4">
+                                        <MessageSquare className="w-6 h-6 text-amber-500 group-hover:scale-125 transition-transform" />
+                                        <span className="font-black text-amber-900 dark:text-amber-400 uppercase tracking-widest text-xs">Support Tickets</span>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5 text-amber-500 group-hover:translate-x-1 transition-transform" />
+                                </Link>
 
                                 <Link href="/profile/wishlist" className="flex items-center justify-between p-6 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 rounded-3xl group transition-all hover:bg-rose-100 dark:hover:bg-rose-900/20">
                                     <div className="flex items-center gap-4">
@@ -285,9 +301,9 @@ export default function ProfilePage() {
 
                             <button
                                 onClick={() => signOut()}
-                                className="w-full mt-10 flex items-center justify-center gap-3 text-slate-400 font-black p-5 rounded-2xl hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all uppercase tracking-widest text-[10px]"
+                                className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl p-4 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/10 sm:mt-10 sm:p-5"
                             >
-                                <LogOut className="w-4 h-4" /> Secure Sign Out
+                                <LogOut className="w-4 h-4" /> Sign Out
                             </button>
                         </div>
                     </motion.div>
@@ -296,11 +312,11 @@ export default function ProfilePage() {
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="w-full lg:w-2/3 space-y-10"
+                        className="w-full space-y-8 lg:w-2/3 lg:space-y-10"
                     >
-                        <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-6">
-                            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center gap-4">
-                                <Package className="w-10 h-10 text-red-600" /> Recent <span className="text-gradient">Orders</span>
+                        <div className="flex flex-col gap-3 border-b border-slate-100 pb-5 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:pb-6">
+                            <h2 className="flex items-center gap-3 text-3xl font-black tracking-tighter text-slate-900 dark:text-white sm:text-4xl">
+                                <Package className="h-8 w-8 text-red-600 sm:h-10 sm:w-10" /> Recent <span className="text-gradient">Orders</span>
                             </h2>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{orders.length} total</p>
                         </div>
@@ -546,18 +562,18 @@ export default function ProfilePage() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-slate-950 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden glass-card border-white/20 premium-shadow"
+                            className="glass-card w-full max-w-lg overflow-hidden rounded-[2rem] bg-white shadow-2xl dark:bg-slate-950 sm:rounded-[2.5rem]"
                         >
-                            <div className="p-8 pb-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                            <div className="flex items-center justify-between border-b border-slate-100 p-6 pb-5 dark:border-slate-800 sm:p-8 sm:pb-6">
+                                <h3 className="flex items-center gap-3 text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white sm:text-2xl">
                                     <MapPin className="w-6 h-6 text-red-600" /> Address Book
                                 </h3>
-                                <button onClick={() => setManagingAddresses(false)} className="w-10 h-10 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors font-black">
+                                <button onClick={() => setManagingAddresses(false)} className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-black text-slate-500 transition-colors hover:text-slate-900 dark:bg-slate-900 dark:hover:text-white">
                                     ✕
                                 </button>
                             </div>
 
-                            <div className="p-8 max-h-[60vh] overflow-y-auto space-y-4 custom-scrollbar">
+                            <div className="max-h-[70vh] overflow-y-auto space-y-4 p-6 custom-scrollbar sm:max-h-[60vh] sm:p-8">
                                 {profile?.savedAddresses?.length === 0 && !newAddressForm && (
                                     <div className="text-center py-10">
                                         <p className="text-slate-500 font-bold mb-4 text-sm">No saved addresses yet.</p>

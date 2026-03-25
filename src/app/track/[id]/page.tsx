@@ -31,28 +31,43 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
     const [supportMsg, setSupportMsg] = useState("");
     const [supportSending, setSupportSending] = useState(false);
 
-    const handleSupportSubmit = (e: React.FormEvent) => {
+    const handleSupportSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!supportMsg.trim()) return;
         setSupportSending(true);
-        // Mock API call delay
-        setTimeout(() => {
+
+        try {
+            const res = await fetch("/api/support-tickets", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    orderId,
+                    subject: `Order support for #${orderId.slice(-6).toUpperCase()}`,
+                    message: supportMsg,
+                    category: "order",
+                    priority: "medium",
+                }),
+            });
+
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.error || "Failed to create support ticket");
+            }
+
             toast.success("Support ticket created. We will reach out shortly!", { icon: "🎫" });
             setSupportMsg("");
             setSupportOpen(false);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to create support ticket");
+        } finally {
             setSupportSending(false);
-        }, 1500);
+        }
     };
 
     useEffect(() => {
         import("leaflet").then((leaflet) => {
             setL(leaflet);
         });
-
-        // Request Push Notification Permission
-        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
-        }
     }, []);
 
     // Interpolate rider location marker

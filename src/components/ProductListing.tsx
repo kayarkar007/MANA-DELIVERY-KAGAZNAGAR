@@ -1,239 +1,255 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCart } from "@/context/CartContext";
-import { Plus, Minus, ShoppingCart, Heart, Star } from "lucide-react";
 import Image from "next/image";
 import * as motion from "framer-motion/client";
+import { Heart, Minus, Plus, ShoppingBag, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export default function ProductListing({ categorySlug }: { categorySlug: string }) {
-    const [products, setProducts] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [wishlistItems, setWishlistItems] = useState<string[]>([]);
-    const [ratings, setRatings] = useState<Record<string, { avgRating: number; count: number }>>({});
-    const { cart, addToCart, updateQuantity } = useCart();
     const { data: session } = useSession();
     const router = useRouter();
+    const { cart, addToCart, updateQuantity } = useCart();
+
+    const [products, setProducts] = useState<any[]>([]);
+    const [wishlistItems, setWishlistItems] = useState<string[]>([]);
+    const [ratings, setRatings] = useState<Record<string, { avgRating: number; count: number }>>({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`/api/products?categorySlug=${categorySlug}`)
-            .then((res) => res.json())
-            .then(async (data) => {
-                if (data.success) {
-                    setProducts(data.data);
+        const controller = new AbortController();
 
-                    // Fetch ratings for all products in one batch request
-                    const ids = data.data.map((p: any) => p._id).filter(Boolean);
-                    if (ids.length > 0) {
-                        try {
-                            const rRes = await fetch("/api/reviews/ratings", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ productIds: ids }),
-                            });
-                            const rData = await rRes.json();
-                            if (rData.success && rData.data.length > 0) {
-                                const map: Record<string, { avgRating: number; count: number }> = {};
-                                rData.data.forEach((r: any) => {
-                                    map[r.productId] = { avgRating: r.avgRating, count: r.count };
-                                });
-                                setRatings(map);
-                            }
-                        } catch {
-                            // Ratings are non-critical, ignore fetch errors
-                        }
-                    }
+        const bootstrap = async () => {
+            setLoading(true);
+
+            try {
+                const productRes = await fetch(`/api/products?categorySlug=${categorySlug}`, { signal: controller.signal });
+                const productData = await productRes.json();
+
+                if (!productData.success || controller.signal.aborted) {
+                    setProducts([]);
+                    return;
                 }
-                setLoading(false);
-            });
-    }, [categorySlug]);
 
-    useEffect(() => {
-        if (session) {
-            fetch('/api/wishlist')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) setWishlistItems(data.data);
-                });
-        }
-    }, [session]);
+                const fetchedProducts = productData.data || [];
+                setProducts(fetchedProducts);
+
+                const ratingPromise = fetchedProducts.length
+                    ? fetch("/api/reviews/ratings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ productIds: fetchedProducts.map((product: any) => product._id) }),
+                        signal: controller.signal,
+                    }).then((response) => response.json()).catch(() => ({ success: false, data: [] }))
+                    : Promise.resolve({ success: false, data: [] });
+
+                const wishlistPromise = session
+                    ? fetch("/api/wishlist", { signal: controller.signal }).then((response) => response.json()).catch(() => ({ success: false, data: [] }))
+                    : Promise.resolve({ success: false, data: [] });
+
+                const [ratingData, wishlistData] = await Promise.all([ratingPromise, wishlistPromise]);
+
+                if (!controller.signal.aborted && ratingData.success) {
+                    const nextRatings: Record<string, { avgRating: number; count: number }> = {};
+                    for (const item of ratingData.data || []) {
+                        nextRatings[item.productId] = { avgRating: item.avgRating, count: item.count };
+                    }
+                    setRatings(nextRatings);
+                }
+
+                if (!controller.signal.aborted && wishlistData.success) {
+                    setWishlistItems(wishlistData.data || []);
+                }
+            } catch {
+                if (!controller.signal.aborted) {
+                    setProducts([]);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        bootstrap();
+        return () => controller.abort();
+    }, [categorySlug, session?.user?.id]);
 
     const toggleWishlist = async (productId: string) => {
         if (!session) {
-            toast.error("Please login to add to wishlist.");
+            toast.error("Please log in to save favorites.");
             router.push("/login");
             return;
         }
 
-        const isWished = wishlistItems.includes(productId);
-        setWishlistItems(prev => isWished ? prev.filter(id => id !== productId) : [...prev, productId]);
+        const wished = wishlistItems.includes(productId);
+        setWishlistItems((prev) => wished ? prev.filter((id) => id !== productId) : [...prev, productId]);
 
         try {
             const res = await fetch("/api/wishlist", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId })
+                body: JSON.stringify({ productId }),
             });
             const data = await res.json();
+
             if (!data.success) {
-                setWishlistItems(prev => isWished ? [...prev, productId] : prev.filter(id => id !== productId));
-                toast.error(data.error || "Failed to update wishlist");
+                setWishlistItems((prev) => wished ? [...prev, productId] : prev.filter((id) => id !== productId));
+                toast.error(data.error || "Unable to update wishlist");
             }
-        } catch (e) {
-            setWishlistItems(prev => isWished ? [...prev, productId] : prev.filter(id => id !== productId));
-            toast.error("Error updating wishlist");
+        } catch {
+            setWishlistItems((prev) => wished ? [...prev, productId] : prev.filter((id) => id !== productId));
+            toast.error("Unable to update wishlist");
         }
     };
 
-    if (loading)
+    if (loading) {
         return (
-            <div className="py-20 text-center text-gray-500 animate-pulse font-medium">
-                Loading products...
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="h-[23rem] animate-pulse rounded-[2rem] border border-slate-200/80 bg-white/75 dark:border-slate-800/80 dark:bg-slate-900/70" />
+                ))}
             </div>
         );
+    }
 
     if (products.length === 0) {
         return (
-            <div className="py-20 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 shadow-sm">
-                <ShoppingCart className="w-16 h-16 mb-4 text-gray-200 dark:text-gray-700" />
-                <p className="font-medium text-lg">No products found here.</p>
-                <p className="text-sm mt-1">Check back later for new arrivals.</p>
+            <div className="app-card rounded-[2.5rem] border-dashed p-14 text-center">
+                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <ShoppingBag className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">No products in this section yet.</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                    This collection is being prepared. Check back in a little while.
+                </p>
             </div>
         );
     }
 
     return (
         <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+            className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
             initial="hidden"
             animate="show"
             variants={{
                 hidden: { opacity: 0 },
-                show: {
-                    opacity: 1,
-                    transition: { staggerChildren: 0.1 }
-                }
+                show: { opacity: 1, transition: { staggerChildren: 0.06 } },
             }}
         >
-            {products.map((product, idx) => {
-                const cartItem = cart.find((i) => i.productId === product._id);
-                const isPremium = idx % 3 === 0;
+            {products.map((product, index) => {
+                const cartItem = cart.find((item) => item.productId === product._id);
                 const rating = ratings[product._id];
+                const isWished = wishlistItems.includes(product._id);
+                const lowStock = typeof product.stockQuantity === "number" && product.stockQuantity > 0 && product.stockQuantity <= 5;
 
                 return (
-                    <motion.div
+                    <motion.article
                         key={product._id}
-                        variants={{
-                            hidden: { opacity: 0, y: 30 },
-                            show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 25 } }
-                        }}
-                        className="group flex flex-col bg-white/50 dark:bg-slate-900/50 glass-card rounded-[2rem] overflow-hidden premium-shadow hover:-translate-y-2 transition-all duration-500"
+                        variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
+                        className="group overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/80 shadow-[0_18px_45px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/72"
                     >
-                        <div className="relative w-full aspect-[4/3] overflow-hidden">
-                            {isPremium && (
-                                <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg animate-pulse-soft">
-                                    Best Value
-                                </div>
-                            )}
+                        <div className="relative aspect-[4/3] overflow-hidden">
+                            <div className="absolute left-4 top-4 z-10 flex gap-2">
+                                {index % 3 === 0 && <span className="app-badge">Popular pick</span>}
+                                {lowStock && <span className="app-badge !bg-amber-500/10 !text-amber-600 dark:!text-amber-300">Low stock</span>}
+                            </div>
+
                             <button
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product._id); }}
-                                className="absolute top-4 right-4 z-10 p-2.5 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl rounded-full hover:scale-110 active:scale-90 transition-all shadow-lg border border-white/20"
+                                onClick={() => toggleWishlist(product._id)}
+                                className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-white/86 shadow-lg backdrop-blur-xl dark:border-white/8 dark:bg-slate-950/86"
+                                aria-label={isWished ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
                             >
-                                <Heart className={`w-5 h-5 ${wishlistItems.includes(product._id) ? 'fill-red-500 text-red-500' : 'text-slate-400'}`} />
+                                <Heart className={cn("h-5 w-5", isWished ? "fill-red-500 text-red-500" : "text-slate-400")} />
                             </button>
+
                             {product.image ? (
                                 <Image
                                     src={product.image}
                                     alt={product.name}
                                     fill
-                                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
-                                    <ShoppingCart className="w-16 h-16 text-slate-200 dark:text-slate-700" />
+                                <div className="flex h-full w-full items-center justify-center bg-slate-100 dark:bg-slate-900">
+                                    <ShoppingBag className="h-16 w-16 text-slate-300 dark:text-slate-700" />
                                 </div>
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/55 to-transparent" />
                         </div>
 
-                        <div className="p-6 md:p-8 flex flex-col h-full">
-                            <div className="mb-4">
-                                <h3 className="font-black text-xl md:text-2xl text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                                    {product.name}
-                                </h3>
-
-                                {/* ✅ Feature: Product Description */}
-                                {product.description && (
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-2 line-clamp-2">
-                                        {product.description}
-                                    </p>
-                                )}
-
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded">
-                                        {product.unit}
+                        <div className="space-y-5 p-6">
+                            <div className="space-y-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                                        {product.unit || "Standard pack"}
                                     </span>
                                     {product.inStock && (
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> In Stock
+                                        <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">
+                                            In stock
                                         </span>
                                     )}
-                                    {/* ✅ Feature: Average Rating */}
-                                    {rating && rating.count > 0 && (
-                                        <span className="flex items-center gap-1 text-[10px] font-black text-amber-500 uppercase tracking-widest">
-                                            <Star className="w-3 h-3 fill-amber-500" />
+                                    {rating?.count ? (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">
+                                            <Star className="h-3.5 w-3.5 fill-current" />
                                             {rating.avgRating} ({rating.count})
                                         </span>
-                                    )}
+                                    ) : null}
+                                </div>
+
+                                <div>
+                                    <h3 className="text-2xl font-black leading-tight text-slate-900 dark:text-white">{product.name}</h3>
+                                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                                        {product.description || "Fresh local essentials delivered quickly and safely."}
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="mt-auto flex items-center justify-between gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Price</span>
-                                    <span className="font-black text-2xl md:text-3xl text-slate-900 dark:text-white">
-                                        ₹{product.price}
-                                    </span>
+                            <div className="flex items-end justify-between gap-4 border-t border-slate-200/80 pt-5 dark:border-slate-800/90">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Price</p>
+                                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
+                                        {formatCurrency(product.price)}
+                                    </p>
                                 </div>
 
                                 {!product.inStock ? (
-                                    <span className="px-5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 text-xs font-black uppercase tracking-widest">
-                                        Sold Out
+                                    <span className="rounded-2xl bg-slate-100 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-400 dark:bg-slate-900 dark:text-slate-500">
+                                        Sold out
                                     </span>
                                 ) : cartItem ? (
-                                    <div className="flex items-center gap-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl p-1.5 shadow-xl shadow-slate-900/20">
-                                        <motion.button
-                                            whileTap={{ scale: 0.8 }}
+                                    <div className="flex items-center gap-3 rounded-2xl bg-slate-950 p-1.5 text-white shadow-xl shadow-slate-950/20 dark:bg-white dark:text-slate-950">
+                                        <button
                                             onClick={() => updateQuantity(product._id, cartItem.quantity - 1)}
-                                            className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-900/10 rounded-xl transition-colors"
+                                            className="rounded-xl p-2 hover:bg-white/10 dark:hover:bg-slate-950/10"
+                                            aria-label={`Decrease ${product.name}`}
                                         >
-                                            <Minus className="w-5 h-5" />
-                                        </motion.button>
-                                        <span className="w-8 text-center font-black text-lg">
-                                            {cartItem.quantity}
-                                        </span>
-                                        <motion.button
-                                            whileTap={{ scale: 0.8 }}
+                                            <Minus className="h-4 w-4" />
+                                        </button>
+                                        <span className="w-6 text-center text-base font-black">{cartItem.quantity}</span>
+                                        <button
                                             onClick={() => updateQuantity(product._id, cartItem.quantity + 1)}
-                                            className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-900/10 rounded-xl transition-colors"
+                                            className="rounded-xl p-2 hover:bg-white/10 dark:hover:bg-slate-950/10"
+                                            aria-label={`Increase ${product.name}`}
                                         >
-                                            <Plus className="w-5 h-5" />
-                                        </motion.button>
+                                            <Plus className="h-4 w-4" />
+                                        </button>
                                     </div>
                                 ) : (
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
+                                    <button
                                         onClick={() => {
                                             if (!session) {
-                                                toast.error("Please login to order products.");
+                                                toast.error("Please log in before placing an order.");
                                                 router.push("/login");
                                                 return;
                                             }
+
                                             addToCart({
                                                 productId: product._id,
                                                 name: product.name,
@@ -241,18 +257,16 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                                                 quantity: 1,
                                                 image: product.image,
                                             });
-                                            toast.success(`${product.name} added`, {
-                                                style: { borderRadius: '1rem', border: 'none', background: '#0f172a', color: '#fff' }
-                                            });
+                                            toast.success(`${product.name} added to cart`);
                                         }}
-                                        className="px-8 py-3.5 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-500/30 hover:bg-red-700 hover:shadow-red-500/50 transition-all uppercase tracking-widest text-xs"
+                                        className="app-button app-button-primary rounded-[1.15rem]"
                                     >
-                                        Add to Cart
-                                    </motion.button>
+                                        Add to cart
+                                    </button>
                                 )}
                             </div>
                         </div>
-                    </motion.div>
+                    </motion.article>
                 );
             })}
         </motion.div>

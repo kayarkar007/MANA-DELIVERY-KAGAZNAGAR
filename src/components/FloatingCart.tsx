@@ -13,15 +13,20 @@ export default function FloatingCart({ onCartClick }: { onCartClick: () => void 
     const pathname = usePathname();
 
     useEffect(() => {
+        let ticking = false;
+
         const handleScroll = () => {
-            if (window.scrollY > 100) {
-                setIsVisible(true);
-            } else {
-                setIsVisible(false);
-            }
+            if (ticking) return;
+
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                setIsVisible(window.scrollY > 120);
+                ticking = false;
+            });
         };
 
-        window.addEventListener("scroll", handleScroll);
+        handleScroll();
+        window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
@@ -38,14 +43,14 @@ export default function FloatingCart({ onCartClick }: { onCartClick: () => void 
             onClick={onCartClick}
             aria-label="Open Floating Cart"
             style={{ willChange: "transform, opacity" }}
-            className="fixed bottom-24 md:bottom-8 right-6 md:right-10 z-50 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-600 text-white shadow-[0_20px_50px_rgba(220,38,38,0.4)] hover:bg-red-700 transition-all border border-white/20 backdrop-blur-lg"
+            className="fixed bottom-24 right-5 z-40 flex h-16 w-16 items-center justify-center rounded-[1.5rem] border border-white/45 bg-[linear-gradient(135deg,var(--primary),var(--primary-strong))] text-white shadow-[0_24px_50px_rgba(217,71,47,0.38)] backdrop-blur-lg md:bottom-8 md:right-10"
         >
             <ShoppingCart className="h-7 w-7" />
             {itemCount > 0 && (
                 <motion.span 
                     initial={{ scale: 0.5 }}
                     animate={{ scale: 1 }}
-                    className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-xs font-black text-white shadow-xl ring-4 ring-white dark:ring-slate-900"
+                    className="absolute -right-2 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-slate-950 px-1 text-xs font-black text-white shadow-xl ring-4 ring-white dark:bg-white dark:text-slate-950 dark:ring-slate-900"
                 >
                     {itemCount}
                 </motion.span>

@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === "production" && !nextAuthSecret) {
 // In production on Vercel, NEXTAUTH_URL is often omitted in favor of VERCEL_URL
 const isVercel = process.env.VERCEL === "1";
 if (!process.env.NEXTAUTH_URL && !isVercel && process.env.NODE_ENV === "production") {
-    console.warn("âš ï¸ NEXTAUTH_URL is not set. This may cause issues with authentication redirects.");
+    console.warn("NEXTAUTH_URL is not set. This may cause issues with authentication redirects.");
 }
 
 export const authOptions: AuthOptions = {
@@ -35,10 +35,7 @@ export const authOptions: AuthOptions = {
                     throw new Error("No user found with this email");
                 }
 
-                const isPasswordValid = await bcrypt.compare(
-                    credentials.password,
-                    user.password
-                );
+                const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
                 if (!isPasswordValid) {
                     throw new Error("Incorrect Password");

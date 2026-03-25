@@ -1,11 +1,11 @@
 "use client";
 
-import { useCart } from "@/context/CartContext";
-import { calculatePricing } from "@/lib/utils";
-import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { Minus, Plus, ShoppingBag, X } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { calculatePricing, formatCurrency } from "@/lib/utils";
 
 export default function CartDrawer({
     isOpen,
@@ -15,8 +15,8 @@ export default function CartDrawer({
     onClose: () => void;
 }) {
     const { cart, updateQuantity, cartTotal } = useCart();
-    const pricing = calculatePricing(cartTotal);
     const { data: session } = useSession();
+    const pricing = calculatePricing(cartTotal);
 
     return (
         <AnimatePresence>
@@ -26,89 +26,83 @@ export default function CartDrawer({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+                        className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm"
                         onClick={onClose}
                     />
-                    <motion.div
+                    <motion.aside
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                        className="fixed inset-y-0 right-0 z-50 w-full max-w-full sm:max-w-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.1)] flex flex-col border-l border-white/20"
+                        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-full flex-col border-l border-white/45 bg-[rgba(255,252,247,0.94)] shadow-[0_0_65px_rgba(15,23,42,0.12)] backdrop-blur-3xl dark:border-white/8 dark:bg-[rgba(9,16,29,0.94)] sm:max-w-md"
                     >
-                        <div className="flex items-center justify-between p-6 md:p-8 border-b border-white/10">
-                            <h2 className="text-xl md:text-2xl font-black flex items-center gap-3 text-slate-900 dark:text-white uppercase tracking-tight">
-                                <ShoppingBag className="w-6 h-6 text-red-600 dark:text-red-400" /> Your Cart
-                            </h2>
-                            <button
-                                onClick={onClose}
-                                className="p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition-all active:scale-95"
-                            >
-                                <X className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                        <div className="flex items-center justify-between border-b border-slate-200/80 p-6 dark:border-slate-800/90 md:p-8">
+                            <div>
+                                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Current basket</p>
+                                <h2 className="font-display mt-2 flex items-center gap-3 text-2xl font-black text-slate-900 dark:text-white">
+                                    <ShoppingBag className="h-6 w-6 text-red-600 dark:text-red-400" />
+                                    Your Cart
+                                </h2>
+                            </div>
+                            <button onClick={onClose} className="app-icon-button h-12 w-12 rounded-2xl" aria-label="Close cart">
+                                <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+                        <div className="flex-1 space-y-5 overflow-y-auto p-6 md:p-8">
                             {cart.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                                    <motion.div 
-                                        initial={{ scale: 0.8 }}
-                                        animate={{ scale: 1 }}
-                                        className="bg-slate-100 dark:bg-slate-800 p-10 rounded-full mb-6 border border-white/10 shadow-inner"
-                                    >
-                                        <ShoppingBag className="w-16 h-16 text-slate-300 dark:text-slate-600" />
-                                    </motion.div>
-                                    <p className="font-black text-xl text-slate-900 dark:text-white">Your cart is empty.</p>
-                                    <p className="text-sm mt-2 opacity-80">Add some products to see them here.</p>
+                                <div className="flex h-full flex-col items-center justify-center text-center text-slate-500">
+                                    <div className="mb-6 rounded-full border border-white/40 bg-white/75 p-10 shadow-inner dark:border-white/8 dark:bg-slate-900/80">
+                                        <ShoppingBag className="h-16 w-16 text-slate-300 dark:text-slate-600" />
+                                    </div>
+                                    <p className="text-xl font-black text-slate-900 dark:text-white">Your cart is empty.</p>
+                                    <p className="mt-2 max-w-xs text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                                        Add a few items and checkout will be ready instantly.
+                                    </p>
                                 </div>
                             ) : (
                                 <motion.div
                                     initial="hidden"
                                     animate="show"
-                                    variants={{
-                                        hidden: {},
-                                        show: { transition: { staggerChildren: 0.05 } }
-                                    }}
-                                    className="space-y-6"
+                                    variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+                                    className="space-y-5"
                                 >
                                     {cart.map((item) => (
                                         <motion.div
-                                            variants={{
-                                                hidden: { opacity: 0, x: 20 },
-                                                show: { opacity: 1, x: 0 }
-                                            }}
                                             key={item.productId}
-                                            className="group flex flex-col gap-4 p-5 bg-white/40 dark:bg-slate-800/40 border border-white/10 rounded-[1.5rem] shadow-sm hover:shadow-xl transition-all duration-300"
+                                            variants={{
+                                                hidden: { opacity: 0, x: 16 },
+                                                show: { opacity: 1, x: 0 },
+                                            }}
+                                            className="rounded-[1.65rem] border border-slate-200/80 bg-white/80 p-5 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/72"
                                         >
-                                            <div className="flex justify-between items-start">
-                                                <span className="font-black text-slate-900 dark:text-white text-lg leading-tight group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                                                    {item.name}
-                                                </span>
-                                                <span className="font-black text-slate-900 dark:text-white text-lg shrink-0">
-                                                    ₹{(item.price * item.quantity).toFixed(0)}
-                                                </span>
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="min-w-0">
+                                                    <p className="text-lg font-black leading-tight text-slate-900 dark:text-white">{item.name}</p>
+                                                    <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                                                        {formatCurrency(item.price)} per unit
+                                                    </p>
+                                                </div>
+                                                <p className="shrink-0 text-lg font-black text-slate-900 dark:text-white">
+                                                    {formatCurrency(item.price * item.quantity)}
+                                                </p>
                                             </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest px-2 py-0.5 bg-slate-100 dark:bg-slate-900/50 rounded">
-                                                    ₹{item.price} / unit
-                                                </span>
-                                                <div className="flex items-center gap-4 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white rounded-xl p-1.5 shadow-xl shadow-slate-950/20">
+                                            <div className="mt-4 flex items-center justify-end">
+                                                <div className="flex items-center gap-4 rounded-2xl bg-slate-950 p-1.5 text-white shadow-xl shadow-slate-950/20 dark:bg-white dark:text-slate-950">
                                                     <motion.button
-                                                        whileTap={{ scale: 0.8 }}
+                                                        whileTap={{ scale: 0.84 }}
                                                         onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                                                        className="p-1 hover:bg-white/10 dark:hover:bg-slate-950/10 rounded-lg transition-colors"
+                                                        className="rounded-xl p-2 hover:bg-white/10 dark:hover:bg-slate-950/10"
                                                     >
-                                                        <Minus className="w-4 h-4" />
+                                                        <Minus className="h-4 w-4" />
                                                     </motion.button>
-                                                    <span className="w-5 text-center font-black text-md">
-                                                        {item.quantity}
-                                                    </span>
+                                                    <span className="w-6 text-center text-base font-black">{item.quantity}</span>
                                                     <motion.button
-                                                        whileTap={{ scale: 0.8 }}
+                                                        whileTap={{ scale: 0.84 }}
                                                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                                                        className="p-1 hover:bg-white/10 dark:hover:bg-slate-950/10 rounded-lg transition-colors"
+                                                        className="rounded-xl p-2 hover:bg-white/10 dark:hover:bg-slate-950/10"
                                                     >
-                                                        <Plus className="w-4 h-4" />
+                                                        <Plus className="h-4 w-4" />
                                                     </motion.button>
                                                 </div>
                                             </div>
@@ -119,33 +113,34 @@ export default function CartDrawer({
                         </div>
 
                         {cart.length > 0 && (
-                            <div className="p-6 md:p-8 bg-white/40 dark:bg-slate-900/40 border-t border-white/10 backdrop-blur-md rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.05)]">
-                                <div className="space-y-4 text-xs font-black text-slate-400 uppercase tracking-widest mb-8">
-                                    <div className="flex justify-between">
+                            <div className="rounded-t-[2.5rem] border-t border-slate-200/80 bg-white/75 p-6 shadow-[0_-20px_50px_rgba(15,23,42,0.05)] backdrop-blur-md dark:border-slate-800/90 dark:bg-slate-950/72 md:p-8">
+                                <div className="mb-8 space-y-3 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                                    <div className="flex items-center justify-between">
                                         <span>Subtotal</span>
-                                        <span className="text-slate-900 dark:text-slate-300">₹{pricing.subtotal.toFixed(0)}</span>
+                                        <span className="text-slate-900 dark:text-slate-200">{formatCurrency(pricing.subtotal)}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span>Extras (Tax/Delivery)</span>
-                                        <span className="text-slate-900 dark:text-slate-300">₹{(pricing.deliveryFee + pricing.platformFee + pricing.tax).toFixed(0)}</span>
+                                    <div className="flex items-center justify-between">
+                                        <span>Taxes and fees</span>
+                                        <span className="text-slate-900 dark:text-slate-200">
+                                            {formatCurrency(pricing.deliveryFee + pricing.platformFee + pricing.tax)}
+                                        </span>
                                     </div>
-                                    <div className="pt-4 border-t border-white/5 flex justify-between font-black text-2xl text-slate-900 dark:text-white normal-case tracking-tight">
-                                        <span>Total Amount</span>
-                                        <span className="text-gradient">₹{pricing.total.toFixed(0)}</span>
+                                    <div className="flex items-center justify-between border-t border-slate-200/80 pt-4 text-xl normal-case tracking-tight text-slate-900 dark:border-slate-800/90 dark:text-white">
+                                        <span>Total</span>
+                                        <span className="text-gradient">{formatCurrency(pricing.total)}</span>
                                     </div>
                                 </div>
+
                                 <Link
                                     href={session ? "/checkout" : "/login"}
-                                    onClick={(e) => {
-                                        onClose();
-                                    }}
-                                    className="w-full h-16 flex justify-center items-center bg-red-600 text-white font-black rounded-2xl shadow-2xl shadow-red-500/40 hover:bg-red-700 hover:scale-[1.02] transform transition-all active:scale-95 uppercase tracking-widest text-sm"
+                                    onClick={onClose}
+                                    className="app-button app-button-primary flex h-16 w-full justify-center rounded-2xl text-sm"
                                 >
                                     Complete Checkout
                                 </Link>
                             </div>
                         )}
-                    </motion.div>
+                    </motion.aside>
                 </>
             )}
         </AnimatePresence>

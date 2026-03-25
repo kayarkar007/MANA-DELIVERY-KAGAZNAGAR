@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Search, Loader2, Store } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { startTransition, useDeferredValue, useEffect, useRef, useState } from "react";
+import { Loader2, Search, Store } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { formatCurrency } from "@/lib/utils";
 
 export default function SearchBar() {
+    const router = useRouter();
+    const wrapperRef = useRef<HTMLFormElement>(null);
+
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
-    const router = useRouter();
-    const wrapperRef = useRef<HTMLFormElement>(null);
+
+    const deferredQuery = useDeferredValue(query.trim());
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -20,41 +24,61 @@ export default function SearchBar() {
                 setIsOpen(false);
             }
         };
+
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     useEffect(() => {
+        if (!deferredQuery) {
+            setResults([]);
+            setIsOpen(false);
+            setLoading(false);
+            return;
+        }
+
+        const controller = new AbortController();
         const fetchResults = async () => {
-            if (!query.trim()) {
-                setResults([]);
-                setIsOpen(false);
-                return;
-            }
             setLoading(true);
+
             try {
-                const res = await fetch(`/api/products/search?q=${encodeURIComponent(query)}&limit=5`);
+                const res = await fetch(`/api/products/search?q=${encodeURIComponent(deferredQuery)}&limit=6`, {
+                    signal: controller.signal,
+                });
                 const data = await res.json();
-                if (data.success) {
-                    setResults(data.data);
+
+                if (!controller.signal.aborted && data.success) {
+                    startTransition(() => {
+                        setResults(data.data || []);
+                        setIsOpen(true);
+                    });
+                }
+            } catch (error) {
+                if (!controller.signal.aborted) {
+                    setResults([]);
                     setIsOpen(true);
                 }
-            } catch (e) {
-                // Ignore
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 
-        const timeoutId = setTimeout(fetchResults, 300);
-        return () => clearTimeout(timeoutId);
-    }, [query]);
+        const timeoutId = window.setTimeout(fetchResults, 220);
+        return () => {
+            controller.abort();
+            window.clearTimeout(timeoutId);
+        };
+    }, [deferredQuery]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSearch = (event: React.FormEvent) => {
+        event.preventDefault();
         setIsOpen(false);
-        if (query.trim()) {
-            router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+
+        const nextQuery = query.trim();
+        if (nextQuery) {
+            router.push(`/search?q=${encodeURIComponent(nextQuery)}`);
         }
     };
 
@@ -62,83 +86,101 @@ export default function SearchBar() {
         <form
             ref={wrapperRef}
             onSubmit={handleSearch}
-            className="relative w-full max-w-2xl mx-auto flex items-center z-50"
+            className="relative z-30 mx-auto flex w-full max-w-3xl items-center"
         >
-            <div className="absolute left-3 sm:left-4 text-gray-400 dark:text-gray-500">
-                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div className="pointer-events-none absolute left-4 text-slate-400 dark:text-slate-500 sm:left-5">
+                <Search className="h-5 w-5" />
             </div>
+
             <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search groceries, medicines, services..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-white/20 dark:bg-slate-900/40 backdrop-blur-3xl text-slate-900 dark:text-white border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] py-3.5 sm:py-6 pl-10 sm:pl-14 pr-14 sm:pr-36 focus:outline-none focus:ring-4 sm:focus:ring-8 focus:ring-red-100/50 dark:focus:ring-red-900/20 focus:border-red-500/50 transition-all font-black shadow-2xl hover:shadow-red-500/10 placeholder:text-slate-400 placeholder:italic placeholder:font-bold tracking-tight text-sm sm:text-base"
+                onFocus={() => {
+                    if (results.length > 0 || loading || deferredQuery) setIsOpen(true);
+                }}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                    if (event.key === "Escape") setIsOpen(false);
+                }}
+                className="w-full rounded-[1.9rem] border border-white/50 bg-white/80 py-4 pl-12 pr-16 text-sm font-semibold text-slate-900 shadow-[0_16px_40px_rgba(15,23,42,0.08)] outline-none placeholder:text-slate-400 dark:border-white/8 dark:bg-slate-950/78 dark:text-white sm:py-5 sm:pl-14 sm:pr-44 sm:text-base"
             />
+
             <button
                 type="submit"
-                className="absolute right-2 sm:right-3 top-2 sm:top-3 bottom-2 sm:bottom-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black px-6 sm:px-10 rounded-[1.25rem] sm:rounded-[1.5rem] transition-all hover:scale-95 active:scale-90 hidden sm:block shadow-lg uppercase tracking-widest text-[10px]"
+                className="app-button app-button-primary absolute inset-y-2 right-2 hidden items-center gap-2 whitespace-nowrap rounded-[1.35rem] px-6 leading-none sm:flex"
             >
                 Search
             </button>
             <button
                 type="submit"
-                className="absolute right-2 top-2 bottom-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black px-3.5 rounded-[1rem] transition-all hover:scale-95 active:scale-90 sm:hidden shadow-lg"
+                className="absolute right-2 top-2 flex h-[calc(100%-1rem)] w-11 items-center justify-center rounded-[1rem] bg-slate-950 text-white dark:bg-white dark:text-slate-950 sm:hidden"
+                aria-label="Submit search"
             >
-                <Search className="w-4 h-4" />
+                <Search className="h-4 w-4" />
             </button>
 
-            {/* Dropdown Auto-suggest */}
-            {isOpen && query.trim() !== "" && (
-                <div className="absolute top-[calc(100%+12px)] left-0 right-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50 overflow-hidden z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-                    <div className="p-4 bg-slate-50/50 dark:bg-slate-950/20 border-b border-white/10">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Recommended for you</p>
+            {isOpen && deferredQuery && (
+                <div className="absolute left-0 right-0 top-[calc(100%+0.85rem)] overflow-hidden rounded-[2rem] border border-white/55 bg-white/88 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur-3xl dark:border-white/8 dark:bg-slate-950/90">
+                    <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800/90">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Quick picks</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                Fast matches for "{deferredQuery}"
+                            </p>
+                        </div>
+                        {loading && <Loader2 className="h-5 w-5 animate-spin text-red-600" />}
                     </div>
-                    {loading ? (
-                        <div className="flex items-center justify-center p-12 text-red-600">
-                            <Loader2 className="w-8 h-8 animate-spin" />
+
+                    {loading && results.length === 0 ? (
+                        <div className="flex items-center justify-center p-10">
+                            <Loader2 className="h-7 w-7 animate-spin text-red-600" />
                         </div>
                     ) : results.length > 0 ? (
-                        <ul className="max-h-[30rem] overflow-y-auto p-4 space-y-2">
+                        <ul className="max-h-[28rem] space-y-2 overflow-y-auto p-4">
                             {results.map((product) => (
                                 <li key={product._id}>
                                     <Link
                                         href={`/search?q=${encodeURIComponent(product.name)}`}
                                         onClick={() => setIsOpen(false)}
-                                        className="flex items-center gap-6 p-4 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-[1.5rem] transition-all group border border-transparent hover:border-white/20 dark:hover:border-slate-700/30"
+                                        className="flex items-center gap-4 rounded-[1.5rem] border border-transparent p-3 hover:border-slate-200 hover:bg-white/80 dark:hover:border-slate-700 dark:hover:bg-slate-900/80"
                                     >
-                                        <div className="relative w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl overflow-hidden flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                                        <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900">
                                             {product.image ? (
-                                                <Image src={product.image} alt={product.name} fill className="object-cover" />
+                                                <Image src={product.image} alt={product.name} fill className="object-cover" sizes="64px" />
                                             ) : (
-                                                <Store className="w-8 h-8 m-auto mt-4 text-slate-200 dark:text-slate-600" />
+                                                <div className="flex h-full w-full items-center justify-center">
+                                                    <Store className="h-7 w-7 text-slate-300 dark:text-slate-600" />
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-lg font-black text-slate-900 dark:text-white truncate tracking-tight">{product.name}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.unit || 'Standard'}</span>
-                                            </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-base font-black text-slate-900 dark:text-white">{product.name}</p>
+                                            <p className="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                                                {product.unit || "Standard pack"}
+                                            </p>
                                         </div>
-                                        <div className="text-xl font-black text-slate-900 dark:text-white">
-                                            <span className="text-red-600 text-sm italic mr-1">₹</span>{product.price}
-                                        </div>
+                                        <p className="shrink-0 text-sm font-black text-slate-900 dark:text-white">
+                                            {formatCurrency(product.price)}
+                                        </p>
                                     </Link>
                                 </li>
                             ))}
-                            <li className="pt-4 px-2">
-                                <button type="submit" className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 h-14 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:opacity-90 transition-all shadow-md">
-                                    View all results for "{query}"
+
+                            <li className="pt-2">
+                                <button type="submit" className="app-button app-button-secondary flex w-full justify-center rounded-[1.4rem]">
+                                    View all results
                                 </button>
                             </li>
                         </ul>
                     ) : (
-                        <div className="p-16 text-center space-y-4">
-                            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Search className="w-8 h-8 text-slate-300" />
+                        <div className="p-12 text-center">
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                <Search className="h-7 w-7 text-slate-300 dark:text-slate-600" />
                             </div>
-                            <p className="text-sm font-black text-slate-400 uppercase tracking-widest">
-                                No products found matching <br/>
-                                <span className="text-slate-900 dark:text-white italic">"{query}"</span>
+                            <p className="text-sm font-black text-slate-900 dark:text-white">No fast matches found.</p>
+                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                                Try a broader keyword or continue to the full results page.
                             </p>
                         </div>
                     )}

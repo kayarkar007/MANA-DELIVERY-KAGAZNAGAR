@@ -91,7 +91,7 @@ export default function LoginPage() {
                             value={form.password}
                             onChange={(e) => setForm({ ...form, password: e.target.value })}
                             className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 pr-12 rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-medium"
-                            placeholder="••••••••"
+                            placeholder="Enter your password"
                         />
                         <button
                             type="button"

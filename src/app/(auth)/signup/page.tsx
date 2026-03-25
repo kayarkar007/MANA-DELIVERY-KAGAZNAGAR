@@ -132,7 +132,7 @@ export default function SignupPage() {
                             value={form.password}
                             onChange={(e) => setForm({ ...form, password: e.target.value })}
                             className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 pr-12 rounded-xl focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 focus:border-red-500 outline-none transition-all font-medium"
-                            placeholder="••••••••"
+                            placeholder="Create a secure password"
                         />
                         <button
                             type="button"
@@ -174,7 +174,7 @@ export default function SignupPage() {
                             value={form.confirmPassword}
                             onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
                             className={`w-full bg-white dark:bg-gray-800 border ${form.confirmPassword && !passwordsMatch ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 dark:border-gray-700 focus:ring-red-100'} text-gray-900 dark:text-white p-4 pr-12 rounded-xl focus:ring-4 outline-none transition-all font-medium`}
-                            placeholder="••••••••"
+                            placeholder="Confirm your password"
                         />
                         <button
                             type="button"

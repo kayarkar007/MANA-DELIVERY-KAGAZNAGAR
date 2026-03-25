@@ -24,9 +24,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
     return (
         <CartProvider>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-red-200 dark:selection:bg-red-900 transition-colors duration-300">
+            <div className="app-shell flex min-h-screen flex-col text-slate-900 dark:text-slate-100 transition-colors duration-300">
+                <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[28rem] bg-[radial-gradient(circle_at_top,rgba(198,40,40,0.22),transparent_50%)]" />
+                <div className="pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[24rem] bg-[radial-gradient(circle_at_bottom_right,rgba(214,160,70,0.12),transparent_42%)]" />
                 <Header onCartClick={() => setIsCartOpen(true)} />
-                <main className="flex-1 w-full max-w-5xl mx-auto px-3 py-6 sm:px-4 sm:py-8 md:py-12 pb-20 sm:pb-24 md:pb-12">
+                <main id="main-content" className="app-page flex-1 pb-24 sm:pb-28 md:pb-16">
                     {children}
                 </main>
                 <FloatingCart onCartClick={() => setIsCartOpen(true)} />

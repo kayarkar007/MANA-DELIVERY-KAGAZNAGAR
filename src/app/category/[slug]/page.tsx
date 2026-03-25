@@ -1,12 +1,12 @@
-import connectToDatabase from "@/lib/mongoose";
-import Category from "@/models/Category";
-import { notFound } from "next/navigation";
-import ProductListing from "@/components/ProductListing";
-import ServiceForm from "@/components/ServiceForm";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { notFound } from "next/navigation";
+import connectToDatabase from "@/lib/mongoose";
+import Category from "@/models/Category";
+import ProductListing from "@/components/ProductListing";
+import ServiceForm from "@/components/ServiceForm";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
@@ -18,46 +18,44 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         notFound();
     }
 
-    // Need to parse stringify because lean() still returns objects with ObjectIds which cant be passed to client components sometimes if we were passing the whole object, but here we just pass primitives.
-
     const categoryName = category.name as string;
     const categoryType = category.type as string;
 
     return (
-        <div className="space-y-12 animate-in fade-in duration-700">
-            <Link href="/" className="inline-flex items-center gap-3 text-sm font-black text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all glass-card px-8 py-4 border-white/20 premium-shadow rounded-2xl w-fit hover:-translate-x-2 active:scale-95 duration-300 uppercase tracking-widest text-[10px]">
-                <ChevronLeft className="w-4 h-4" /> Back to Store
+        <div className="space-y-8 sm:space-y-10">
+            <Link href="/" className="app-button app-button-secondary w-fit rounded-[1.2rem]">
+                <ChevronLeft className="h-4 w-4" />
+                Back to store
             </Link>
 
-            <div className="relative pt-6 pb-12 overflow-hidden">
-                {/* Decorative Background Element */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
-                
-                <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-[0.9] mb-6">
-                    {categoryName} <span className="text-gradient">Collection</span>
-                </h1>
-                
-                <div className="flex items-center gap-4">
-                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-lg ${
-                        categoryType === "service" 
-                        ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/50" 
-                        : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50"
-                    }`}>
-                        {categoryType}
+            <section className="app-card-strong relative overflow-hidden px-6 py-8 sm:px-10 sm:py-10">
+                <div className="absolute right-0 top-0 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(217,71,47,0.18),transparent_65%)] blur-3xl" />
+                <div className="relative z-10 space-y-5">
+                    <span className={`app-badge ${categoryType === "service" ? "!bg-sky-500/10 !text-sky-600 dark:!text-sky-300" : ""}`}>
+                        {categoryType === "service" ? "Service flow" : "Product collection"}
                     </span>
-                    <div className="h-px flex-1 bg-gradient-to-r from-slate-200 dark:from-slate-800 to-transparent" />
+                    <div className="space-y-3">
+                        <h1 className="app-title text-4xl text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+                            {categoryName}
+                        </h1>
+                        <p className="app-subtitle max-w-2xl">
+                            {categoryType === "product"
+                                ? "A cleaner product grid, clearer pricing, ratings, wishlist controls, and faster cart actions for this category."
+                                : "Submit service requests with a calmer layout and a more focused form experience."}
+                        </p>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div className="animate-slide-up">
+            <section>
                 {categoryType === "product" ? (
                     <ProductListing categorySlug={slug} />
                 ) : (
-                    <div className="glass-card p-10 md:p-16 border-white/20 premium-shadow rounded-[3.5rem]">
+                    <div className="app-card rounded-[2.5rem] p-6 sm:p-10">
                         <ServiceForm categoryName={categoryName} />
                     </div>
                 )}
-            </div>
+            </section>
         </div>
     );
 }
