@@ -23,21 +23,25 @@ const CartContext = createContext<CartContextProps | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [isHydrated, setIsHydrated] = useState(false);
 
     useEffect(() => {
         const stored = localStorage.getItem("hypercart");
-        if (stored) {
-            try {
+        try {
+            if (stored) {
                 setCart(JSON.parse(stored));
-            } catch (e) {
-                console.error("Failed to parse cart data from local storage", e);
             }
+        } catch (error) {
+            console.error("Failed to parse cart data from local storage", error);
+        } finally {
+            setIsHydrated(true);
         }
     }, []);
 
     useEffect(() => {
+        if (!isHydrated) return;
         localStorage.setItem("hypercart", JSON.stringify(cart));
-    }, [cart]);
+    }, [cart, isHydrated]);
 
     const addToCart = (item: CartItem) => {
         setCart((prev) => {

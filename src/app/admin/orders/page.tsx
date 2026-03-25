@@ -46,35 +46,71 @@ export default function AdminOrdersPage() {
 
     const fetchOrders = async (nextPage = page, nextSearch = search) => {
         setLoading(true);
-        try {
-            const params = new URLSearchParams({
-                page: String(nextPage),
-                limit: "10",
-            });
-            if (nextSearch.trim()) params.set("search", nextSearch.trim());
-            if (status) params.set("status", status);
-            if (paymentStatus) params.set("paymentStatus", paymentStatus);
-            if (refundStatus) params.set("refundStatus", refundStatus);
+        let lastError = "Failed to fetch orders";
 
-            const res = await fetch(`/api/orders?${params.toString()}`);
-            const data = await res.json();
-            if (data.success) {
+        for (const delayMs of [0, 800]) {
+            if (delayMs) {
+                await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    page: String(nextPage),
+                    limit: "10",
+                });
+                if (nextSearch.trim()) params.set("search", nextSearch.trim());
+                if (status) params.set("status", status);
+                if (paymentStatus) params.set("paymentStatus", paymentStatus);
+                if (refundStatus) params.set("refundStatus", refundStatus);
+
+                const res = await fetch(`/api/orders?${params.toString()}`, { cache: "no-store" });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || "Failed to fetch orders");
+                }
+
                 setOrders(data.data || []);
                 setTotalPages(data.pagination?.totalPages || 1);
-            } else {
-                toast.error(data.error || "Failed to fetch orders");
+                setLoading(false);
+                return true;
+            } catch (error: any) {
+                lastError = error.message || lastError;
             }
-        } finally {
-            setLoading(false);
         }
+
+        toast.error(lastError);
+        setOrders([]);
+        setTotalPages(1);
+        setLoading(false);
+
+        return false;
     };
 
     const fetchRiders = async () => {
-        const res = await fetch("/api/admin/riders");
-        const data = await res.json();
-        if (data.success) {
-            setRiders(data.data || []);
+        let lastError = "Failed to fetch riders";
+
+        for (const delayMs of [0, 800]) {
+            if (delayMs) {
+                await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+            }
+
+            try {
+                const res = await fetch("/api/admin/riders", { cache: "no-store" });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || "Failed to fetch riders");
+                }
+
+                setRiders(data.data || []);
+                return true;
+            } catch (error: any) {
+                lastError = error.message || lastError;
+            }
         }
+
+        toast.error(lastError);
+        setRiders([]);
+        return false;
     };
 
     useEffect(() => {

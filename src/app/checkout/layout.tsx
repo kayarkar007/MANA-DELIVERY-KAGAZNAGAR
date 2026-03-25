@@ -1,11 +1,12 @@
+import type { ReactNode } from "react";
+import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export default async function CheckoutLayout({ children }: { children: React.ReactNode }) {
+export default async function CheckoutLayout({ children }: { children: ReactNode }) {
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session?.user) {
         redirect("/login");
     }
 

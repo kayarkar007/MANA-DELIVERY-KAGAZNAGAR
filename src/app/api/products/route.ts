@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
+import { requireAdmin } from "@/lib/routeAuth";
 import Product from "@/models/Product";
 
 export async function GET(request: Request) {
@@ -56,6 +57,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        const auth = await requireAdmin();
+        if ("response" in auth) return auth.response;
+
         await connectToDatabase();
         const body = await request.json();
         const stockQuantity = Math.max(0, Number(body.stockQuantity) || 0);

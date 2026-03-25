@@ -63,9 +63,8 @@ export default function AddToCartButton({ product }: { product: any }) {
                     image: product.image,
                 });
 
-                toast.success(`${product.name} added to cart`, {
-                    description: `${formatCurrency(product.price)} • ${product.unit || "Standard pack"}`,
-                });
+                const description = `${formatCurrency(product.price)} | ${product.unit || "Standard pack"}`;
+                toast.success(`${product.name} added to cart`, { description });
             }}
             className="app-button app-button-primary rounded-[1.15rem] px-4 py-3 text-[11px]"
         >

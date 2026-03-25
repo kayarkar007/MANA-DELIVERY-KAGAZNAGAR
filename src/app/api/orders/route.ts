@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/routeAuth";
 import { hydrateOrderItemImages } from "@/lib/orderData";
 import { createNotification, notifyAdmins } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
+import { getInventoryItems, reserveInventory, restoreInventory, type InventoryItem } from "@/lib/inventory";
 import { createWalletTransaction } from "@/lib/wallet";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
@@ -68,6 +69,10 @@ async function validatePromoCode(code: string | undefined, subtotal: number) {
 }
 
 export async function POST(request: Request) {
+    let reservedInventory: InventoryItem[] = [];
+    let inventoryReserved = false;
+    let orderCreated = false;
+
     try {
         await connectToDatabase();
 
@@ -111,7 +116,7 @@ export async function POST(request: Request) {
             }
 
             const products = await Product.find({ _id: { $in: productIds } })
-                .select("_id name price image")
+                .select("_id name price image stockQuantity")
                 .lean();
 
             const productMap = new Map(
@@ -125,6 +130,10 @@ export async function POST(request: Request) {
 
                 if (!product || quantity < 1) {
                     throw new Error("One or more cart items are invalid or unavailable");
+                }
+
+                if ((Number(product.stockQuantity) || 0) < quantity) {
+                    throw new Error(`${product.name} is out of stock for the requested quantity`);
                 }
 
                 return {
@@ -180,6 +189,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: "UPI transaction ID is required" }, { status: 400 });
         }
 
+        reservedInventory = type === "product" ? getInventoryItems(normalizedItems) : [];
+        if (reservedInventory.length > 0) {
+            await reserveInventory(reservedInventory);
+            inventoryReserved = true;
+        }
+
         const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
         const order = await Order.create({
@@ -219,6 +234,7 @@ export async function POST(request: Request) {
             ],
             deliveryOtp,
         });
+        orderCreated = true;
 
         if (walletUsed > 0 && userId) {
             await createWalletTransaction({
@@ -304,6 +320,14 @@ Order Tracking ID: #${order._id.toString().slice(-6).toUpperCase()}`;
 
         return NextResponse.json({ success: true, data: order, redirectUrl });
     } catch (error: any) {
+        if (!orderCreated && inventoryReserved && reservedInventory.length > 0) {
+            try {
+                await restoreInventory(reservedInventory);
+            } catch (restoreError) {
+                console.error("Failed to restore inventory after order creation error", restoreError);
+            }
+        }
+
         return NextResponse.json(
             { success: false, error: error.message || "Failed to place order" },
             { status: 400 }

@@ -44,13 +44,24 @@ export default function MobileNav() {
     const pathname = usePathname();
     const { data: session } = useSession();
 
-    if (pathname?.startsWith("/admin") || pathname?.startsWith("/rider")) return null;
+    const hideNav =
+        pathname?.startsWith("/admin") ||
+        pathname?.startsWith("/rider") ||
+        pathname === "/checkout" ||
+        pathname?.startsWith("/track") ||
+        pathname === "/login" ||
+        pathname === "/signup" ||
+        pathname === "/forgot-password" ||
+        pathname === "/reset-password" ||
+        pathname === "/verify-email";
+
+    if (hideNav) return null;
 
     const navItems = getNavItems(session?.user.role);
 
     return (
-        <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-3 pt-2 md:hidden">
-            <div className="mx-auto flex h-[4.85rem] max-w-xl items-center justify-around rounded-[2rem] border border-[rgba(214,160,70,0.14)] bg-[rgba(14,6,8,0.82)] px-2 pb-[max(0.15rem,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(0,0,0,0.35)] backdrop-blur-3xl">
+        <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pt-2 md:hidden" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+            <div className="mx-auto flex h-[5.15rem] max-w-xl items-center justify-around rounded-[2.15rem] border border-[rgba(214,160,70,0.14)] bg-[rgba(14,6,8,0.88)] px-2 shadow-[0_-18px_50px_rgba(0,0,0,0.35)] backdrop-blur-3xl">
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
@@ -60,7 +71,7 @@ export default function MobileNav() {
                             key={item.label}
                             href={item.href}
                             className={cn(
-                                "relative flex h-full flex-1 flex-col items-center justify-center gap-1.5 rounded-[1.35rem] text-[10px] font-black uppercase tracking-[0.18em] transition",
+                                "relative flex h-full flex-1 flex-col items-center justify-center gap-1.5 rounded-[1.4rem] text-[10px] font-black uppercase tracking-[0.18em] transition",
                                 isActive ? "text-white" : "text-[#9b7d77]",
                             )}
                         >

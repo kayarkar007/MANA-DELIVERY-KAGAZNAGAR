@@ -7,9 +7,11 @@ import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "https://manadelivery.vercel.app"),
+  applicationName: "Mana Delivery",
   title: "Mana Delivery - #1 Delivery App in Kagaznagar",
   description: "Order food, groceries & more online in Kagaznagar. Superfast local delivery right to your door with the Mana Delivery app. Vocal for Local!",
   keywords: ["Mana Delivery", "Kagaznagar Food Delivery", "Grocery Delivery Kagaznagar", "Localu Delivery App", "Online shopping Kagaznagar"],
+  category: "shopping",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.png",
@@ -38,6 +40,10 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+  },
   verification: {
     google: "IoKUEh7XbSc43fQ_WHPFGJVPbJ4GMjIk1TddDzo511w",
   },
@@ -47,6 +53,7 @@ export const viewport: Viewport = {
   themeColor: "#090405",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -56,7 +63,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      <body className="overflow-x-hidden font-sans antialiased">
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
             <Toaster position="top-center" richColors />

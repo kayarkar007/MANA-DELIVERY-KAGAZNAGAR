@@ -30,7 +30,19 @@ export default function FloatingCart({ onCartClick }: { onCartClick: () => void 
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    if (pathname === "/checkout" || pathname?.startsWith("/admin")) {
+    const hideFloatingCart =
+        pathname === "/checkout" ||
+        pathname?.startsWith("/admin") ||
+        pathname?.startsWith("/rider") ||
+        pathname?.startsWith("/profile") ||
+        pathname?.startsWith("/track") ||
+        pathname === "/login" ||
+        pathname === "/signup" ||
+        pathname === "/forgot-password" ||
+        pathname === "/reset-password" ||
+        pathname === "/verify-email";
+
+    if (hideFloatingCart) {
         return null;
     }
 
@@ -42,8 +54,8 @@ export default function FloatingCart({ onCartClick }: { onCartClick: () => void 
             whileTap={{ scale: 0.9 }}
             onClick={onCartClick}
             aria-label="Open Floating Cart"
-            style={{ willChange: "transform, opacity" }}
-            className="fixed bottom-24 right-5 z-40 flex h-16 w-16 items-center justify-center rounded-[1.5rem] border border-white/45 bg-[linear-gradient(135deg,var(--primary),var(--primary-strong))] text-white shadow-[0_24px_50px_rgba(217,71,47,0.38)] backdrop-blur-lg md:bottom-8 md:right-10"
+            style={{ willChange: "transform, opacity", bottom: "calc(6.25rem + env(safe-area-inset-bottom))" }}
+            className="fixed right-4 z-40 flex h-15 w-15 items-center justify-center rounded-[1.4rem] border border-white/45 bg-[linear-gradient(135deg,var(--primary),var(--primary-strong))] text-white shadow-[0_24px_50px_rgba(217,71,47,0.38)] backdrop-blur-lg md:bottom-8 md:right-10 md:h-16 md:w-16"
         >
             <ShoppingCart className="h-7 w-7" />
             {itemCount > 0 && (

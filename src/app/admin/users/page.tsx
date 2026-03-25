@@ -14,18 +14,39 @@ export default function AdminUsersPage() {
 
     const fetchUsers = async () => {
         setLoading(true);
-        const params = new URLSearchParams({
-            page: String(page),
-            limit: "20",
-        });
-        if (search.trim()) params.set("search", search.trim());
+        let lastError = "Failed to fetch users";
 
-        const res = await fetch(`/api/admin/users?${params.toString()}`);
-        const data = await res.json();
-        if (data.success) {
-            setUsers(data.data || []);
-            setTotalPages(data.pagination?.totalPages || 1);
+        for (const delayMs of [0, 800]) {
+            if (delayMs) {
+                await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    page: String(page),
+                    limit: "20",
+                });
+                if (search.trim()) params.set("search", search.trim());
+
+                const res = await fetch(`/api/admin/users?${params.toString()}`, { cache: "no-store" });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || "Failed to fetch users");
+                }
+
+                setUsers(data.data || []);
+                setTotalPages(data.pagination?.totalPages || 1);
+                setLoading(false);
+                return;
+            } catch (error: any) {
+                lastError = error.message || lastError;
+            }
         }
+
+        setUsers([]);
+        setTotalPages(1);
+        toast.error(lastError);
         setLoading(false);
     };
 

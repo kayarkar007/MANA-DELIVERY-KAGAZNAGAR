@@ -88,7 +88,7 @@ export async function PATCH(req: Request) {
                 recipientId: body.userId,
                 recipientRole: "user",
                 title: "Wallet Updated",
-                message: `${type === "credit" ? "₹" + amount + " added to" : "₹" + amount + " deducted from"} your wallet`,
+                message: `${type === "credit" ? "Rs " + amount + " added to" : "Rs " + amount + " deducted from"} your wallet`,
                 type: "wallet",
                 href: "/profile/wallet",
                 metadata: { balanceAfter: result.balanceAfter },

@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
+import { requireAdmin } from "@/lib/routeAuth";
 import Product from "@/models/Product";
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
     try {
+        const auth = await requireAdmin();
+        if ("response" in auth) return auth.response;
+
         await connectToDatabase();
         const params = await context.params;
         const id = params.id;
@@ -29,6 +33,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
     try {
+        const auth = await requireAdmin();
+        if ("response" in auth) return auth.response;
+
         await connectToDatabase();
         const params = await context.params;
         const id = params.id;

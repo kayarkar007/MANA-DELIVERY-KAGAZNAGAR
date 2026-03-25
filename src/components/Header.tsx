@@ -23,7 +23,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
     const ThemeIcon = mounted && isDark ? Sun : Moon;
 
     return (
-        <header className="sticky top-0 z-50 px-2.5 pt-2.5 sm:px-4 sm:pt-4">
+        <header className="sticky z-50 px-2.5 sm:px-4" style={{ top: "env(safe-area-inset-top)", paddingTop: "max(0.625rem, env(safe-area-inset-top))" }}>
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 rounded-[1.75rem] border border-[rgba(214,160,70,0.14)] bg-[rgba(14,6,8,0.78)] px-2.5 py-2.5 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-2xl sm:gap-3 sm:rounded-[2rem] sm:px-5 sm:py-3">
                 <Link href="/" className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
                     <motion.div

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import { hydrateOrderItemImages } from "@/lib/orderData";
+import { getInventoryItems, restoreInventory } from "@/lib/inventory";
 import { getMappedOrderStatus } from "@/lib/orderPresentation";
 import { createNotification } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
@@ -86,6 +87,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         }
 
         const refundCredit = getRefundCredit(order);
+        const inventoryItems = order.type === "product" ? getInventoryItems(order.items) : [];
 
         order.status = "cancelled";
         order.deliveryStatus = "cancelled";
@@ -104,6 +106,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
             }),
         ];
         await order.save();
+
+        if (inventoryItems.length > 0) {
+            await restoreInventory(inventoryItems);
+        }
 
         if (refundCredit > 0 && order.userId) {
             await createWalletTransaction({
@@ -172,6 +178,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const previousStatus = order.status;
         const previousDeliveryStatus = order.deliveryStatus;
         const previousRefundStatus = order.refundStatus;
+        const inventoryItems = order.type === "product" ? getInventoryItems(order.items) : [];
 
         let assignedRider: any = null;
 
@@ -291,7 +298,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             ];
         }
 
+        const shouldRestoreInventory =
+            previousStatus !== "cancelled" &&
+            order.status === "cancelled" &&
+            inventoryItems.length > 0;
+
         await order.save();
+
+        if (shouldRestoreInventory) {
+            await restoreInventory(inventoryItems);
+        }
 
         let whatsappRedirectUrl = null;
         let riderWhatsappUrl = null;

@@ -1,23 +1,63 @@
 {
-    "name": "Mana Delivery",
-    "short_name": "Mana Delivery",
-    "description": "Kagaznagar ki apni hyperlocal delivery service.",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#dc2626",
-    "icons": [
-        {
-            "src": "/logo2.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/logo2.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ]
+  "id": "/",
+  "name": "Mana Delivery",
+  "short_name": "Mana",
+  "description": "Kagaznagar ki apni hyperlocal delivery service.",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait",
+  "background_color": "#090405",
+  "theme_color": "#090405",
+  "categories": ["shopping", "food", "lifestyle", "business"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/logo2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "url": "/search",
+      "icons": [{ "src": "/logo2.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "url": "/profile",
+      "icons": [{ "src": "/logo2.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "url": "/profile/wallet",
+      "icons": [{ "src": "/logo2.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
 }

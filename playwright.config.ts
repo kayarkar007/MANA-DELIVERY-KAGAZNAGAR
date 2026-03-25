@@ -3,10 +3,11 @@ const projectRoot = process.cwd();
 
 export default defineConfig({
   testDir: './tests',
-  fullyParallel: true,
+  globalSetup: './tests/global.setup.ts',
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: 'html',
   webServer: {
     command: 'node ./node_modules/next/dist/bin/next dev . --webpack --port 3000',

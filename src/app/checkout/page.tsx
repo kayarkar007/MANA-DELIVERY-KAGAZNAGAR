@@ -190,7 +190,7 @@ export default function CheckoutPage() {
             window.open(orderResponse.redirectUrl, "_blank");
         }
         toast.success("Order placed successfully", { description });
-        setTimeout(() => router.push("/profile"), 900);
+        router.replace("/profile");
     };
 
     const handlePlaceOrder = async (event: React.FormEvent) => {

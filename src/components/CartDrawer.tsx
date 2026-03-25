@@ -35,6 +35,7 @@ export default function CartDrawer({
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", damping: 30, stiffness: 300 }}
                         className="fixed inset-y-0 right-0 z-50 flex w-full max-w-full flex-col border-l border-white/45 bg-[rgba(255,252,247,0.94)] shadow-[0_0_65px_rgba(15,23,42,0.12)] backdrop-blur-3xl dark:border-white/8 dark:bg-[rgba(9,16,29,0.94)] sm:max-w-md"
+                        style={{ paddingTop: "env(safe-area-inset-top)" }}
                     >
                         <div className="flex items-center justify-between border-b border-slate-200/80 p-6 dark:border-slate-800/90 md:p-8">
                             <div>
@@ -113,7 +114,7 @@ export default function CartDrawer({
                         </div>
 
                         {cart.length > 0 && (
-                            <div className="rounded-t-[2.5rem] border-t border-slate-200/80 bg-white/75 p-6 shadow-[0_-20px_50px_rgba(15,23,42,0.05)] backdrop-blur-md dark:border-slate-800/90 dark:bg-slate-950/72 md:p-8">
+                            <div className="rounded-t-[2.5rem] border-t border-slate-200/80 bg-white/75 p-6 shadow-[0_-20px_50px_rgba(15,23,42,0.05)] backdrop-blur-md dark:border-slate-800/90 dark:bg-slate-950/72 md:p-8" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
                                 <div className="mb-8 space-y-3 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
                                     <div className="flex items-center justify-between">
                                         <span>Subtotal</span>
