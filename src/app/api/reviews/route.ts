@@ -4,6 +4,7 @@ import Review from "@/models/Review";
 import Order from "@/models/Order";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { notifyAdmins } from "@/lib/notifications";
 
 export async function POST(req: Request) {
     try {
@@ -42,6 +43,14 @@ export async function POST(req: Request) {
             orderId,
             rating,
             comment
+        });
+
+        await notifyAdmins({
+            title: "New Review Submitted",
+            message: `Review received for order #${orderId.toString().slice(-6).toUpperCase()}`,
+            type: "review",
+            href: "/admin/reviews",
+            metadata: { reviewId: review._id.toString(), orderId },
         });
 
         return NextResponse.json({ success: true, data: review }, { status: 201 });

@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         // If productId is not set on review, we show order-level reviews by orderId.
         // Here we aggregate by orderId as a proxy (per-category).
         const pipeline = [
-            { $match: { productId: { $in: productIds } } },
+            { $match: { productId: { $in: productIds }, status: "approved" } },
             {
                 $group: {
                     _id: "$productId",
