@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import { requireUser } from "@/lib/routeAuth";
 import { hydrateOrderItemImages } from "@/lib/orderData";
+import { createNotification, notifyAdmins } from "@/lib/notifications";
+import { buildOrderHistoryEntry } from "@/lib/orderHistory";
+import { createWalletTransaction } from "@/lib/wallet";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
 import PromoCode from "@/models/PromoCode";
@@ -11,6 +14,18 @@ import User from "@/models/User";
 
 function formatCurrency(value: number) {
     return `Rs ${value.toFixed(2)}`;
+}
+
+function getInitialPaymentStatus(paymentMethod: string, total: number) {
+    if (paymentMethod === "cod") {
+        return "cod_pending";
+    }
+
+    if (paymentMethod === "wallet" && total === 0) {
+        return "verified";
+    }
+
+    return "pending";
 }
 
 async function validatePromoCode(code: string | undefined, subtotal: number) {
@@ -184,6 +199,7 @@ export async function POST(request: Request) {
             total,
             tipAmount,
             paymentMethod,
+            paymentStatus: getInitialPaymentStatus(paymentMethod, total),
             transactionId: transactionId || undefined,
             customerName,
             customerPhone,
@@ -191,12 +207,27 @@ export async function POST(request: Request) {
             latitude,
             longitude,
             deliveryStatus: "pending",
+            statusHistory: [
+                buildOrderHistoryEntry({
+                    status: "pending",
+                    deliveryStatus: "pending",
+                    label: "Order placed",
+                    note: type === "product" ? "Customer created a product order" : "Customer created a service request",
+                    actorRole: userId ? "user" : "guest",
+                    actorId: userId,
+                }),
+            ],
             deliveryOtp,
         });
 
         if (walletUsed > 0 && userId) {
-            await User.findByIdAndUpdate(userId, {
-                $inc: { walletBalance: -walletUsed },
+            await createWalletTransaction({
+                userId,
+                amount: walletUsed,
+                type: "debit",
+                source: "order_payment",
+                note: `Wallet applied to order #${order._id.toString().slice(-6).toUpperCase()}`,
+                orderId: order._id.toString(),
             });
         }
 
@@ -251,6 +282,26 @@ Order Tracking ID: #${order._id.toString().slice(-6).toUpperCase()}`;
         const ownerNumber = process.env.OWNER_NUMBER || "917659989336";
         const redirectUrl = `https://wa.me/${ownerNumber}?text=${encodeURIComponent(finalWhatsappText)}`;
 
+        if (userId) {
+            await createNotification({
+                recipientId: userId,
+                recipientRole: "user",
+                title: "Order Placed",
+                message: `Your order #${order._id.toString().slice(-6).toUpperCase()} was placed successfully`,
+                type: "order",
+                href: "/profile",
+                metadata: { orderId: order._id.toString() },
+            });
+        }
+
+        await notifyAdmins({
+            title: "New Order",
+            message: `${customerName} placed order #${order._id.toString().slice(-6).toUpperCase()}`,
+            type: "order",
+            href: "/admin/orders",
+            metadata: { orderId: order._id.toString(), type },
+        });
+
         return NextResponse.json({ success: true, data: order, redirectUrl });
     } catch (error: any) {
         return NextResponse.json(
@@ -283,10 +334,49 @@ export async function GET(req: Request) {
             }
         }
 
-        const orders = await Order.find(query).sort({ createdAt: -1 });
+        const page = Math.max(1, Number(searchParams.get("page")) || 1);
+        const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 50));
+        const status = searchParams.get("status");
+        const refundStatus = searchParams.get("refundStatus");
+        const paymentStatus = searchParams.get("paymentStatus");
+        const search = `${searchParams.get("search") || ""}`.trim();
+
+        if (status) {
+            query.status = status;
+        }
+        if (refundStatus) {
+            query.refundStatus = refundStatus;
+        }
+        if (paymentStatus) {
+            query.paymentStatus = paymentStatus;
+        }
+        if (search) {
+            query.$or = [
+                { customerName: { $regex: search, $options: "i" } },
+                { customerPhone: { $regex: search, $options: "i" } },
+                { address: { $regex: search, $options: "i" } },
+                { transactionId: { $regex: search, $options: "i" } },
+                { promoCode: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        const total = await Order.countDocuments(query);
+        const orders = await Order.find(query)
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
         const hydratedOrders = await hydrateOrderItemImages(orders);
 
-        return NextResponse.json({ success: true, data: hydratedOrders }, { status: 200 });
+        return NextResponse.json({
+            success: true,
+            data: hydratedOrders,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.max(1, Math.ceil(total / limit)),
+            },
+        }, { status: 200 });
     } catch (error: any) {
         return NextResponse.json(
             { success: false, error: "Failed to fetch orders" },

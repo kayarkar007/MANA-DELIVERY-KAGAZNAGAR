@@ -24,6 +24,11 @@ export interface IOrder extends Document {
     tipAmount?: number;
     paymentMethod?: "cod" | "upi" | "wallet" | "razorpay";
     transactionId?: string;
+    paymentStatus?: "pending" | "verified" | "failed" | "refunded" | "cod_pending";
+    refundStatus?: "none" | "requested" | "approved" | "rejected" | "processed";
+    refundReason?: string;
+    refundRequestedAt?: Date;
+    refundedAt?: Date;
     customerName: string;
     customerPhone: string;
     address: string;
@@ -35,6 +40,15 @@ export interface IOrder extends Document {
         longitude: number;
     };
     deliveryStatus: "pending" | "assigned" | "accepted" | "declined" | "picked_up" | "out_for_delivery" | "delivered" | "cancelled";
+    statusHistory?: Array<{
+        status?: string;
+        deliveryStatus?: string;
+        label: string;
+        note?: string;
+        actorRole?: string;
+        actorId?: string;
+        at: Date;
+    }>;
     deliveryOtp?: string;
     estimatedDeliveryTime?: Date;
     createdAt: Date;
@@ -72,6 +86,19 @@ const OrderSchema: Schema = new Schema(
         tipAmount: { type: Number, default: 0 },
         paymentMethod: { type: String, enum: ["cod", "upi", "wallet", "razorpay"], default: "cod" },
         transactionId: { type: String },
+        paymentStatus: {
+            type: String,
+            enum: ["pending", "verified", "failed", "refunded", "cod_pending"],
+            default: "pending",
+        },
+        refundStatus: {
+            type: String,
+            enum: ["none", "requested", "approved", "rejected", "processed"],
+            default: "none",
+        },
+        refundReason: { type: String },
+        refundRequestedAt: { type: Date },
+        refundedAt: { type: Date },
         customerName: { type: String, required: true },
         customerPhone: { type: String, required: true },
         address: { type: String, required: true },
@@ -87,6 +114,17 @@ const OrderSchema: Schema = new Schema(
             enum: ["pending", "assigned", "accepted", "declined", "picked_up", "out_for_delivery", "delivered", "cancelled"],
             default: "pending"
         },
+        statusHistory: [
+            {
+                status: { type: String },
+                deliveryStatus: { type: String },
+                label: { type: String, required: true },
+                note: { type: String },
+                actorRole: { type: String },
+                actorId: { type: String },
+                at: { type: Date, default: Date.now },
+            },
+        ],
         deliveryOtp: { type: String },
         estimatedDeliveryTime: { type: Date }
     },
