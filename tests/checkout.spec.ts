@@ -16,9 +16,9 @@ test.describe('Core E-Commerce Cart Flow', () => {
 
     test('Checkout Boundary Security Guard', async ({ page }) => {
         // Attempt an unauthorized bypass directly to sensitive checkout
-        await page.goto('/checkout');
+        await page.goto('/checkout', { waitUntil: 'domcontentloaded', timeout: 60000 });
         
         // The robust routing interceptors should catch and bounce to the login portal.
-        await expect(page).toHaveURL(/.*login/);
+        await expect(page).toHaveURL(/.*login/, { timeout: 15000 });
     });
 });

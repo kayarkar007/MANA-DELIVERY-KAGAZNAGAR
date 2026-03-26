@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -12,6 +12,7 @@ export default function NotificationBell() {
     const [loading, setLoading] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const panelRef = useRef<HTMLDivElement | null>(null);
 
     const fetchNotifications = async (silent = false) => {
         if (!session?.user) return;
@@ -43,6 +44,13 @@ export default function NotificationBell() {
         if (!session?.user) return;
 
         fetchNotifications();
+        const notificationStream = new EventSource("/api/notifications/stream");
+        notificationStream.onmessage = () => {
+            fetchNotifications(true);
+        };
+        notificationStream.onerror = () => {
+            // Fall back to interval polling if the stream drops.
+        };
 
         const tick = () => {
             if (document.visibilityState === "visible") {
@@ -54,10 +62,24 @@ export default function NotificationBell() {
         document.addEventListener("visibilitychange", tick);
 
         return () => {
+            notificationStream.close();
             clearInterval(interval);
             document.removeEventListener("visibilitychange", tick);
         };
     }, [session?.user?.id]);
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handlePointerDown = (event: MouseEvent) => {
+            if (!panelRef.current?.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handlePointerDown);
+        return () => document.removeEventListener("mousedown", handlePointerDown);
+    }, [open]);
 
     if (!session?.user) return null;
 
@@ -82,7 +104,10 @@ export default function NotificationBell() {
             </button>
 
             {open && (
-                <div className="absolute right-0 z-50 mt-3 w-[20rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:w-[22rem] sm:max-w-[calc(100vw-2rem)]">
+                <div
+                    ref={panelRef}
+                    className="fixed inset-x-2 top-[calc(env(safe-area-inset-top)+4.75rem)] z-50 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-[22rem] sm:max-w-[calc(100vw-2rem)]"
+                >
                     <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div>
                             <p className="text-sm font-black text-slate-900 dark:text-white">Notifications</p>
@@ -96,7 +121,7 @@ export default function NotificationBell() {
                         </button>
                     </div>
 
-                    <div className="max-h-[24rem] overflow-y-auto">
+                    <div className="overflow-y-auto" style={{ maxHeight: "min(24rem, calc(100vh - 8rem))" }}>
                         {loading ? (
                             <div className="p-8 flex justify-center">
                                 <Loader2 className="w-6 h-6 animate-spin text-red-600" />

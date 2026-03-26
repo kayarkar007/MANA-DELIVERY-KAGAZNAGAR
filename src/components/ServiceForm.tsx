@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { getCurrentLocation } from "@/lib/geolocation";
 import { Loader2, MapPin } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export default function ServiceForm({ categoryName }: { categoryName: string }) {
     const { data: session } = useSession();
+    const router = useRouter();
+    const pathname = usePathname();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<any>({});
     const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
@@ -26,15 +29,25 @@ export default function ServiceForm({ categoryName }: { categoryName: string }) 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError("");
+
+        if (!session?.user?.id) {
+            router.push(`/login?callbackUrl=${encodeURIComponent(pathname || "/")}`);
+            return;
+        }
+
+        if (!navigator.onLine) {
+            setError("You're offline. Reconnect to submit a service request.");
+            return;
+        }
+
+        setLoading(true);
 
         try {
             const location = await getCurrentLocation();
 
             const payload = {
                 type: "service",
-                userId: (session as any)?.user?.id,
                 serviceCategory: categoryName,
                 serviceDetails: formData,
                 customerName: customer.name,
@@ -318,7 +331,7 @@ export default function ServiceForm({ categoryName }: { categoryName: string }) 
                     </>
                 ) : (
                     <>
-                        <MapPin className="w-6 h-6" /> Share GPS & Request Service
+                        <MapPin className="w-6 h-6" /> {session?.user?.id ? "Share GPS & Request Service" : "Log In to Request Service"}
                     </>
                 )}
             </button>

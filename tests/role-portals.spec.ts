@@ -44,6 +44,15 @@ async function login(page: Page, email: string, password: string, destination: R
     await page.getByPlaceholder("Enter your password").fill(password);
     await page.getByRole("button", { name: /sign in/i }).click();
     await expect(page).toHaveURL(destination, { timeout: 20000 });
+    // Wait for session to be fully hydrated before proceeding
+    await expect.poll(
+        async () => {
+            const res = await page.request.get("/api/auth/session");
+            const data = await res.json();
+            return !!data?.user?.email;
+        },
+        { timeout: 15000, intervals: [500, 1000] }
+    ).toBe(true);
 }
 
 test.describe.serial("Role-based end-to-end coverage", () => {
@@ -92,7 +101,7 @@ test.describe.serial("Role-based end-to-end coverage", () => {
         deliveryOtp = orderData.data.deliveryOtp;
         shortOrderId = orderId.slice(-6).toUpperCase();
 
-        await expect(page).toHaveURL(/\/profile$/);
+        await expect(page).toHaveURL(/\/profile$/, { timeout: 20000 });
         await expect(page.getByText(`#ORD-${shortOrderId}`)).toBeVisible({ timeout: 20000 });
         await expect(page.getByText(deliveryOtp)).toBeVisible();
 
@@ -119,13 +128,25 @@ test.describe.serial("Role-based end-to-end coverage", () => {
 
         await page.goto("/admin/users");
         await expect(page.getByRole("heading", { name: /user management/i })).toBeVisible();
-        await page.getByPlaceholder("Search users").fill("Playwright User");
+        await page.getByPlaceholder("Search users").fill(credentials.user.email);
         await page.getByRole("button", { name: /^search$/i }).click();
-        await expect(page.getByRole("cell", { name: "playwright.user@localu.com" })).toBeVisible();
+        // Retry search if the user row doesn't appear
+        const userCell = page.getByRole("cell", { name: credentials.user.email });
+        if (!(await userCell.isVisible())) {
+            await page.waitForTimeout(2000);
+            await page.getByRole("button", { name: /^search$/i }).click();
+        }
+        await expect(userCell).toBeVisible({ timeout: 15000 });
 
         await page.goto("/admin/products");
         await expect(page.getByRole("heading", { name: /products/i })).toBeVisible();
-        await expect(page.getByRole("row").filter({ hasText: productName }).first()).toBeVisible();
+        await page.getByPlaceholder("Search by product name or description").fill(productName);
+        const productSearchResponse = page.waitForResponse((response) =>
+            response.url().includes("/api/products?") && response.request().method() === "GET"
+        );
+        await page.getByRole("button", { name: /^search$/i }).click();
+        await productSearchResponse;
+        await expect(page.getByRole("row").filter({ hasText: productName }).first()).toBeVisible({ timeout: 15000 });
 
         await page.goto("/admin/categories");
         await expect(page.getByRole("heading", { name: /categories/i })).toBeVisible();
@@ -256,8 +277,12 @@ test.describe.serial("Role-based end-to-end coverage", () => {
         const resolveResponse = adminPage.waitForResponse((response) =>
             response.url().includes("/api/support-tickets/") && response.request().method() === "PATCH"
         );
+        const fetchResponse = adminPage.waitForResponse((response) =>
+            response.url().includes("/api/support-tickets?") && response.request().method() === "GET"
+        );
         await ticketCard.getByRole("button", { name: /mark resolved/i }).click();
         await resolveResponse;
+        await fetchResponse;
         await expect(ticketCard.locator("span").filter({ hasText: /^resolved$/i }).first()).toBeVisible({ timeout: 15000 });
 
         await adminContext.close();

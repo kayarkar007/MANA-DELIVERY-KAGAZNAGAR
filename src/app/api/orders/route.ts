@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import mongoose from "mongoose";
 import connectToDatabase from "@/lib/mongoose";
 import { requireUser } from "@/lib/routeAuth";
 import { hydrateOrderItemImages } from "@/lib/orderData";
@@ -15,6 +14,24 @@ import User from "@/models/User";
 
 function formatCurrency(value: number) {
     return `Rs ${value.toFixed(2)}`;
+}
+
+const rateLimitMap = new Map<string, number[]>();
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const windowStart = now - 60000;
+    const requestTimestamps = rateLimitMap.get(ip) || [];
+    const requestsInWindow = requestTimestamps.filter((t) => t > windowStart);
+    requestsInWindow.push(now);
+    
+    if (rateLimitMap.size > 1000) {
+        const firstKey = rateLimitMap.keys().next().value;
+        if (firstKey) rateLimitMap.delete(firstKey);
+    }
+    
+    rateLimitMap.set(ip, requestsInWindow);
+    return requestsInWindow.length <= 10;
 }
 
 function getInitialPaymentStatus(paymentMethod: string, total: number) {
@@ -70,15 +87,19 @@ async function validatePromoCode(code: string | undefined, subtotal: number) {
 
 export async function POST(request: Request) {
     let reservedInventory: InventoryItem[] = [];
-    let inventoryReserved = false;
-    let orderCreated = false;
 
     try {
+        const auth = await requireUser();
+        if ("response" in auth) return auth.response;
+
+        const userId = auth.session.user.id;
+        if (!checkRateLimit(userId)) {
+            return NextResponse.json({ success: false, error: "Too many requests. Please try again later." }, { status: 429 });
+        }
+
         await connectToDatabase();
 
         const body = await request.json();
-        const session = await getServerSession(authOptions);
-        const userId = session?.user?.id;
 
         const type = body.type;
         const customerName = `${body.customerName || ""}`.trim();
@@ -190,67 +211,81 @@ export async function POST(request: Request) {
         }
 
         reservedInventory = type === "product" ? getInventoryItems(normalizedItems) : [];
-        if (reservedInventory.length > 0) {
-            await reserveInventory(reservedInventory);
-            inventoryReserved = true;
-        }
+        const mongoSession = await mongoose.startSession();
+        let orderObj: any;
 
-        const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+        try {
+            mongoSession.startTransaction();
 
-        const order = await Order.create({
-            type,
-            userId,
-            items: normalizedItems,
-            serviceCategory,
-            serviceDetails,
-            status: "pending",
-            subtotal,
-            deliveryFee,
-            platformFee,
-            tax,
-            discountAmount: promoResult.discountAmount,
-            promoCode: promoResult.promo?.code,
-            walletUsed,
-            total,
-            tipAmount,
-            paymentMethod,
-            paymentStatus: getInitialPaymentStatus(paymentMethod, total),
-            transactionId: transactionId || undefined,
-            customerName,
-            customerPhone,
-            address,
-            latitude,
-            longitude,
-            deliveryStatus: "pending",
-            statusHistory: [
-                buildOrderHistoryEntry({
-                    status: "pending",
-                    deliveryStatus: "pending",
-                    label: "Order placed",
-                    note: type === "product" ? "Customer created a product order" : "Customer created a service request",
-                    actorRole: userId ? "user" : "guest",
-                    actorId: userId,
-                }),
-            ],
-            deliveryOtp,
-        });
-        orderCreated = true;
+            if (reservedInventory.length > 0) {
+                await reserveInventory(reservedInventory, mongoSession);
+            }
 
-        if (walletUsed > 0 && userId) {
-            await createWalletTransaction({
+            const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+            const order = await Order.create([{
+                type,
                 userId,
-                amount: walletUsed,
-                type: "debit",
-                source: "order_payment",
-                note: `Wallet applied to order #${order._id.toString().slice(-6).toUpperCase()}`,
-                orderId: order._id.toString(),
-            });
-        }
+                items: normalizedItems,
+                serviceCategory,
+                serviceDetails,
+                status: "pending",
+                subtotal,
+                deliveryFee,
+                platformFee,
+                tax,
+                discountAmount: promoResult.discountAmount,
+                promoCode: promoResult.promo?.code,
+                walletUsed,
+                total,
+                tipAmount,
+                paymentMethod,
+                paymentStatus: getInitialPaymentStatus(paymentMethod, total),
+                transactionId: transactionId || undefined,
+                customerName,
+                customerPhone,
+                address,
+                latitude,
+                longitude,
+                deliveryStatus: "pending",
+                statusHistory: [
+                    buildOrderHistoryEntry({
+                        status: "pending",
+                        deliveryStatus: "pending",
+                        label: "Order placed",
+                        note: type === "product" ? "Customer created a product order" : "Customer created a service request",
+                        actorRole: userId ? "user" : "guest",
+                        actorId: userId,
+                    }),
+                ],
+                deliveryOtp,
+            }], { session: mongoSession });
 
-        if (promoResult.promo && promoResult.discountAmount > 0) {
-            await PromoCode.findByIdAndUpdate(promoResult.promo._id, {
-                $inc: { usedCount: 1 },
-            });
+            orderObj = order[0];
+
+            if (walletUsed > 0 && userId) {
+                await createWalletTransaction({
+                    userId,
+                    amount: walletUsed,
+                    type: "debit",
+                    source: "order_payment",
+                    note: `Wallet applied to order #${orderObj._id.toString().slice(-6).toUpperCase()}`,
+                    orderId: orderObj._id.toString(),
+                }, mongoSession);
+            }
+
+            if (promoResult.promo && promoResult.discountAmount > 0) {
+                await PromoCode.findByIdAndUpdate(promoResult.promo._id, {
+                    $inc: { usedCount: 1 },
+                }, { session: mongoSession });
+            }
+
+            await mongoSession.commitTransaction();
+        } catch (txnError) {
+            await mongoSession.abortTransaction();
+            throw txnError;
+        } finally {
+            mongoSession.endSession();
         }
 
         let whatsappText = "";
@@ -293,7 +328,7 @@ Google Maps: https://www.google.com/maps?q=${latitude},${longitude}`;
 --------------------------------
 Payment: ${paymentMethod.toUpperCase()}
 ${transactionId ? `Txn ID: ${transactionId}\n` : ""}--------------------------------
-Order Tracking ID: #${order._id.toString().slice(-6).toUpperCase()}`;
+Order Tracking ID: #${orderObj._id.toString().slice(-6).toUpperCase()}`;
 
         const ownerNumber = process.env.OWNER_NUMBER || "917659989336";
         const redirectUrl = `https://wa.me/${ownerNumber}?text=${encodeURIComponent(finalWhatsappText)}`;
@@ -303,31 +338,23 @@ Order Tracking ID: #${order._id.toString().slice(-6).toUpperCase()}`;
                 recipientId: userId,
                 recipientRole: "user",
                 title: "Order Placed",
-                message: `Your order #${order._id.toString().slice(-6).toUpperCase()} was placed successfully`,
+                message: `Your order #${orderObj._id.toString().slice(-6).toUpperCase()} was placed successfully`,
                 type: "order",
                 href: "/profile",
-                metadata: { orderId: order._id.toString() },
+                metadata: { orderId: orderObj._id.toString() },
             });
         }
 
         await notifyAdmins({
             title: "New Order",
-            message: `${customerName} placed order #${order._id.toString().slice(-6).toUpperCase()}`,
+            message: `${customerName} placed order #${orderObj._id.toString().slice(-6).toUpperCase()}`,
             type: "order",
             href: "/admin/orders",
-            metadata: { orderId: order._id.toString(), type },
+            metadata: { orderId: orderObj._id.toString(), type },
         });
 
-        return NextResponse.json({ success: true, data: order, redirectUrl });
+        return NextResponse.json({ success: true, data: orderObj, redirectUrl });
     } catch (error: any) {
-        if (!orderCreated && inventoryReserved && reservedInventory.length > 0) {
-            try {
-                await restoreInventory(reservedInventory);
-            } catch (restoreError) {
-                console.error("Failed to restore inventory after order creation error", restoreError);
-            }
-        }
-
         return NextResponse.json(
             { success: false, error: error.message || "Failed to place order" },
             { status: 400 }

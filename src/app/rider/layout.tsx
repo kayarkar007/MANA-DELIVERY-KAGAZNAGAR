@@ -11,8 +11,12 @@ export const metadata: Metadata = {
 export default async function RiderLayout({ children }: { children: React.ReactNode }) {
     const session = await getServerSession(authOptions);
 
-    if (!session || !["rider", "admin"].includes(session.user.role)) {
+    if (!session) {
         redirect("/login");
+    }
+
+    if (session.user.role !== "rider") {
+        redirect(session.user.role === "admin" ? "/admin" : "/login");
     }
 
     return (

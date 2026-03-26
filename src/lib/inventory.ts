@@ -1,4 +1,5 @@
 import Product from "@/models/Product";
+import { type ClientSession } from "mongoose";
 
 export type InventoryItem = {
     productId: string;
@@ -32,7 +33,7 @@ export function getInventoryItems(items: unknown): InventoryItem[] {
     );
 }
 
-export async function reserveInventory(items: InventoryItem[]) {
+export async function reserveInventory(items: InventoryItem[], session?: ClientSession) {
     const normalizedItems = coalesceInventory(items);
     const reservedItems: InventoryItem[] = [];
 
@@ -41,7 +42,7 @@ export async function reserveInventory(items: InventoryItem[]) {
             const updated = await Product.findOneAndUpdate(
                 { _id: item.productId, stockQuantity: { $gte: item.quantity } },
                 { $inc: { stockQuantity: -item.quantity } },
-                { new: true, select: "_id stockQuantity" }
+                { new: true, select: "_id stockQuantity", session }
             );
 
             if (!updated) {
@@ -50,13 +51,14 @@ export async function reserveInventory(items: InventoryItem[]) {
 
             await Product.updateOne(
                 { _id: item.productId },
-                { $set: { inStock: Number(updated.stockQuantity) > 0 } }
+                { $set: { inStock: Number(updated.stockQuantity) > 0 } },
+                { session }
             );
 
             reservedItems.push(item);
         }
     } catch (error) {
-        if (reservedItems.length > 0) {
+        if (reservedItems.length > 0 && !session) {
             await restoreInventory(reservedItems);
         }
 
@@ -64,7 +66,7 @@ export async function reserveInventory(items: InventoryItem[]) {
     }
 }
 
-export async function restoreInventory(items: InventoryItem[]) {
+export async function restoreInventory(items: InventoryItem[], session?: ClientSession) {
     const normalizedItems = coalesceInventory(items);
 
     if (normalizedItems.length === 0) {
@@ -77,11 +79,13 @@ export async function restoreInventory(items: InventoryItem[]) {
                 filter: { _id: item.productId },
                 update: { $inc: { stockQuantity: item.quantity } },
             },
-        }))
+        })),
+        { session }
     );
 
     await Product.updateMany(
         { _id: { $in: normalizedItems.map((item) => item.productId) } },
-        { $set: { inStock: true } }
+        { $set: { inStock: true } },
+        { session }
     );
 }

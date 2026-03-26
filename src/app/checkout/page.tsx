@@ -197,6 +197,12 @@ export default function CheckoutPage() {
         event.preventDefault();
         setPlacingOrder(true);
 
+        if (!navigator.onLine) {
+            toast.error("You're offline. Reconnect before placing an order.");
+            setPlacingOrder(false);
+            return;
+        }
+
         if (paymentMethod === "upi" && !upiId) {
             toast.error("UPI ID is not configured.");
             setPlacingOrder(false);

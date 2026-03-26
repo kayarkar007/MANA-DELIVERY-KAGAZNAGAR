@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
+import NotificationBell from "@/components/NotificationBell";
 import {
     getOrderItemSummary,
     getOrderMetaLabel,
@@ -127,6 +128,11 @@ export default function RiderDashboard() {
     };
 
     const handleShiftAction = async (action: "start" | "break_start" | "break_end" | "end") => {
+        if (!navigator.onLine) {
+            toast.error("You're offline. Reconnect before changing your shift.");
+            return;
+        }
+
         setShiftLoading(true);
         try {
             const res = await fetch("/api/rider/shift", {
@@ -249,6 +255,11 @@ export default function RiderDashboard() {
     };
 
     const updateOrderStatus = async (orderId: string, deliveryStatus: string, deliveryOtp?: string) => {
+        if (!navigator.onLine) {
+            toast.error("You're offline. Reconnect before updating delivery status.");
+            return;
+        }
+
         try {
             const res = await fetch("/api/rider/orders", {
                 method: "PATCH",
@@ -320,6 +331,13 @@ export default function RiderDashboard() {
 
         bootstrapDutyState();
         fetchOrders();
+        const notificationStream = new EventSource("/api/notifications/stream");
+        notificationStream.onmessage = () => {
+            fetchOrders(true);
+        };
+        notificationStream.onerror = () => {
+            // Fallback interval below keeps the dashboard fresh.
+        };
 
         const tick = () => {
             if (document.visibilityState === "visible") {
@@ -331,6 +349,7 @@ export default function RiderDashboard() {
         document.addEventListener("visibilitychange", tick);
         return () => {
             isMounted = false;
+            notificationStream.close();
             clearInterval(interval);
             document.removeEventListener("visibilitychange", tick);
 
@@ -399,6 +418,7 @@ export default function RiderDashboard() {
                     <span className={`text-xs font-bold px-2 py-1 rounded-lg ${isOnline ? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20" : "text-red-600 bg-red-50"}`}>
                         {isOnline ? "Online" : "Offline"}
                     </span>
+                    <NotificationBell />
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
                         className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition"

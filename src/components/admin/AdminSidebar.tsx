@@ -22,6 +22,7 @@ import {
     MessageSquareQuote,
 } from "lucide-react";
 import PendingOrderBadge from "@/components/admin/PendingOrderBadge";
+import NotificationBell from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -86,9 +87,12 @@ export default function AdminSidebar() {
                         <p className="truncate text-[9px] font-black uppercase tracking-[0.18em] text-[#b89b92]">Control Panel</p>
                     </div>
                 </Link>
-                <button onClick={() => setIsOpen((value) => !value)} className="app-icon-button h-10 w-10 shrink-0" aria-label="Toggle admin navigation">
-                    {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                    <NotificationBell />
+                    <button onClick={() => setIsOpen((value) => !value)} className="app-icon-button h-10 w-10 shrink-0" aria-label="Toggle admin navigation">
+                        {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                    </button>
+                </div>
             </div>
 
             {isOpen && <div className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden" onClick={() => setIsOpen(false)} />}
@@ -131,9 +135,12 @@ export default function AdminSidebar() {
                                     <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#b89b92]">Control center</p>
                                 </div>
                             </div>
-                            <button onClick={() => signOut({ callbackUrl: "/login" })} className="app-icon-button h-10 w-10" title="Sign Out">
-                                <LogOut className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <NotificationBell />
+                                <button onClick={() => signOut({ callbackUrl: "/login" })} className="app-icon-button h-10 w-10" title="Sign Out">
+                                    <LogOut className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

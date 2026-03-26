@@ -44,6 +44,13 @@ export default function PendingOrderBadge() {
         };
 
         fetchCount();
+        const notificationStream = new EventSource("/api/notifications/stream");
+        notificationStream.onmessage = () => {
+            fetchCount();
+        };
+        notificationStream.onerror = () => {
+            // Fallback interval continues below.
+        };
 
         const tick = () => {
             if (document.visibilityState === "visible") {
@@ -55,6 +62,7 @@ export default function PendingOrderBadge() {
         document.addEventListener("visibilitychange", tick);
 
         return () => {
+            notificationStream.close();
             clearInterval(interval);
             document.removeEventListener("visibilitychange", tick);
         };

@@ -61,7 +61,7 @@ export function getPublicVapidKey() {
 
 export async function sendPushToStoredSubscriptions(
     recipientIds: string[],
-    payloadByRecipient: Map<string, PushPayload>
+    payloadByRecipient: Map<string, PushPayload[]>
 ) {
     if (!recipientIds.length) return;
 
@@ -74,11 +74,13 @@ export async function sendPushToStoredSubscriptions(
     }).lean();
 
     await Promise.all(subscriptions.map(async (subscription: any) => {
-        const payload = payloadByRecipient.get(subscription.userId);
-        if (!payload) return;
+        const payloads = payloadByRecipient.get(subscription.userId) || [];
+        if (!payloads.length) return;
 
         try {
-            await webpush.sendNotification(subscription, buildPayload(payload));
+            for (const payload of payloads) {
+                await webpush.sendNotification(subscription, buildPayload(payload));
+            }
             await PushSubscription.updateOne({ _id: subscription._id }, { $set: { lastUsedAt: new Date() } });
         } catch (error: any) {
             if (error?.statusCode === 404 || error?.statusCode === 410) {
