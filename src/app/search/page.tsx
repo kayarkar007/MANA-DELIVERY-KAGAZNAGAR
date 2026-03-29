@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, SearchX, ShoppingBag } from "lucide-react";
@@ -7,6 +8,33 @@ import AddToCartButton from "@/components/AddToCartButton";
 import { formatCurrency } from "@/lib/utils";
 
 export const revalidate = 0;
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}): Promise<Metadata> {
+  const { q } = await searchParams;
+  const BASE_URL = "https://manadelivery.in";
+
+  if (!q) {
+    return {
+      title: "Search Products in Kagaznagar | Mana Delivery",
+      description:
+        "Search for groceries, food, medicines, and essentials available for home delivery in Kagaznagar on Mana Delivery.",
+      alternates: { canonical: `${BASE_URL}/search` },
+    };
+  }
+
+  return {
+    title: `Buy "${q}" in Kagaznagar – Home Delivery | Mana Delivery`,
+    description: `Search results for "${q}" in Kagaznagar. Fast home delivery of ${q} and related products across Sirpur Kagaznagar by Mana Delivery.`,
+    alternates: { canonical: `${BASE_URL}/search?q=${encodeURIComponent(q)}` },
+    // Prevent indexing transient search queries (good SEO practice)
+    robots: { index: false, follow: true },
+  };
+}
+
 
 async function performSearch(params: { q?: string; minPrice?: string; maxPrice?: string; sort?: string }) {
     try {

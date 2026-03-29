@@ -11,7 +11,34 @@ import { authOptions } from "@/lib/auth";
 const SearchBar = dynamic(() => import("@/components/SearchBar"));
 const RoleBanner = dynamic(() => import("@/components/RoleBanner"));
 
-export const revalidate = 0;
+export const revalidate = 3600; // revalidate every hour
+
+const SEO_PAGES = [
+    { href: "/grocery-delivery-kagaznagar", label: "Grocery Delivery in Kagaznagar" },
+    { href: "/food-delivery-kagaznagar", label: "Food Delivery in Kagaznagar" },
+    { href: "/medicine-delivery-kagaznagar", label: "Medicine Delivery in Kagaznagar" },
+    { href: "/delivery-sirpur-kagaznagar", label: "Delivery in Sirpur Kagaznagar" },
+    { href: "/online-shopping-kagaznagar", label: "Online Shopping in Kagaznagar" },
+];
+
+const homeFaqs = [
+    {
+        q: "What is Mana Delivery?",
+        a: "Mana Delivery is Kagaznagar's own hyperlocal delivery app. We deliver groceries, food, medicines, and daily essentials right to your doorstep in Sirpur Kagaznagar.",
+    },
+    {
+        q: "Which areas does Mana Delivery cover?",
+        a: "We cover Sirpur Kagaznagar, Kagaznagar town, and surrounding areas of Adilabad district, Telangana. Our coverage is expanding regularly.",
+    },
+    {
+        q: "How fast is delivery in Kagaznagar?",
+        a: "Most orders are delivered the same day. Delivery time depends on the category and your location within Kagaznagar.",
+    },
+    {
+        q: "What payment methods does Mana Delivery accept?",
+        a: "We accept UPI, wallet, and cash on delivery. Choose whatever is convenient for you.",
+    },
+];
 
 async function getCategories() {
     try {
@@ -46,8 +73,22 @@ export default async function Home() {
     const categories = await getCategories();
     const session = await getServerSession(authOptions);
 
+    const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: homeFaqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.q,
+            acceptedAnswer: { "@type": "Answer", text: faq.a },
+        })),
+    };
+
     return (
         <div className="space-y-12 sm:space-y-16">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+            />
             <RoleBanner role={session?.user?.role} />
 
             <section className="relative overflow-hidden rounded-[2.5rem] border border-[rgba(214,160,70,0.16)] bg-[linear-gradient(135deg,#120507,#26090d_45%,#6d1016_82%,#d6a046_122%)] px-6 py-8 text-white shadow-[0_28px_90px_rgba(0,0,0,0.34)] sm:px-10 sm:py-12 md:px-14 md:py-16">
@@ -72,7 +113,7 @@ export default async function Home() {
 
                         <div className="space-y-5">
                             <h1 className="app-title max-w-4xl text-5xl text-white sm:text-6xl lg:text-7xl">
-                                Faster local delivery with a cleaner, calmer ordering flow.
+                                Grocery, Food &amp; Medicine Delivery in Kagaznagar, Sirpur
                             </h1>
                             <p className="max-w-2xl text-base leading-8 text-white/78 sm:text-lg">
                                 Groceries, medicines, daily essentials, and trusted services from nearby partners. Built for repeat orders, quick checkout, wallet top-ups, rider tracking, and real local reliability.
@@ -207,6 +248,53 @@ export default async function Home() {
                         ))}
                     </div>
                 )}
+            </section>
+
+            {/* Internal links to SEO landing pages */}
+            <section className="space-y-6">
+                <div className="space-y-2">
+                    <span className="app-kicker">Delivery in Kagaznagar</span>
+                    <h2 className="app-title text-3xl text-slate-900 dark:text-white sm:text-4xl">
+                        What do you need delivered today?
+                    </h2>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {SEO_PAGES.map((page) => (
+                        <Link
+                            key={page.href}
+                            href={page.href}
+                            className="flex items-center justify-between rounded-[1.75rem] border border-slate-200 bg-white p-5 text-sm font-black text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800"
+                        >
+                            {page.label}
+                            <ArrowRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            {/* FAQ Section for SEO */}
+            <section className="space-y-6">
+                <div className="space-y-2">
+                    <span className="app-kicker">Help &amp; FAQs</span>
+                    <h2 className="app-title text-3xl text-slate-900 dark:text-white sm:text-4xl">
+                        Frequently Asked Questions
+                    </h2>
+                </div>
+                <div className="space-y-4">
+                    {homeFaqs.map((faq) => (
+                        <div key={faq.q} className="rounded-[1.75rem] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                            <h3 className="font-black text-slate-900 dark:text-white">{faq.q}</h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{faq.a}</p>
+                        </div>
+                    ))}
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Have more questions?{" "}
+                    <a href="tel:+919494378247" className="font-black text-red-600 hover:underline dark:text-red-400">
+                        Call us: +91 9494378247
+                    </a>{" "}
+                    · 3-1-313 Subhash Chandrabose Colony, Sirpur Kagaznagar 504296
+                </p>
             </section>
         </div>
     );

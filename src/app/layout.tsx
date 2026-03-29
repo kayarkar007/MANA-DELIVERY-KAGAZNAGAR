@@ -4,33 +4,69 @@ import ClientLayout from "@/components/ClientLayout";
 import AuthProvider from "@/components/AuthProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
+import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
+import WebsiteSchema from "@/components/seo/WebsiteSchema";
+
+const BASE_URL = "https://manadelivery.in";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://manadelivery.vercel.app"),
+  metadataBase: new URL(BASE_URL),
   applicationName: "Mana Delivery",
-  title: "Mana Delivery - #1 Delivery App in Kagaznagar",
-  description: "Order food, groceries & more online in Kagaznagar. Superfast local delivery right to your door with the Mana Delivery app. Vocal for Local!",
-  keywords: ["Mana Delivery", "Kagaznagar Food Delivery", "Grocery Delivery Kagaznagar", "Localu Delivery App", "Online shopping Kagaznagar"],
+  title: {
+    default: "Mana Delivery – Grocery, Food & Medicine Delivery in Kagaznagar",
+    template: "%s | Mana Delivery Kagaznagar",
+  },
+  description:
+    "Order groceries, food, medicines & daily essentials online in Sirpur Kagaznagar. Fast hyperlocal delivery to your doorstep. Same-day delivery available! Call +91 9494378247.",
+  keywords: [
+    "delivery in kagaznagar",
+    "grocery delivery kagaznagar",
+    "food delivery kagaznagar",
+    "medicine delivery kagaznagar",
+    "online shopping kagaznagar",
+    "sirpur kagaznagar delivery",
+    "hyperlocal delivery telangana",
+    "mana delivery",
+    "home delivery kagaznagar",
+    "same day delivery kagaznagar",
+    "grocery home delivery sirpur",
+    "daily essentials delivery kagaznagar",
+  ],
   category: "shopping",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.png",
     apple: "/apple-icon.png",
   },
+  alternates: {
+    canonical: BASE_URL,
+  },
   openGraph: {
-    title: "Mana Delivery - Fastest Delivery in Kagaznagar",
-    description: "Order food, groceries, and services online in Kagaznagar. We deliver happiness instantly!",
+    title: "Mana Delivery – Fastest Delivery in Kagaznagar, Sirpur",
+    description:
+      "Order groceries, food, medicines & daily essentials online in Sirpur Kagaznagar. Fast hyperlocal delivery to your doorstep. Same-day delivery available!",
     siteName: "Mana Delivery",
+    url: BASE_URL,
     images: [
       {
-        url: "/logo2.png",
+        url: `${BASE_URL}/og-image.png`,
         width: 1200,
-        height: 600,
-        alt: "Mana Delivery Logo",
+        height: 630,
+        alt: "Mana Delivery — Kagaznagar ki apni delivery service",
       },
     ],
     locale: "en_IN",
     type: "website",
+    countryName: "India",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mana Delivery – Grocery & Food Delivery in Kagaznagar",
+    description:
+      "Fast hyperlocal delivery of groceries, food & medicines in Sirpur Kagaznagar. Order online now!",
+    images: [`${BASE_URL}/og-image.png`],
+    site: "@manadelivery",
+    creator: "@manadelivery",
   },
   appleWebApp: {
     capable: true,
@@ -43,6 +79,11 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
+    // NAP (Name Address Phone) consistency
+    "geo.region": "IN-TG",
+    "geo.placename": "Sirpur Kagaznagar",
+    "geo.position": "19.1667;79.4667",
+    "ICBM": "19.1667, 79.4667",
   },
   verification: {
     google: "IoKUEh7XbSc43fQ_WHPFGJVPbJ4GMjIk1TddDzo511w",
@@ -62,7 +103,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-IN" suppressHydrationWarning>
+      <head>
+        {/* Global JSON-LD structured data */}
+        <LocalBusinessSchema />
+        <WebsiteSchema />
+        {/* Preconnect to critical domains */}
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
       <body className="overflow-x-hidden font-sans antialiased">
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
