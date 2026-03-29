@@ -28,7 +28,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 <div className="pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[24rem] bg-[radial-gradient(circle_at_bottom_right,rgba(214,160,70,0.12),transparent_42%)]" />
                 <Header onCartClick={() => setIsCartOpen(true)} />
                 <PwaInstallPrompt />
-                <main id="main-content" className="app-page flex-1 pb-[calc(6.4rem+env(safe-area-inset-bottom))] sm:pb-28 md:pb-16">
+                <main id="main-content" className="app-page flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:pb-24 md:pb-16">
                     {children}
                 </main>
                 <FloatingCart onCartClick={() => setIsCartOpen(true)} />

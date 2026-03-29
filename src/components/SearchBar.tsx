@@ -137,7 +137,7 @@ export default function SearchBar() {
                             <Loader2 className="h-7 w-7 animate-spin text-red-600" />
                         </div>
                     ) : results.length > 0 ? (
-                        <ul className="max-h-[28rem] space-y-2 overflow-y-auto p-4">
+                        <ul className="max-h-[min(28rem,50dvh)] space-y-2 overflow-y-auto p-3 sm:p-4">
                             {results.map((product) => (
                                 <li key={product._id}>
                                     <Link
