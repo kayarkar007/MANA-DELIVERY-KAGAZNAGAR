@@ -314,7 +314,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         if (assignedRider?.whatsapp) {
             const orderId = order._id.toString().slice(-6).toUpperCase();
-            const riderMsg = `Hi ${assignedRider.name}, you have been assigned a new Mana Delivery order #${orderId}. Please visit your dashboard to accept: ${process.env.NEXTAUTH_URL}/rider`;
+            const siteUrl = process.env.NEXTAUTH_URL || "https://manadelivery.vercel.app";
+            const riderMsg = `Hi ${assignedRider.name}, you have been assigned a new Mana Delivery order #${orderId}. Please visit your dashboard to accept: ${siteUrl}/rider`;
             const cleanRiderPhone = assignedRider.whatsapp.replace(/\D/g, "");
             const finalRiderPhone = cleanRiderPhone.length === 10 ? `91${cleanRiderPhone}` : cleanRiderPhone;
             riderWhatsappUrl = `https://wa.me/${finalRiderPhone}?text=${encodeURIComponent(riderMsg)}`;

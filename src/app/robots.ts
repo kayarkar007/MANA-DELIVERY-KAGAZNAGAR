@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin/', '/rider/', '/profile/', '/track/', '/checkout/'],
     },
-    sitemap: `${process.env.NEXTAUTH_URL || 'https://localu-delivery-app.vercel.app'}/sitemap.xml`,
+    sitemap: `${process.env.NEXTAUTH_URL || 'https://manadelivery.vercel.app'}/sitemap.xml`,
   };
 }

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://localu-delivery-app.vercel.app';
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://manadelivery.vercel.app';
 
   return [
     {
