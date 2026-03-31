@@ -19,7 +19,10 @@ export async function GET(req: Request) {
             return NextResponse.json({ success: true, data: [] }, { status: 200 });
         }
 
-        const products = await Product.find({ _id: { $in: wishlist.productIds } });
+        const products = await Product.find({
+            _id: { $in: wishlist.productIds },
+            isHidden: { $ne: true },
+        }).populate("shopId");
         return NextResponse.json({ success: true, data: products }, { status: 200 });
 
     } catch (error: any) {

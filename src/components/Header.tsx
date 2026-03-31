@@ -85,7 +85,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                             </Link>
 
                             {/* Notification bell — hidden on mobile (added to MobileNav) */}
-                            <div className="hidden sm:block">
+                            <div className="block">
                                 <NotificationBell />
                             </div>
 

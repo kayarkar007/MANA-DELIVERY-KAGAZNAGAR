@@ -43,7 +43,7 @@ test.describe("Production hardening regressions", () => {
     test("Admins are redirected away from the rider portal", async ({ page }) => {
         await login(page, credentials.admin.email, credentials.admin.password, /\/admin$/);
 
-        await page.goto("/rider");
+        await page.goto("/rider", { waitUntil: "domcontentloaded" });
         await expect(page).toHaveURL(/\/admin$/);
         await expect(page.getByRole("heading", { name: /admin dashboard/i })).toBeVisible();
         await expect(page.locator('[aria-label="Notifications"]:visible').first()).toBeVisible({ timeout: 15000 });

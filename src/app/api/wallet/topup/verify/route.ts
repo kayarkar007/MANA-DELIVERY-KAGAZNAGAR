@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import WalletTransaction from "@/models/WalletTransaction";
 import { createWalletTransaction } from "@/lib/wallet";
-import { createNotification } from "@/lib/notifications";
+import { triggerNotification } from "@/lib/notifications";
 import { getRazorpayClient, verifyRazorpaySignature } from "@/lib/razorpay";
 
 export async function POST(req: Request) {
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
             referenceId: razorpayPaymentId,
         });
 
-        await createNotification({
+        await triggerNotification({
             recipientId: session.user.id,
             recipientRole: "user",
             title: "Wallet Recharged",

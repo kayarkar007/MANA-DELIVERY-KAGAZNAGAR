@@ -59,38 +59,51 @@ export function getPublicVapidKey() {
     return configureWebPush().publicKey;
 }
 
-export async function sendPushToStoredSubscriptions(
-    recipientIds: string[],
-    payloadByRecipient: Map<string, PushPayload[]>
-) {
-    if (!recipientIds.length) return;
-
+export async function dispatchPushToUser(
+    userId: string,
+    payload: PushPayload
+): Promise<{ success: boolean; shouldRetry: boolean }> {
     configureWebPush();
     await connectToDatabase();
 
     const subscriptions = await PushSubscription.find({
-        userId: { $in: recipientIds },
+        userId,
         isActive: true,
     }).lean();
 
-    await Promise.all(subscriptions.map(async (subscription: any) => {
-        const payloads = payloadByRecipient.get(subscription.userId) || [];
-        if (!payloads.length) return;
+    if (!subscriptions.length) {
+        // No active subscriptions, so we can't deliver a push. No point retrying.
+        return { success: false, shouldRetry: false };
+    }
 
+    let atLeastOneSuccess = false;
+    let pushServiceError = false;
+    const constructedPayload = buildPayload(payload);
+
+    await Promise.all(subscriptions.map(async (subscription: any) => {
         try {
-            for (const payload of payloads) {
-                await webpush.sendNotification(subscription, buildPayload(payload));
-            }
+            await webpush.sendNotification(subscription, constructedPayload);
+            atLeastOneSuccess = true;
             await PushSubscription.updateOne({ _id: subscription._id }, { $set: { lastUsedAt: new Date() } });
         } catch (error: any) {
             if (error?.statusCode === 404 || error?.statusCode === 410) {
+                // Subscription has expired or is no longer valid
                 await deactivateSubscription(subscription.endpoint);
-                return;
+            } else if (error?.statusCode >= 500 || error?.statusCode === 429) {
+                // Push service is down or rate limited — we should retry
+                pushServiceError = true;
+                console.error("Push service error", error);
+            } else {
+                console.error("Failed to send web push notification", error);
             }
-
-            console.error("Failed to send web push notification", error);
         }
     }));
+
+    if (pushServiceError && !atLeastOneSuccess) {
+        return { success: false, shouldRetry: true };
+    }
+
+    return { success: atLeastOneSuccess, shouldRetry: false };
 }
 
 export async function sendPushToSubscription(

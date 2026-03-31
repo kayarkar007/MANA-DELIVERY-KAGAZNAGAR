@@ -3,19 +3,35 @@ import connectToDatabase from "@/lib/mongoose";
 import { requireAdmin } from "@/lib/routeAuth";
 import Product from "@/models/Product";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const categorySlug = searchParams.get("categorySlug");
+        const shopId = searchParams.get("shopId");
         const search = `${searchParams.get("search") || ""}`.trim();
         const page = Math.max(1, Number(searchParams.get("page")) || 1);
         const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 100));
 
         await connectToDatabase();
 
+        const adminView = searchParams.get("adminView") === "1";
+        if (adminView) {
+            const auth = await requireAdmin();
+            if ("response" in auth) return auth.response;
+        }
+
         let query: Record<string, any> = {};
+        if (!adminView) {
+            // Customers never see hidden products
+            query.isHidden = { $ne: true };
+        }
         if (categorySlug) {
-            query = { categorySlug };
+            query.categorySlug = categorySlug;
+        }
+        if (shopId) {
+            query.shopId = shopId;
         }
         if (search) {
             query.$or = [
@@ -26,6 +42,7 @@ export async function GET(request: Request) {
 
         const total = await Product.countDocuments(query);
         const products = await Product.find(query)
+            .populate("shopId")
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit);
@@ -66,6 +83,7 @@ export async function POST(request: Request) {
         const lowStockThreshold = Math.max(0, Number(body.lowStockThreshold) || 5);
         const product = await Product.create({
             ...body,
+            shopId: body.shopId || undefined,
             stockQuantity,
             lowStockThreshold,
             inStock: stockQuantity > 0,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/routeAuth";
 import { createWalletTransaction } from "@/lib/wallet";
-import { createNotification } from "@/lib/notifications";
+import { triggerNotification } from "@/lib/notifications";
 
 export async function POST(req: Request) {
     try {
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
             createdBy: auth.session.user.id,
         });
 
-        await createNotification({
+        await triggerNotification({
             recipientId: userId,
             recipientRole: "user",
             title: "Wallet Updated",

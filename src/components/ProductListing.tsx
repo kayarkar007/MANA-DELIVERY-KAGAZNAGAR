@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import * as motion from "framer-motion/client";
-import { Heart, Minus, Plus, ShoppingBag, Star } from "lucide-react";
+import { Heart, Minus, Plus, ShoppingBag, Star, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { cn, formatCurrency } from "@/lib/utils";
 
-export default function ProductListing({ categorySlug }: { categorySlug: string }) {
+export default function ProductListing({ categorySlug, shopId }: { categorySlug?: string; shopId?: string }) {
     const { data: session } = useSession();
     const router = useRouter();
     const { cart, addToCart, updateQuantity } = useCart();
@@ -27,7 +28,13 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
             setLoading(true);
 
             try {
-                const productRes = await fetch(`/api/products?categorySlug=${categorySlug}`, { signal: controller.signal });
+                let url = `/api/products?`;
+                if (categorySlug) url += `categorySlug=${categorySlug}&`;
+                if (shopId) url += `shopId=${shopId}`;
+                const productRes = await fetch(url.replace(/&$/, ""), { 
+                    signal: controller.signal,
+                    cache: "no-store"
+                });
                 const productData = await productRes.json();
 
                 if (!productData.success || controller.signal.aborted) {
@@ -77,7 +84,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
 
         bootstrap();
         return () => controller.abort();
-    }, [categorySlug, session?.user?.id]);
+    }, [categorySlug, shopId, session?.user?.id]);
 
     const toggleWishlist = async (productId: string) => {
         if (!session) {
@@ -136,7 +143,7 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
 
     return (
         <motion.div
-            className="grid gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3"
+            className="grid gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3 pb-32 sm:pb-40"
             initial="hidden"
             animate="show"
             variants={{
@@ -216,6 +223,16 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                                 <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                                     {product.description || "Fresh local essentials delivered quickly and safely."}
                                 </p>
+                                {product.shopId && typeof product.shopId === "object" && product.shopId.name && (
+                                    <Link
+                                        href={`/shop/${product.shopId.slug || ""}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-red-900 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                                    >
+                                        <Store className="h-3 w-3 flex-shrink-0" />
+                                        {product.shopId.name}
+                                    </Link>
+                                )}
                             </div>
 
                             {/* Price + Add-to-cart — stacks on ≤360px */}
@@ -265,6 +282,11 @@ export default function ProductListing({ categorySlug }: { categorySlug: string 
                                                 price: product.price,
                                                 quantity: 1,
                                                 image: product.image,
+                                                shop: (product.shopId && typeof product.shopId === 'object' && product.shopId._id) ? {
+                                                    shopId: product.shopId._id,
+                                                    name: product.shopId.name,
+                                                    image: product.shopId.image
+                                                } : undefined,
                                             });
                                             toast.success(`${product.name} added to cart`);
                                         }}

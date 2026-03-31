@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import SupportTicket from "@/models/SupportTicket";
 import User from "@/models/User";
-import { createNotification, notifyAdmins } from "@/lib/notifications";
+import { triggerNotification, notifyAdmins } from "@/lib/notifications";
 
 export async function GET(req: Request) {
     try {

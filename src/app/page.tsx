@@ -1,17 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import * as motion from "framer-motion/client";
 import { ArrowRight, Clock3, MapPin, ShieldCheck, ShoppingBag } from "lucide-react";
 import { getServerSession } from "next-auth";
 import connectToDatabase from "@/lib/mongoose";
 import Category from "@/models/Category";
+import Shop from "@/models/Shop";
 import { authOptions } from "@/lib/auth";
 
-const SearchBar = dynamic(() => import("@/components/SearchBar"));
-const RoleBanner = dynamic(() => import("@/components/RoleBanner"));
+const SearchBar = nextDynamic(() => import("@/components/SearchBar"));
+const RoleBanner = nextDynamic(() => import("@/components/RoleBanner"));
 
-export const revalidate = 3600; // revalidate every hour
+export const dynamic = "force-dynamic";
 
 const SEO_PAGES = [
     { href: "/grocery-delivery-kagaznagar", label: "Grocery Delivery in Kagaznagar" },
@@ -43,10 +44,30 @@ const homeFaqs = [
 async function getCategories() {
     try {
         await connectToDatabase();
-        const categories = await Category.find({}).sort({ createdAt: -1 }).lean();
+        // Only show categories that have at least 1 product — auto-syncs when admin adds products
+        const Product = (await import("@/models/Product")).default;
+        const activeSlugs = await Product.distinct("categorySlug", {
+            categorySlug: { $exists: true, $ne: "" },
+            isHidden: { $ne: true },
+        });
+        if (!activeSlugs.length) return [];
+        const categories = await Category.find({ slug: { $in: activeSlugs } })
+            .sort({ createdAt: -1 })
+            .lean();
         return JSON.parse(JSON.stringify(categories));
     } catch (error) {
         console.error("Failed to fetch categories:", error);
+        return [];
+    }
+}
+
+async function getShops() {
+    try {
+        await connectToDatabase();
+        const shops = await Shop.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+        return JSON.parse(JSON.stringify(shops));
+    } catch (error) {
+        console.error("Failed to fetch shops:", error);
         return [];
     }
 }
@@ -71,6 +92,7 @@ const trustPoints = [
 
 export default async function Home() {
     const categories = await getCategories();
+    const shops = await getShops();
     const session = await getServerSession(authOptions);
 
     const faqSchema = {
@@ -193,62 +215,134 @@ export default async function Home() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                        {categories.map((category: any, index: number) => (
-                            <motion.div
-                                key={category._id}
-                                initial={{ opacity: 0, y: 16 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: index * 0.05 }}
-                                className="h-full"
-                            >
-                                <Link
-                                    href={`/category/${category.slug}`}
-                                    className="group relative flex h-full min-h-[22rem] overflow-hidden rounded-[2.25rem] border border-white/55 bg-slate-950 text-white shadow-[0_24px_60px_rgba(15,23,42,0.14)]"
+                    <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+                        <div
+                            className="scroll-strip flex gap-4 overflow-x-auto px-4 pb-4 sm:gap-5 sm:px-6 lg:px-8"
+                            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
+                        >
+                            {categories.map((category: any, index: number) => (
+                                <motion.div
+                                    key={category._id}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: index * 0.04 }}
+                                    className="flex-none"
+                                    style={{ scrollSnapAlign: "start" }}
                                 >
-                                    <div className="absolute inset-0">
-                                        {category.image ? (
-                                            <Image
-                                                src={category.image}
-                                                alt={category.name}
-                                                fill
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                                                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                            />
-                                        ) : (
-                                            <div
-                                                className="h-full w-full"
-                                                style={{
-                                                    background:
-                                                        category.type === "service"
-                                                            ? "linear-gradient(135deg, #120507, #6d1016 65%, #d6a046)"
-                                                            : "linear-gradient(135deg, #28070b, #c62828 60%, #d6a046)",
-                                                }}
-                                            />
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                                    </div>
+                                    <Link
+                                        href={`/category/${category.slug}`}
+                                        className="group relative flex h-52 w-44 flex-col overflow-hidden rounded-[1.75rem] border border-white/55 bg-slate-950 text-white shadow-[0_24px_60px_rgba(15,23,42,0.14)] sm:h-64 sm:w-52"
+                                    >
+                                        <div className="absolute inset-0">
+                                            {category.image ? (
+                                                <Image
+                                                    src={category.image}
+                                                    alt={category.name}
+                                                    fill
+                                                    sizes="224px"
+                                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="h-full w-full"
+                                                    style={{
+                                                        background:
+                                                            category.type === "service"
+                                                                ? "linear-gradient(135deg, #120507, #6d1016 65%, #d6a046)"
+                                                                : "linear-gradient(135deg, #28070b, #c62828 60%, #d6a046)",
+                                                    }}
+                                                />
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+                                        </div>
 
-                                    <div className="relative z-10 flex h-full w-full flex-col justify-between p-6">
-                                        <span className="w-fit rounded-full border border-white/18 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/80">
-                                            {category.type}
-                                        </span>
+                                        <div className="relative z-10 flex h-full w-full flex-col justify-between p-4">
+                                            <span className="w-fit rounded-full border border-white/18 bg-white/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.18em] text-white/80">
+                                                {category.type}
+                                            </span>
 
-                                        <div className="space-y-4">
-                                            <h3 className="font-display text-3xl font-black leading-none">{category.name}</h3>
-                                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-white/75">
-                                                Explore collection
-                                                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                            <div className="space-y-2">
+                                                <h3 className="font-display text-xl font-black leading-none">{category.name}</h3>
+                                                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/75">
+                                                    Explore
+                                                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </Link>
-                            </motion.div>
-                        ))}
+                                    </Link>
+                                </motion.div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </section>
+
+            {/* Shop by Shop Section */}
+            {shops && shops.length > 0 && (
+                <section className="space-y-6 sm:space-y-8">
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="space-y-3">
+                            <span className="app-kicker">Local Vendors</span>
+                            <h2 className="app-title text-4xl text-slate-900 dark:text-white sm:text-5xl">
+                                Shop by Shop.
+                            </h2>
+                            <p className="app-subtitle max-w-2xl">
+                                Order directly from your favourite local stores in Kagaznagar. Each shop carries its own curated stock, updated in real time.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+                        <div
+                            className="scroll-strip flex gap-4 overflow-x-auto px-4 pb-4 sm:gap-5 sm:px-6 lg:px-8"
+                            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
+                        >
+                            {shops.map((shop: any, index: number) => (
+                                <motion.div
+                                    key={shop._id}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.04, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                                    className="flex-none"
+                                    style={{ scrollSnapAlign: "start" }}
+                                >
+                                    <Link
+                                        href={`/shop/${shop.slug}`}
+                                        className="group relative block h-56 w-40 overflow-hidden rounded-[2rem] border border-[rgba(255,255,255,0.12)] bg-[#100709] shadow-lg dark:border-[rgba(255,255,255,0.06)] dark:bg-black sm:h-64 sm:w-48"
+                                    >
+                                        <div className="pointer-events-none absolute inset-0 z-10 transition-colors duration-500 group-hover:bg-slate-950/20" />
+                                        {shop.image ? (
+                                            <Image
+                                                src={shop.image}
+                                                alt={shop.name}
+                                                fill
+                                                className="object-cover opacity-80 transition-transform duration-[1.2s] ease-[0.16,1,0.3,1] group-hover:scale-110 group-hover:opacity-100"
+                                                sizes="192px"
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center bg-slate-200 dark:bg-slate-900">
+                                                <ShoppingBag className="h-12 w-12 text-slate-400 dark:text-slate-600" />
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-x-0 bottom-0 z-20 h-1/2 bg-gradient-to-t from-[#0a0406] via-[#0a0406]/85 to-transparent" />
+                                        <div className="absolute inset-0 z-30 flex flex-col justify-end p-4 transition-transform duration-[0.4s] group-hover:translate-y-[-0.25rem]">
+                                            <div className="space-y-2">
+                                                <h3 className="line-clamp-2 text-base font-black leading-[1.15] text-white">
+                                                    {shop.name}
+                                                </h3>
+                                                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/75">
+                                                    Visit store
+                                                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Internal links to SEO landing pages */}
             <section className="space-y-6">

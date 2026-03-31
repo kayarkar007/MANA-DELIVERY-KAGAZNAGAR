@@ -20,6 +20,7 @@ import {
     LogOut,
     MessageSquare,
     MessageSquareQuote,
+    Store,
 } from "lucide-react";
 import PendingOrderBadge from "@/components/admin/PendingOrderBadge";
 import NotificationBell from "@/components/NotificationBell";
@@ -28,6 +29,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
     { label: "Dashboard", mobileLabel: "Home", href: "/admin", icon: LayoutDashboard },
     { label: "Categories", mobileLabel: "Cats", href: "/admin/categories", icon: CopyPlus },
+    { label: "Shops", mobileLabel: "Shops", href: "/admin/shops", icon: Store },
     { label: "Products", mobileLabel: "Items", href: "/admin/products", icon: ShoppingCart },
     { label: "Orders", mobileLabel: "Orders", href: "/admin/orders", icon: FileText, badge: <PendingOrderBadge /> },
     { label: "Promo", mobileLabel: "Promo", href: "/admin/promo", icon: Tag },

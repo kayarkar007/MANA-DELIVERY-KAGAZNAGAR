@@ -115,7 +115,19 @@ self.addEventListener("push", event => {
     }
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(clientList) {
+      var isFocused = clientList.some(function(client) { return client.focused; });
+      if (isFocused) {
+        clientList.forEach(function(client) {
+          client.postMessage({ type: "FOREGROUND_NOTIFICATION", payload: Object.assign({ title: title }, options) });
+        });
+        return Promise.resolve();
+      } else {
+        return self.registration.showNotification(title, options);
+      }
+    })
+  );
 });
 
 self.addEventListener("notificationclick", event => {

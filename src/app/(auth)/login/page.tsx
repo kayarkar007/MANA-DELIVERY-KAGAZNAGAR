@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -10,9 +10,49 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const { data: session, status } = useSession();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [form, setForm] = useState({ email: "", password: "" });
+
+    const redirectTarget = useMemo(() => {
+        const callbackUrl = searchParams.get("callbackUrl");
+
+        if (callbackUrl) {
+            try {
+                const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+                const parsed = new URL(callbackUrl, origin);
+                const path = `${parsed.pathname}${parsed.search}`;
+                if (
+                    parsed.origin === origin &&
+                    ![
+                        "/login",
+                        "/signup",
+                        "/forgot-password",
+                        "/reset-password",
+                        "/verify-email",
+                    ].includes(parsed.pathname)
+                ) {
+                    return path;
+                }
+            } catch {
+                // Ignore malformed callback URLs and fall back to role defaults.
+            }
+        }
+
+        if (session?.user?.role === "admin") return "/admin";
+        if (session?.user?.role === "rider") return "/rider";
+        return "/";
+    }, [searchParams, session?.user?.role]);
+
+    useEffect(() => {
+        if (status !== "authenticated") return;
+
+        setLoading(false);
+        router.replace(redirectTarget);
+        router.refresh();
+    }, [redirectTarget, router, status]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,15 +69,6 @@ export default function LoginPage() {
             setLoading(false);
         } else {
             toast.success("Welcome back!");
-            const session = await getSession();
-            if (session?.user?.role === "admin") {
-                router.push("/admin");
-            } else if (session?.user?.role === "rider") {
-                router.push("/rider");
-            } else {
-                router.push("/");
-            }
-            router.refresh();
         }
     };
 

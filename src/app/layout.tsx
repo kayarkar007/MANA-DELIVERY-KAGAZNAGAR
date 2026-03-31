@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 import WebsiteSchema from "@/components/seo/WebsiteSchema";
+import PushMessageListener from "@/components/PushMessageListener";
 
 const BASE_URL = "https://manadelivery.in";
 
@@ -116,6 +117,7 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
             <Toaster position="top-center" richColors />
+            <PushMessageListener />
             <a
               href="#main-content"
               className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[120] focus:rounded-full focus:bg-slate-950 focus:px-4 focus:py-2 focus:text-xs focus:font-black focus:uppercase focus:tracking-[0.18em] focus:text-white"

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/routeAuth";
 import connectToDatabase from "@/lib/mongoose";
 import Review from "@/models/Review";
-import { createNotification } from "@/lib/notifications";
+import { triggerNotification } from "@/lib/notifications";
 
 export async function GET(req: Request) {
     try {
@@ -75,7 +75,7 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ success: false, error: "Review not found" }, { status: 404 });
         }
 
-        await createNotification({
+        await triggerNotification({
             recipientId: review.userId,
             recipientRole: "user",
             title: "Review Moderated",

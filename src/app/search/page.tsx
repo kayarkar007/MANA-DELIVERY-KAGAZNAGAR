@@ -41,7 +41,7 @@ async function performSearch(params: { q?: string; minPrice?: string; maxPrice?:
         await connectToDatabase();
         if (!params.q && !params.minPrice && !params.maxPrice) return [];
 
-        const dbQuery: any = {};
+        const dbQuery: any = { isHidden: { $ne: true } };
 
         if (params.q) {
             const searchRegex = new RegExp(params.q, "i");
@@ -58,7 +58,7 @@ async function performSearch(params: { q?: string; minPrice?: string; maxPrice?:
         if (params.sort === "price_asc") sortOption = { price: 1 };
         if (params.sort === "price_desc") sortOption = { price: -1 };
 
-        const products = await Product.find(dbQuery).sort(sortOption).lean();
+        const products = await Product.find(dbQuery).populate("shopId").sort(sortOption).lean();
         return JSON.parse(JSON.stringify(products));
     } catch (error) {
         console.error("Search failed:", error);

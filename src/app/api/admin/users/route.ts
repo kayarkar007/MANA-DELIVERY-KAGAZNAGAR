@@ -3,7 +3,7 @@ import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import { requireAdmin } from "@/lib/routeAuth";
 import { createWalletTransaction } from "@/lib/wallet";
-import { createNotification } from "@/lib/notifications";
+import { triggerNotification } from "@/lib/notifications";
 
 // GET: list all users
 export async function GET(req: Request) {
@@ -84,7 +84,7 @@ export async function PATCH(req: Request) {
                 createdBy: auth.session.user.id,
             });
 
-            await createNotification({
+            await triggerNotification({
                 recipientId: body.userId,
                 recipientRole: "user",
                 title: "Wallet Updated",

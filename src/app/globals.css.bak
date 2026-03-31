@@ -156,6 +156,7 @@ img {
 .app-page {
   width: min(100%, 80rem);
   margin-inline: auto;
+  /* Floor at 14px (0.875rem) for 320px devices, grows with viewport */
   padding-inline: clamp(0.875rem, 4vw, 1.5rem);
   padding-block: clamp(1rem, 3vw, 3rem);
   box-sizing: border-box;
@@ -207,6 +208,7 @@ img {
   font-family: "Aptos Display", "Segoe UI Variable Display", "SF Pro Display", var(--font-sans);
   font-weight: 900;
   letter-spacing: -0.05em;
+  /* 0.96 clips descenders at large sizes on mobile — use 1.0 as floor */
   line-height: clamp(1.0, 0.96em, 0.96);
   overflow-wrap: break-word;
   word-break: break-word;
@@ -238,6 +240,7 @@ img {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  /* 44px minimum touch target per WCAG 2.5.8 */
   min-height: 2.75rem;
   padding: 0.75rem 1.1rem;
   border-radius: 1.1rem;
@@ -383,86 +386,3 @@ img {
   animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Scrollbar Polish ── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #6d1316;
-  border-radius: 10px;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #9d1b20;
-}
-
-/* ── Horizontal scroll strips (Shop by Category / Shop by Shop) ── */
-/* Hide scrollbar but keep scrollability */
-.scroll-strip {
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE / Edge */
-}
-.scroll-strip::-webkit-scrollbar {
-  display: none;               /* Chrome / Safari / Opera */
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .app-page {
-    padding-inline: clamp(0.875rem, 4vw, 1rem);
-    padding-block: 0.875rem 1.25rem;
-  }
-
-  .app-card,
-  .app-card-strong,
-  .app-stat {
-    border-radius: 1.35rem;
-  }
-
-  .app-button {
-    min-height: 2.75rem;
-    padding: 0.7rem 0.9rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    gap: 0.4rem;
-  }
-
-  .app-kicker,
-  .app-badge {
-    font-size: 0.6rem;
-    letter-spacing: 0.12em;
-    padding: 0.4rem 0.7rem;
-  }
-
-  /* Prevent zoom on iOS — must be 16px+ */
-  .app-input,
-  .app-select,
-  .app-textarea {
-    font-size: 16px !important;
-  }
-
-  /* Tighter icon buttons at 320px */
-  .app-icon-button {
-    width: 2.6rem;
-    height: 2.6rem;
-  }
-}

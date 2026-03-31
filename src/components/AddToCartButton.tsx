@@ -61,6 +61,13 @@ export default function AddToCartButton({ product }: { product: any }) {
                     price: product.price,
                     quantity: 1,
                     image: product.image,
+                    shop: (product.shopId && typeof product.shopId === "object" && product.shopId._id)
+                        ? {
+                            shopId: product.shopId._id,
+                            name: product.shopId.name,
+                            image: product.shopId.image,
+                        }
+                        : undefined,
                 });
 
                 const description = `${formatCurrency(product.price)} | ${product.unit || "Standard pack"}`;

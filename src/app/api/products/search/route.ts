@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import Product from "@/models/Product";
 
+export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
 
         await connectToDatabase();
 
-        const dbQuery: any = {};
+        const dbQuery: any = { isHidden: { $ne: true } };
 
         if (query) {
             const searchRegex = new RegExp(query, "i");

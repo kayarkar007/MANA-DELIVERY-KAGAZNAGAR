@@ -161,6 +161,7 @@ export default function CheckoutPage() {
                     price: item.price,
                     quantity: item.quantity,
                     image: item.image,
+                    shop: item.shop,
                 })),
                 subtotal: pricing.subtotal,
                 deliveryFee: pricing.deliveryFee,
@@ -187,7 +188,7 @@ export default function CheckoutPage() {
     const finalizeSuccessfulOrder = (orderResponse: any, description = "Redirecting to your orders...") => {
         clearCart();
         if (orderResponse.redirectUrl) {
-            window.open(orderResponse.redirectUrl, "_blank");
+            window.open(orderResponse.redirectUrl, "_blank", "noopener,noreferrer");
         }
         toast.success("Order placed successfully", { description });
         router.replace("/profile");

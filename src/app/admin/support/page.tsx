@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,16 +12,17 @@ export default function AdminSupportPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [savingId, setSavingId] = useState<string | null>(null);
+    const searchRef = useRef(search);
 
-    const fetchTickets = async () => {
+    const fetchTickets = async (nextPage = page, nextSearch = searchRef.current, nextStatus = status) => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
-                page: String(page),
+                page: String(nextPage),
                 limit: "10",
             });
-            if (search.trim()) params.set("search", search.trim());
-            if (status) params.set("status", status);
+            if (nextSearch.trim()) params.set("search", nextSearch.trim());
+            if (nextStatus) params.set("status", nextStatus);
 
             const res = await fetch(`/api/support-tickets?${params.toString()}`);
             const data = await res.json();
@@ -47,7 +48,7 @@ export default function AdminSupportPage() {
             const data = await res.json();
             if (data.success) {
                 toast.success("Ticket updated");
-                fetchTickets();
+                fetchTickets(page, searchRef.current, status);
             } else {
                 toast.error(data.error || "Failed to update ticket");
             }
@@ -68,14 +69,17 @@ export default function AdminSupportPage() {
                 <div className="flex gap-3">
                     <input
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            searchRef.current = e.target.value;
+                        }}
                         placeholder="Search tickets"
                         className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm"
                     />
-                    <button onClick={() => { setPage(1); fetchTickets(); }} className="px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold">
+                    <button onClick={() => { setPage(1); fetchTickets(1, searchRef.current, status); }} className="px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold">
                         Search
                     </button>
-                    <select value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm">
+                    <select value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); fetchTickets(1, searchRef.current, e.target.value); }} className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm">
                         <option value="">All Status</option>
                         <option value="open">Open</option>
                         <option value="in_progress">In Progress</option>

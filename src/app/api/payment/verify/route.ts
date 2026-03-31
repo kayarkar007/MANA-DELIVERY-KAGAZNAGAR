@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
-import { createNotification, notifyAdmins } from "@/lib/notifications";
+import { triggerNotification, notifyAdmins } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import { getRazorpayClient, verifyRazorpaySignature } from "@/lib/razorpay";
 
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         await order.save();
 
         if (order.userId) {
-            await createNotification({
+            await triggerNotification({
                 recipientId: order.userId,
                 recipientRole: "user",
                 title: "Payment Verified",

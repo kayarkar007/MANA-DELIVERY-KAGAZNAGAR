@@ -15,6 +15,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
     }
 
+    // Role-based route protection at the Edge
+    const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+    if (isAdminRoute && token.role !== "admin") {
+        return NextResponse.redirect(new URL("/", request.url));
+    }
+
     return NextResponse.next();
 }
 

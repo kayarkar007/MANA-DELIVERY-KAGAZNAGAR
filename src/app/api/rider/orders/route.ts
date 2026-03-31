@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import { hydrateOrderItemImages } from "@/lib/orderData";
 import { getMappedOrderStatus } from "@/lib/orderPresentation";
-import { createNotification, notifyAdmins } from "@/lib/notifications";
+import { triggerNotification, notifyAdmins } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import Order from "@/models/Order";
 import RiderShift from "@/models/RiderShift";
@@ -86,6 +86,9 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ success: false, error: "Order not found or not assigned to you" }, { status: 404 });
         }
 
+        const previousDeliveryStatus = order.deliveryStatus;
+        const previousStatus = order.status;
+
         if (order.deliveryStatus !== deliveryStatus) {
             const allowedNextStates = allowedTransitions[order.deliveryStatus] || [];
             if (!allowedNextStates.includes(deliveryStatus)) {
@@ -122,6 +125,10 @@ export async function PATCH(req: Request) {
 
         await order.save();
 
+        const deliveryStateChanged =
+            order.deliveryStatus !== previousDeliveryStatus ||
+            order.status !== previousStatus;
+
         if (deliveryStatus === "delivered") {
             await RiderShift.findOneAndUpdate(
                 { riderId: session.user.id, status: { $in: ["active", "on_break"] } },
@@ -134,8 +141,8 @@ export async function PATCH(req: Request) {
             );
         }
 
-        if (order.userId) {
-            await createNotification({
+        if (deliveryStateChanged && order.userId) {
+            await triggerNotification({
                 recipientId: order.userId,
                 recipientRole: "user",
                 title: "Delivery Update",
@@ -146,13 +153,15 @@ export async function PATCH(req: Request) {
             });
         }
 
-        await notifyAdmins({
-            title: "Rider Status Update",
-            message: `Order #${order._id.toString().slice(-6).toUpperCase()} is now ${deliveryStatus.replace(/_/g, " ")}`,
-            type: "order",
-            href: "/admin/orders",
-            metadata: { orderId: order._id.toString() },
-        });
+        if (deliveryStateChanged) {
+            await notifyAdmins({
+                title: "Rider Status Update",
+                message: `Order #${order._id.toString().slice(-6).toUpperCase()} is now ${deliveryStatus.replace(/_/g, " ")}`,
+                type: "order",
+                href: "/admin/orders",
+                metadata: { orderId: order._id.toString() },
+            });
+        }
 
         const hydratedOrder = await hydrateOrderItemImages(order);
         return NextResponse.json({ success: true, data: hydratedOrder });

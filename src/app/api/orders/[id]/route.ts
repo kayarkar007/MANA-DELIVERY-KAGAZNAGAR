@@ -5,7 +5,7 @@ import connectToDatabase from "@/lib/mongoose";
 import { hydrateOrderItemImages } from "@/lib/orderData";
 import { getInventoryItems, restoreInventory } from "@/lib/inventory";
 import { getMappedOrderStatus } from "@/lib/orderPresentation";
-import { createNotification } from "@/lib/notifications";
+import { triggerNotification } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import { createWalletTransaction } from "@/lib/wallet";
 import Order from "@/models/Order";
@@ -121,7 +121,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
                 orderId: order._id.toString(),
             });
 
-            await createNotification({
+            await triggerNotification({
                 recipientId: order.userId,
                 recipientRole: "user",
                 title: "Refund Added to Wallet",
@@ -178,55 +178,62 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const previousStatus = order.status;
         const previousDeliveryStatus = order.deliveryStatus;
         const previousRefundStatus = order.refundStatus;
+        const previousRiderId = order.riderId?.toString?.() ?? "";
         const inventoryItems = order.type === "product" ? getInventoryItems(order.items) : [];
 
         let assignedRider: any = null;
+        let riderAssignmentChanged = false;
 
         if (riderId !== undefined) {
             const normalizedRiderId = `${riderId}`.trim();
+            riderAssignmentChanged = normalizedRiderId !== previousRiderId;
 
             if (normalizedRiderId) {
-                assignedRider = await User.findOne({ _id: normalizedRiderId, role: "rider" }).select("name whatsapp");
-                if (!assignedRider) {
-                    return NextResponse.json({ success: false, error: "Rider not found" }, { status: 404 });
-                }
-
-                order.riderId = normalizedRiderId;
-                order.deliveryStatus = "assigned";
-                order.status = getMappedOrderStatus("assigned", order.status);
-                order.set("riderLocation", undefined);
-                order.statusHistory = [
-                    ...(order.statusHistory || []),
-                    buildOrderHistoryEntry({
-                        status: order.status,
-                        deliveryStatus: "assigned",
-                        label: "Rider assigned",
-                        note: `${assignedRider.name} assigned by admin`,
-                        actorRole: "admin",
-                        actorId: session.user.id,
-                    }),
-                ];
-            } else {
-                order.set("riderId", undefined);
-                order.set("riderLocation", undefined);
-
-                if (!["delivered", "cancelled"].includes(order.status)) {
-                    order.deliveryStatus = "pending";
-                    if (order.status === "shipped") {
-                        order.status = "processing";
+                if (riderAssignmentChanged) {
+                    assignedRider = await User.findOne({ _id: normalizedRiderId, role: "rider" }).select("name whatsapp");
+                    if (!assignedRider) {
+                        return NextResponse.json({ success: false, error: "Rider not found" }, { status: 404 });
                     }
-                }
 
-                order.statusHistory = [
-                    ...(order.statusHistory || []),
-                    buildOrderHistoryEntry({
-                        status: order.status,
-                        deliveryStatus: order.deliveryStatus,
-                        label: "Rider unassigned",
-                        actorRole: "admin",
-                        actorId: session.user.id,
-                    }),
-                ];
+                    order.riderId = normalizedRiderId;
+                    order.deliveryStatus = "assigned";
+                    order.status = getMappedOrderStatus("assigned", order.status);
+                    order.set("riderLocation", undefined);
+                    order.statusHistory = [
+                        ...(order.statusHistory || []),
+                        buildOrderHistoryEntry({
+                            status: order.status,
+                            deliveryStatus: "assigned",
+                            label: "Rider assigned",
+                            note: `${assignedRider.name} assigned by admin`,
+                            actorRole: "admin",
+                            actorId: session.user.id,
+                        }),
+                    ];
+                }
+            } else {
+                if (riderAssignmentChanged) {
+                    order.set("riderId", undefined);
+                    order.set("riderLocation", undefined);
+
+                    if (!["delivered", "cancelled"].includes(order.status)) {
+                        order.deliveryStatus = "pending";
+                        if (order.status === "shipped") {
+                            order.status = "processing";
+                        }
+                    }
+
+                    order.statusHistory = [
+                        ...(order.statusHistory || []),
+                        buildOrderHistoryEntry({
+                            status: order.status,
+                            deliveryStatus: order.deliveryStatus,
+                            label: "Rider unassigned",
+                            actorRole: "admin",
+                            actorId: session.user.id,
+                        }),
+                    ];
+                }
             }
         }
 
@@ -277,18 +284,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             }
         }
 
-        if (
-            order.status !== previousStatus ||
-            order.deliveryStatus !== previousDeliveryStatus ||
-            order.refundStatus !== previousRefundStatus
-        ) {
+        const statusChanged = order.status !== previousStatus;
+        const deliveryChanged = order.deliveryStatus !== previousDeliveryStatus;
+        const refundChanged = order.refundStatus !== previousRefundStatus;
+
+        if (statusChanged || deliveryChanged || refundChanged) {
             order.statusHistory = [
                 ...(order.statusHistory || []),
                 buildOrderHistoryEntry({
                     status: order.status,
                     deliveryStatus: order.deliveryStatus,
                     label:
-                        order.refundStatus !== previousRefundStatus
+                        refundChanged
                             ? `Refund ${order.refundStatus}`
                             : `Status updated to ${order.status}`,
                     note: refundReason || undefined,
@@ -312,7 +319,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         let whatsappRedirectUrl = null;
         let riderWhatsappUrl = null;
 
-        if (assignedRider?.whatsapp) {
+        if (riderAssignmentChanged && assignedRider?.whatsapp) {
             const orderId = order._id.toString().slice(-6).toUpperCase();
             const siteUrl = process.env.NEXTAUTH_URL || "https://manadelivery.vercel.app";
             const riderMsg = `Hi ${assignedRider.name}, you have been assigned a new Mana Delivery order #${orderId}. Please visit your dashboard to accept: ${siteUrl}/rider`;
@@ -320,7 +327,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             const finalRiderPhone = cleanRiderPhone.length === 10 ? `91${cleanRiderPhone}` : cleanRiderPhone;
             riderWhatsappUrl = `https://wa.me/${finalRiderPhone}?text=${encodeURIComponent(riderMsg)}`;
 
-            await createNotification({
+            await triggerNotification({
                 recipientId: order.riderId.toString(),
                 recipientRole: "rider",
                 title: "New Rider Assignment",
@@ -333,13 +340,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         const hasCustomerFacingChange =
             order.customerPhone &&
-            (order.status !== previousStatus || order.deliveryStatus !== previousDeliveryStatus);
+            (statusChanged || deliveryChanged || riderAssignmentChanged);
 
         if (hasCustomerFacingChange) {
             let message = "";
             const orderId = order._id.toString().slice(-6).toUpperCase();
 
-            if (order.status === "processing") {
+            if (riderAssignmentChanged && order.deliveryStatus === "assigned") {
+                message = `Hi ${order.customerName}, a rider has been assigned to your Mana Delivery order #${orderId}.`;
+            } else if (order.status === "processing") {
                 message = `Hi ${order.customerName}, your Mana Delivery order #${orderId} is now being prepared.`;
             } else if (order.status === "shipped") {
                 message = `Hi ${order.customerName}, your Mana Delivery order #${orderId} is on the way.`;
@@ -356,18 +365,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             }
         }
 
-        if (order.userId) {
+        if (order.userId && (statusChanged || deliveryChanged || refundChanged || riderAssignmentChanged)) {
             const notificationMessage =
-                order.refundStatus !== previousRefundStatus
+                refundChanged
                     ? `Refund status for order #${order._id.toString().slice(-6).toUpperCase()} is now ${order.refundStatus}`
+                    : riderAssignmentChanged && order.deliveryStatus === "assigned"
+                        ? `A rider has been assigned to order #${order._id.toString().slice(-6).toUpperCase()}`
                     : `Order #${order._id.toString().slice(-6).toUpperCase()} is now ${order.status}`;
 
-            await createNotification({
+            await triggerNotification({
                 recipientId: order.userId,
                 recipientRole: "user",
-                title: order.refundStatus !== previousRefundStatus ? "Refund Update" : "Order Update",
+                title: refundChanged ? "Refund Update" : "Order Update",
                 message: notificationMessage,
-                type: order.refundStatus !== previousRefundStatus ? "payment" : "order",
+                type: refundChanged ? "payment" : "order",
                 href: "/profile",
                 metadata: { orderId: order._id.toString() },
             });

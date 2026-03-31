@@ -9,6 +9,11 @@ export interface IOrder extends Document {
         price: number;
         quantity: number;
         image?: string;
+        shop?: {
+            shopId: string;
+            name: string;
+            image?: string;
+        };
     }>;
     serviceCategory?: string;
     serviceDetails?: any;
@@ -65,7 +70,7 @@ const OrderSchema: Schema = new Schema(
                 name: { type: String },
                 price: { type: Number },
                 quantity: { type: Number },
-                image: { type: String },
+                image: { type: String }, shop: { shopId: { type: String }, name: { type: String }, image: { type: String } },
             },
         ],
         serviceCategory: { type: String },
@@ -136,5 +141,6 @@ OrderSchema.index({ userId: 1, createdAt: -1 });
 OrderSchema.index({ riderId: 1, deliveryStatus: 1 });
 OrderSchema.index({ deliveryStatus: 1 });
 OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ status: 1, createdAt: -1 }); // Admin order filtering by status
 
 export default mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);

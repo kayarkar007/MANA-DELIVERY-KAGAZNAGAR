@@ -12,18 +12,38 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         const params = await context.params;
         const id = params.id;
         const body = await request.json();
+
+        // Quick-toggle: if only isHidden is sent, just flip it
+        if (Object.keys(body).length === 1 && "isHidden" in body) {
+            const product = await Product.findByIdAndUpdate(
+                id,
+                { $set: { isHidden: Boolean(body.isHidden) } },
+                { new: true }
+            );
+            if (!product) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+            return NextResponse.json({ success: true, data: product });
+        }
+
+        // Full product update
         const stockQuantity = Math.max(0, Number(body.stockQuantity) || 0);
         const lowStockThreshold = Math.max(0, Number(body.lowStockThreshold) || 5);
-        const product = await Product.findByIdAndUpdate(
-            id,
-            {
-                ...body,
-                stockQuantity,
-                lowStockThreshold,
-                inStock: stockQuantity > 0,
-            },
-            { new: true }
-        );
+
+        const updateData: Record<string, any> = {
+            ...body,
+            stockQuantity,
+            lowStockThreshold,
+            inStock: stockQuantity > 0,
+            isHidden: Boolean(body.isHidden ?? false),
+        };
+
+        if (body.shopId === "" || body.shopId === null) {
+            updateData.$unset = { shopId: 1 };
+            delete updateData.shopId;
+        } else if (body.shopId) {
+            updateData.shopId = body.shopId;
+        }
+
+        const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
         if (!product) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
         return NextResponse.json({ success: true, data: product });
     } catch (error) {

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import connectToDatabase from "@/lib/mongoose";
 import { requireUser } from "@/lib/routeAuth";
 import { hydrateOrderItemImages } from "@/lib/orderData";
-import { createNotification, notifyAdmins } from "@/lib/notifications";
+import { triggerNotification, notifyAdmins } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import { getInventoryItems, reserveInventory, restoreInventory, type InventoryItem } from "@/lib/inventory";
 import { createWalletTransaction } from "@/lib/wallet";
@@ -14,24 +14,6 @@ import User from "@/models/User";
 
 function formatCurrency(value: number) {
     return `Rs ${value.toFixed(2)}`;
-}
-
-const rateLimitMap = new Map<string, number[]>();
-
-function checkRateLimit(ip: string): boolean {
-    const now = Date.now();
-    const windowStart = now - 60000;
-    const requestTimestamps = rateLimitMap.get(ip) || [];
-    const requestsInWindow = requestTimestamps.filter((t) => t > windowStart);
-    requestsInWindow.push(now);
-    
-    if (rateLimitMap.size > 1000) {
-        const firstKey = rateLimitMap.keys().next().value;
-        if (firstKey) rateLimitMap.delete(firstKey);
-    }
-    
-    rateLimitMap.set(ip, requestsInWindow);
-    return requestsInWindow.length <= 10;
 }
 
 function getInitialPaymentStatus(paymentMethod: string, total: number) {
@@ -93,9 +75,6 @@ export async function POST(request: Request) {
         if ("response" in auth) return auth.response;
 
         const userId = auth.session.user.id;
-        if (!checkRateLimit(userId)) {
-            return NextResponse.json({ success: false, error: "Too many requests. Please try again later." }, { status: 429 });
-        }
 
         await connectToDatabase();
 
@@ -136,7 +115,10 @@ export async function POST(request: Request) {
                 return NextResponse.json({ success: false, error: "Invalid cart items" }, { status: 400 });
             }
 
-            const products = await Product.find({ _id: { $in: productIds } })
+            const products = await Product.find({ 
+                _id: { $in: productIds },
+                isHidden: { $ne: true }
+            })
                 .select("_id name price image stockQuantity")
                 .lean();
 
@@ -150,7 +132,7 @@ export async function POST(request: Request) {
                 const quantity = Math.max(0, Number(item.quantity) || 0);
 
                 if (!product || quantity < 1) {
-                    throw new Error("One or more cart items are invalid or unavailable");
+                    throw new Error("Some items in your cart are no longer available for purchase. Please review your cart.");
                 }
 
                 if ((Number(product.stockQuantity) || 0) < quantity) {
@@ -163,6 +145,11 @@ export async function POST(request: Request) {
                     price: Number(product.price),
                     quantity,
                     image: product.image || undefined,
+                    shop: item.shop ? {
+                        shopId: item.shop.shopId,
+                        name: item.shop.name,
+                        image: item.shop.image,
+                    } : undefined,
                 };
             });
 
@@ -275,9 +262,23 @@ export async function POST(request: Request) {
             }
 
             if (promoResult.promo && promoResult.discountAmount > 0) {
-                await PromoCode.findByIdAndUpdate(promoResult.promo._id, {
-                    $inc: { usedCount: 1 },
-                }, { session: mongoSession });
+                // Atomic promo increment — guards against race conditions where
+                // two concurrent requests both pass the usage-limit check
+                const updatedPromo = await PromoCode.findOneAndUpdate(
+                    {
+                        _id: promoResult.promo._id,
+                        $or: [
+                            { usageLimit: null },
+                            { usageLimit: { $exists: false } },
+                            { $expr: { $lt: ["$usedCount", "$usageLimit"] } },
+                        ],
+                    },
+                    { $inc: { usedCount: 1 } },
+                    { session: mongoSession }
+                );
+                if (!updatedPromo) {
+                    throw new Error("Promo code usage limit has been reached. Please remove it and try again.");
+                }
             }
 
             await mongoSession.commitTransaction();
@@ -334,7 +335,7 @@ Order Tracking ID: #${orderObj._id.toString().slice(-6).toUpperCase()}`;
         const redirectUrl = `https://wa.me/${ownerNumber}?text=${encodeURIComponent(finalWhatsappText)}`;
 
         if (userId) {
-            await createNotification({
+            await triggerNotification({
                 recipientId: userId,
                 recipientRole: "user",
                 title: "Order Placed",

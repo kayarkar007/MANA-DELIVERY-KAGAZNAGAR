@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Users, Loader2, ShieldAlert, Package, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,8 +11,9 @@ export default function AdminUsersPage() {
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const searchRef = useRef(search);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (nextPage = page, nextSearch = searchRef.current) => {
         setLoading(true);
         let lastError = "Failed to fetch users";
 
@@ -23,10 +24,10 @@ export default function AdminUsersPage() {
 
             try {
                 const params = new URLSearchParams({
-                    page: String(page),
+                    page: String(nextPage),
                     limit: "20",
                 });
-                if (search.trim()) params.set("search", search.trim());
+                if (nextSearch.trim()) params.set("search", nextSearch.trim());
 
                 const res = await fetch(`/api/admin/users?${params.toString()}`, { cache: "no-store" });
                 const data = await res.json();
@@ -100,7 +101,7 @@ export default function AdminUsersPage() {
             const data = await res.json();
             if (data.success) {
                 toast.success("Wallet updated");
-                fetchUsers();
+                fetchUsers(page, searchRef.current);
             } else {
                 toast.error(data.error || "Failed to update wallet");
             }
@@ -161,17 +162,20 @@ export default function AdminUsersPage() {
                 <div className="flex flex-wrap gap-2">
                     <input
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            searchRef.current = e.target.value;
+                        }}
                         placeholder="Search users"
                         className="px-4 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900"
                     />
-                    <button onClick={() => { setPage(1); fetchUsers(); }} className="px-4 py-2 text-sm font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">
+                    <button onClick={() => { setPage(1); fetchUsers(1, searchRef.current); }} className="px-4 py-2 text-sm font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">
                         Search
                     </button>
                     <button onClick={exportCsv} className="px-4 py-2 text-sm font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         Export CSV
                     </button>
-                    <button onClick={fetchUsers} className="px-4 py-2 text-sm font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <button onClick={() => fetchUsers(page, searchRef.current)} className="px-4 py-2 text-sm font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         Refresh
                     </button>
                 </div>

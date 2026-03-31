@@ -22,7 +22,25 @@ self.addEventListener("push", (event) => {
         },
     };
 
-    event.waitUntil(self.registration.showNotification(title, options));
+    event.waitUntil(
+        self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+            const isFocused = clientList.some((client) => client.focused);
+
+            if (isFocused) {
+                // App is active and focused: act as a real-time WebSocket replacement
+                clientList.forEach((client) => {
+                    client.postMessage({
+                        type: "FOREGROUND_NOTIFICATION",
+                        payload: { title, ...options },
+                    });
+                });
+                return Promise.resolve();
+            } else {
+                // App is background/closed: fallback to system notification
+                return self.registration.showNotification(title, options);
+            }
+        })
+    );
 });
 
 self.addEventListener("notificationclick", (event) => {

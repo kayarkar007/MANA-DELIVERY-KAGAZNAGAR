@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import SupportTicket from "@/models/SupportTicket";
-import { createNotification } from "@/lib/notifications";
+import { triggerNotification } from "@/lib/notifications";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -32,7 +32,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         await ticket.save();
 
         if (ticket.userId) {
-            await createNotification({
+            await triggerNotification({
                 recipientId: ticket.userId,
                 recipientRole: "user",
                 title: "Support Ticket Updated",
