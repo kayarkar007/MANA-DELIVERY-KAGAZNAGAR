@@ -35,7 +35,6 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const filteredProducts = products.filter((p) =>
@@ -51,6 +50,7 @@ export default function HomeScreen({ navigation }) {
         <Image
           source={{ uri: item.imageUrl || item.images?.[0] || 'https://via.placeholder.com/150' }}
           style={styles.productImage}
+          accessibilityLabel={item.name}
         />
         <View style={styles.cardContent}>
           <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>

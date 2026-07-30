@@ -17,6 +17,11 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "replace.js",
     "scripts/**/*.js",
+    // React Native mobile apps — not linted by Next.js ESLint rules
+    "mobile/**",
+    "mobile-rider/**",
+    "mobile-vendor/**",
+    "mobile-admin/**",
   ]),
   {
     rules: {

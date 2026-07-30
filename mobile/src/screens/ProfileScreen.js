@@ -42,7 +42,6 @@ export default function ProfileScreen({ navigation }) {
     if (user) {
       fetchProfileData();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   function handleLogout() {

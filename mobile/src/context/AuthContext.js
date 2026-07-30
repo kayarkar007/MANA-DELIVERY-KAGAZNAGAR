@@ -23,7 +23,6 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     loadSession();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loginWithPhoneOtp(phone, otp) {

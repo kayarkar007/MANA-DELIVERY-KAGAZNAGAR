@@ -137,7 +137,6 @@ export default function SmartRouteScreen({ navigation }) {
       }
     }
     init();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 

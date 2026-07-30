@@ -22,7 +22,7 @@ export default function ProductDetailScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Product Image */}
         <View style={styles.imageWrapper}>
-          <Image source={{ uri: imageUri }} style={styles.productImage} />
+          <Image source={{ uri: imageUri }} style={styles.productImage} accessibilityLabel="Product image" />
           {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}

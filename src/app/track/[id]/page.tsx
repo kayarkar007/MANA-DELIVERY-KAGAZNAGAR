@@ -219,7 +219,6 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
         return () => {
             eventSource.close();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orderId]);
 
     if (loading || !L) {
