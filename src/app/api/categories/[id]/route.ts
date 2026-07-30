@@ -12,7 +12,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         const params = await context.params;
         const id = params.id;
         const body = await request.json();
-        const category = await Category.findByIdAndUpdate(id, body, { new: true });
+        const category = await Category.findByIdAndUpdate(id, body, { returnDocument: "after" });
         if (!category) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
         return NextResponse.json({ success: true, data: category });
     } catch (error) {

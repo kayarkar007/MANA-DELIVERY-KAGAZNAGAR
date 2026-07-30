@@ -107,7 +107,7 @@ export async function PATCH(req: Request) {
         const updated = await User.findByIdAndUpdate(
             userId,
             { role },
-            { new: true, select: "name email role walletBalance" }
+            { returnDocument: "after", select: "name email role walletBalance" }
         );
 
         if (!updated) {

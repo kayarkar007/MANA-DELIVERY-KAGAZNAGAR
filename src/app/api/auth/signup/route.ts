@@ -3,11 +3,24 @@ import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { sendEmail } from "@/lib/mailer";
+import { signupLimiter, otpResendLimiter } from "@/lib/rateLimit";
+
 
 export async function POST(req: Request) {
     try {
+        // ── Rate limit: 5 signups per IP per 15 minutes ───────────────────────
+        const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
+        if (!signupLimiter.check(ip)) {
+            return NextResponse.json(
+                { success: false, error: "Too many signup attempts. Please try again later." },
+                { status: 429 }
+            );
+        }
+
         await connectToDatabase();
-        const { name, email, password, whatsapp } = await req.json();
+        const { name, email, password, phone, address, referralCode } = await req.json();
+        const cleanPhone = phone ? phone.replace(/\D/g, "").slice(-10) : undefined;
+
 
         // 1. Validate Password Strength
         const isStrong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password);
@@ -18,51 +31,45 @@ export async function POST(req: Request) {
             );
         }
 
-        // 2. Check if user already exists
+        // 2. Check if user with email or phone already exists
         const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            // If user exists but unverified, resend OTP instead of blocking
-            if (!existingUser.isVerified) {
-                const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-                existingUser.verifyOtp = otp;
-                existingUser.verifyOtpExpiry = otpExpiry;
-                await existingUser.save();
-
-                const result = await sendEmail(email, "Verify your Mana Delivery Account", buildOtpEmail(existingUser.name, otp));
-                if (!result.success) {
-                    return NextResponse.json(
-                        { success: false, error: `Account exists but email failed: ${result.error}` },
-                        { status: 500 }
-                    );
-                }
-
-                return NextResponse.json(
-                    { success: true, message: "OTP resent! Please verify your email.", email, resent: true },
-                    { status: 200 }
-                );
-            }
+        if (existingUser && existingUser.isVerified) {
             return NextResponse.json(
-                { success: false, error: "An account with this email already exists." },
+                { success: false, error: "An account with this email already exists. Please log in." },
                 { status: 400 }
             );
+        }
+
+        if (cleanPhone) {
+            const existingPhone = await User.findOne({ phone: cleanPhone });
+            if (existingPhone && existingPhone.isPhoneVerified) {
+                return NextResponse.json(
+                    { success: false, error: `An account with +91 ${cleanPhone} already exists. Please log in.` },
+                    { status: 400 }
+                );
+            }
         }
 
         // 3. Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 4. Generate 6-digit OTP
+        // 4. Generate 6-digit OTP and hash it
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        // SECURITY: Store bcrypt hash, never the raw OTP string
+        const hashedOtp = await bcrypt.hash(otp, 10);
 
-        // 5. Create User — unverified
+        // 5. Create User — unverified with complete details
         const newUser = await User.create({
             name,
             email,
             password: hashedPassword,
-            whatsapp,
+            phone: cleanPhone,
+            whatsapp: cleanPhone,
+            address: address || undefined,
+            referredBy: referralCode || undefined,
             isVerified: false,
-            verifyOtp: otp,
+            verifyOtp: hashedOtp,
             verifyOtpExpiry: otpExpiry,
         });
 

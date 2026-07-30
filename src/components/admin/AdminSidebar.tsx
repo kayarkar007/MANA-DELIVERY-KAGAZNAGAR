@@ -104,6 +104,7 @@ export default function AdminSidebar() {
                     "fixed left-0 top-14 z-50 flex w-72 flex-col border-r border-[rgba(214,160,70,0.14)] bg-[rgba(9,4,5,0.94)] shadow-[0_16px_50px_rgba(0,0,0,0.34)] backdrop-blur-3xl transition-transform lg:static lg:top-0 lg:z-0 lg:h-screen lg:translate-x-0",
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 )}
+                style={{ height: "calc(100dvh - 3.5rem)" }}
             >
                 <div className="border-b border-[rgba(214,160,70,0.14)] p-5">
                     <Link href="/" className="mb-4 flex items-center gap-2 text-sm font-black text-[#b89b92] transition hover:text-white">
@@ -162,8 +163,14 @@ export default function AdminSidebar() {
                                 active ? "text-white" : "text-[#9b7d77]"
                             )}
                         >
-                            {active && <div className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-red-500" />}
-                            <Icon className="h-5 w-5" />
+                            <div className="relative">
+                                <Icon className="h-5 w-5" />
+                                {item.label === "Orders" && (
+                                    <span className="absolute -right-2 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white">
+                                        !
+                                    </span>
+                                )}
+                            </div>
                             <span className="max-w-[4.2rem] truncate whitespace-nowrap text-center text-[9px] leading-none tracking-[0.12em]">
                                 {item.mobileLabel ?? item.label}
                             </span>

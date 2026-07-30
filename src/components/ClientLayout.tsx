@@ -6,7 +6,9 @@ import Header from "./Header";
 import CartDrawer from "./CartDrawer";
 import FloatingCart from "./FloatingCart";
 import MobileNav from "./MobileNav";
+import Footer from "./Footer";
 import PwaInstallPrompt from "./PwaInstallPrompt";
+import OnboardingModal from "./OnboardingModal";
 import { CartProvider } from "@/context/CartContext";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -21,6 +23,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         return <>{children}</>;
     }
 
+    // Hide footer on checkout and auth pages for cleaner flow
+    const hideFooter =
+        pathname === "/checkout" ||
+        pathname === "/login" ||
+        pathname === "/signup" ||
+        pathname === "/forgot-password" ||
+        pathname === "/reset-password" ||
+        pathname === "/verify-email";
+
     return (
         <CartProvider>
             <div className="app-shell flex min-h-screen flex-col text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -31,9 +42,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 <main id="main-content" className="app-page flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:pb-24 md:pb-16">
                     {children}
                 </main>
+                {!hideFooter && <Footer />}
                 <FloatingCart onCartClick={() => setIsCartOpen(true)} />
                 <MobileNav />
                 <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+                {pathname === "/" && <OnboardingModal />}
             </div>
         </CartProvider>
     );

@@ -8,11 +8,13 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const categorySlug = searchParams.get("categorySlug");
+        // Accept both categorySlug and category (legacy alias)
+        const categorySlug = searchParams.get("categorySlug") || searchParams.get("category");
         const shopId = searchParams.get("shopId");
         const search = `${searchParams.get("search") || ""}`.trim();
         const page = Math.max(1, Number(searchParams.get("page")) || 1);
         const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 100));
+        const sortParam = searchParams.get("sort") || "newest";
 
         await connectToDatabase();
 
@@ -41,9 +43,18 @@ export async function GET(request: Request) {
         }
 
         const total = await Product.countDocuments(query);
+
+        // Build sort object based on sort param
+        let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
+        if (sortParam === "price_asc") sortObj = { price: 1 };
+        else if (sortParam === "price_desc") sortObj = { price: -1 };
+        else if (sortParam === "name_asc") sortObj = { name: 1 };
+        else if (sortParam === "name_desc") sortObj = { name: -1 };
+        else if (sortParam === "popular") sortObj = { salesCount: -1, createdAt: -1 };
+
         const products = await Product.find(query)
             .populate("shopId")
-            .sort({ createdAt: -1 })
+            .sort(sortObj)
             .skip((page - 1) * limit)
             .limit(limit);
 

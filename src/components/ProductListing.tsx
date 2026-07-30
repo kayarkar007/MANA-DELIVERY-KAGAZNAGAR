@@ -185,6 +185,10 @@ export default function ProductListing({ categorySlug, shopId }: { categorySlug?
                                     fill
                                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                                     sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                                    // First card is the LCP candidate — load eagerly.
+                                    // All subsequent cards are below-the-fold — defer.
+                                    priority={index === 0}
+                                    loading={index === 0 ? undefined : "lazy"}
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-slate-100 dark:bg-slate-900">

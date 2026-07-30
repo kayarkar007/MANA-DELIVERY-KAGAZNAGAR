@@ -7,13 +7,20 @@ import { triggerNotification, notifyAdmins } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import { getInventoryItems, reserveInventory, restoreInventory, type InventoryItem } from "@/lib/inventory";
 import { createWalletTransaction } from "@/lib/wallet";
+import { orderLimiter } from "@/lib/rateLimit";
 import Order from "@/models/Order";
 import Product from "@/models/Product";
 import PromoCode from "@/models/PromoCode";
 import User from "@/models/User";
+import { sendEmail } from "@/lib/mailer";
+import { orderConfirmationEmail } from "@/lib/emailTemplates";
+import { sendOrderStatusSMS } from "@/lib/sms";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { isWithinServiceZone, isKagaznagarAddress, KAGAZNAGAR_CENTER } from "@/lib/geolocation";
+
 
 function formatCurrency(value: number) {
-    return `Rs ${value.toFixed(2)}`;
+    return `₹${value.toFixed(2)}`;
 }
 
 function getInitialPaymentStatus(paymentMethod: string, total: number) {
@@ -76,6 +83,14 @@ export async function POST(request: Request) {
 
         const userId = auth.session.user.id;
 
+        // ── Rate limit: 20 orders per user per 10 minutes ────────────────────
+        if (!orderLimiter.check(userId)) {
+            return NextResponse.json(
+                { success: false, error: "Too many order requests. Please wait a moment before trying again." },
+                { status: 429 }
+            );
+        }
+
         await connectToDatabase();
 
         const body = await request.json();
@@ -83,14 +98,49 @@ export async function POST(request: Request) {
         const type = body.type;
         const customerName = `${body.customerName || ""}`.trim();
         const customerPhone = `${body.customerPhone || ""}`.trim();
-        const address = `${body.address || ""}`.trim();
-        const latitude = Number(body.latitude);
-        const longitude = Number(body.longitude);
-        const tipAmount = Math.max(0, Number(body.tipAmount) || 0);
+        const address = `${body.address || body.deliveryAddress || ""}`.trim();
+        const deliveryAddress = address;
+        let latitude = Number(body.latitude);
+        let longitude = Number(body.longitude);
+        const requestedTipAmount = Number(body.tipAmount ?? 0);
 
-        if (!type || !customerName || !customerPhone || !address || Number.isNaN(latitude) || Number.isNaN(longitude)) {
-            return NextResponse.json({ success: false, error: "Missing required order details" }, { status: 400 });
+        if (!type || !customerName || !customerPhone || !address) {
+
+            return NextResponse.json({ success: false, error: "Missing required order details (name, phone, delivery address)" }, { status: 400 });
         }
+
+        // If coordinates missing or zero, fallback to Kagaznagar center if address matches Kagaznagar keywords
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || (latitude === 0 && longitude === 0)) {
+            if (isKagaznagarAddress(deliveryAddress)) {
+                latitude = KAGAZNAGAR_CENTER.latitude;
+                longitude = KAGAZNAGAR_CENTER.longitude;
+            } else {
+                return NextResponse.json({
+                    success: false,
+                    error: "Delivery is currently restricted to Kagaznagar & surrounding 15 km area. Please enter a valid Kagaznagar delivery address."
+                }, { status: 400 });
+            }
+        }
+
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            return NextResponse.json({ success: false, error: "Invalid delivery coordinates" }, { status: 400 });
+        }
+
+        // ── Geofencing check: 15 km service radius around Sirpur Kagaznagar ────
+        const geoCheck = isWithinServiceZone(latitude, longitude);
+        if (!geoCheck.serviceable) {
+            return NextResponse.json({
+                success: false,
+                error: `Sorry, delivery location is ${geoCheck.distanceKm} km away. Mana Delivery currently serves within ${geoCheck.maxRadiusKm} km of Sirpur Kagaznagar.`
+            }, { status: 400 });
+        }
+
+
+        if (!Number.isFinite(requestedTipAmount) || requestedTipAmount < 0 || requestedTipAmount > 10000) {
+            return NextResponse.json({ success: false, error: "Invalid tip amount" }, { status: 400 });
+        }
+
+        const tipAmount = Number(requestedTipAmount.toFixed(2));
 
         const deliveryFee = 30;
         const platformFee = 5;
@@ -105,6 +155,10 @@ export async function POST(request: Request) {
             const requestedItems = Array.isArray(body.items) ? body.items : [];
             if (requestedItems.length === 0) {
                 return NextResponse.json({ success: false, error: "Cart is empty" }, { status: 400 });
+            }
+
+            if (requestedItems.length > 100) {
+                return NextResponse.json({ success: false, error: "Cart contains too many items" }, { status: 400 });
             }
 
             const productIds = requestedItems
@@ -129,9 +183,9 @@ export async function POST(request: Request) {
             normalizedItems = requestedItems.map((item: any) => {
                 const productId = `${item.productId}`.trim();
                 const product = productMap.get(productId);
-                const quantity = Math.max(0, Number(item.quantity) || 0);
+                const quantity = Number(item.quantity);
 
-                if (!product || quantity < 1) {
+                if (!product || !Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
                     throw new Error("Some items in your cart are no longer available for purchase. Please review your cart.");
                 }
 
@@ -158,6 +212,30 @@ export async function POST(request: Request) {
                 0
             );
         } else if (type === "service") {
+            // Sanitize serviceDetails — only allow known safe string/number keys
+            // to prevent arbitrary data injection into the Mixed schema field.
+            const ALLOWED_SERVICE_KEYS = new Set([
+                "description", "quantity", "weight", "from", "to",
+                "pickupAddress", "dropAddress", "notes", "preferredTime",
+                "item", "itemDescription", "liters", "vehicleType",
+            ]);
+            if (serviceDetails && typeof serviceDetails === "object") {
+                serviceDetails = Object.fromEntries(
+                    Object.entries(serviceDetails)
+                        .filter(([key]) => ALLOWED_SERVICE_KEYS.has(key))
+                        .map(([key, value]) => [
+                            key,
+                            typeof value === "string"
+                                ? `${value}`.slice(0, 500)          // cap string length
+                                : typeof value === "number"
+                                    ? Number(value)                 // keep numbers
+                                    : String(value).slice(0, 500),  // coerce rest to string
+                        ])
+                );
+            } else {
+                serviceDetails = {};
+            }
+
             if (serviceCategory === "Petrol Delivery") {
                 subtotal = (Number(serviceDetails?.quantity) || 1) * 105;
             } else if (serviceCategory === "Pickup & Drop") {
@@ -190,7 +268,14 @@ export async function POST(request: Request) {
             Math.max(0, grossTotal - promoResult.discountAmount - walletUsed).toFixed(2)
         );
 
-        const paymentMethod = total === 0 ? "wallet" : (body.paymentMethod || "cod");
+        const requestedPaymentMethod = `${body.paymentMethod || "cod"}`.toLowerCase();
+        const allowedPaymentMethods = new Set(["cod", "upi", "razorpay"]);
+
+        if (total > 0 && !allowedPaymentMethods.has(requestedPaymentMethod)) {
+            return NextResponse.json({ success: false, error: "Invalid payment method" }, { status: 400 });
+        }
+
+        const paymentMethod = total === 0 ? "wallet" : requestedPaymentMethod;
         const transactionId = `${body.transactionId || ""}`.trim();
 
         if (paymentMethod === "upi" && total > 0 && !transactionId) {
@@ -231,7 +316,7 @@ export async function POST(request: Request) {
                 transactionId: transactionId || undefined,
                 customerName,
                 customerPhone,
-                address,
+                address: deliveryAddress,
                 latitude,
                 longitude,
                 deliveryStatus: "pending",
@@ -344,7 +429,61 @@ Order Tracking ID: #${orderObj._id.toString().slice(-6).toUpperCase()}`;
                 href: "/profile",
                 metadata: { orderId: orderObj._id.toString() },
             });
+
+            // Send Order Confirmation Email (Non-blocking)
+            (async () => {
+                try {
+                    const user = await User.findById(userId).select("email").lean() as any;
+                    if (user?.email) {
+                        const shortId = orderObj._id.toString().slice(-6).toUpperCase();
+                        const html = orderConfirmationEmail({
+                            customerName,
+                            orderId: shortId,
+                            orderTotal: total,
+                            paymentMethod,
+                            deliveryAddress: address,
+                            items: (normalizedItems || []).map((i: any) => ({
+                                name: i.name,
+                                quantity: i.quantity,
+                                price: i.price,
+                            })),
+                            promoDiscount: promoResult.discountAmount,
+                            walletUsed,
+                            tipAmount,
+                            deliveryFee,
+                            platformFee,
+                            tax,
+                            subtotal,
+                            type,
+                            serviceCategory,
+                        });
+                        await sendEmail(user.email, `Order Confirmed #${shortId} – Mana Delivery`, html);
+                    }
+                } catch (emailErr: any) {
+                    console.warn("⚠️ Order confirmation email failed (non-fatal):", emailErr.message);
+                }
+            })();
         }
+
+        // Non-blocking SMS & WhatsApp notifications
+        (async () => {
+            try {
+                const shortId = orderObj._id.toString().slice(-6).toUpperCase();
+                if (customerPhone) {
+                    await sendOrderStatusSMS(customerPhone, shortId, "pending");
+                    await sendWhatsAppMessage({
+                        toPhone: customerPhone,
+                        customerName,
+                        orderShortId: shortId,
+                        status: "placed",
+                        totalAmount: total,
+                        lang: "te",
+                    });
+                }
+            } catch (err: any) {
+                console.warn("⚠️ Order SMS/WhatsApp alert failed (non-fatal):", err.message);
+            }
+        })();
 
         await notifyAdmins({
             title: "New Order",

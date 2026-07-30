@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 import connectToDatabase from '@/lib/mongoose';
 import Category from '@/models/Category';
+import Product from '@/models/Product';
+import Shop from '@/models/Shop';
 
 const BASE_URL = 'https://manadelivery.in';
 
@@ -14,16 +16,38 @@ const SEO_LANDING_PAGES = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Fetch categories from DB for dynamic pages
   let categoryEntries: MetadataRoute.Sitemap = [];
+  let productEntries: MetadataRoute.Sitemap = [];
+  let shopEntries: MetadataRoute.Sitemap = [];
+
   try {
     await connectToDatabase();
-    const categories = await Category.find({}).select('slug updatedAt').lean();
+    
+    const [categories, products, shops] = await Promise.all([
+      Category.find({}).select('slug updatedAt').lean(),
+      Product.find({ isHidden: false }).select('slug updatedAt').lean(),
+      Shop.find({ isActive: true }).select('slug updatedAt').lean(),
+    ]);
+
     categoryEntries = categories.map((cat: any) => ({
       url: `${BASE_URL}/category/${cat.slug}`,
       lastModified: cat.updatedAt ? new Date(cat.updatedAt) : new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
+    }));
+
+    productEntries = products.map((prod: any) => ({
+      url: `${BASE_URL}/product/${prod.slug || prod._id}`,
+      lastModified: prod.updatedAt ? new Date(prod.updatedAt) : new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+
+    shopEntries = shops.map((shop: any) => ({
+      url: `${BASE_URL}/shop/${shop.slug}`,
+      lastModified: shop.updatedAt ? new Date(shop.updatedAt) : new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.75,
     }));
   } catch {
     // silently skip if DB is unavailable during build
@@ -63,5 +87,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: page.priority,
   }));
 
-  return [...staticPages, ...seoLandingPages, ...categoryEntries];
+  return [...staticPages, ...seoLandingPages, ...categoryEntries, ...shopEntries, ...productEntries];
 }

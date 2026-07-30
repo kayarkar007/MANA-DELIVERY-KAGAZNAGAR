@@ -68,7 +68,7 @@ export async function PATCH(req: Request) {
                 moderatedBy: auth.session.user.id,
                 moderatedAt: new Date(),
             },
-            { new: true }
+            { returnDocument: "after" }
         );
 
         if (!review) {

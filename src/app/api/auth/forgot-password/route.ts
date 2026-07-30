@@ -3,11 +3,23 @@ import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import { sendEmail } from "@/lib/mailer";
 import crypto from "crypto";
+import { forgotPasswordLimiter } from "@/lib/rateLimit";
+
 
 export async function POST(req: Request) {
     try {
         await connectToDatabase();
         const { email } = await req.json();
+
+        // ── Rate limit: 3 password-reset emails per IP per 15 minutes ────────
+        const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
+        if (!forgotPasswordLimiter.check(ip)) {
+            // Return the same generic message to avoid confirming email existence
+            return NextResponse.json(
+                { success: true, message: "If that email exists, a reset link has been sent." },
+                { status: 200 }
+            );
+        }
 
         if (!email) {
             return NextResponse.json({ success: false, error: "Email is required" }, { status: 400 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -14,8 +14,6 @@ import { useRouter } from "next/navigation";
  */
 export default function PushMessageListener() {
     const router = useRouter();
-    const routerRef = useRef(router);
-    routerRef.current = router;
 
     useEffect(() => {
         if (!("serviceWorker" in navigator)) return;
@@ -32,7 +30,7 @@ export default function PushMessageListener() {
                 action: data?.href
                     ? {
                           label: "View",
-                          onClick: () => routerRef.current.push(data.href),
+                          onClick: () => router.push(data.href),
                       }
                     : undefined,
             });
@@ -43,7 +41,7 @@ export default function PushMessageListener() {
 
         navigator.serviceWorker.addEventListener("message", handleMessage);
         return () => navigator.serviceWorker.removeEventListener("message", handleMessage);
-    }, []);
+    }, [router]);
 
     return null;
 }

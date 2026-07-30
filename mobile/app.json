@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Mana Delivery",
+    "slug": "mana-delivery",
+    "scheme": "manadelivery",
+    "version": "1.2.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090405"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.manadelivery.app"
+    },
+    "android": {
+      "package": "com.manadelivery.app",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#090405",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

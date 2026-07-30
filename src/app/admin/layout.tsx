@@ -11,10 +11,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
 
     return (
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex min-h-screen min-h-dvh">
             <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[24rem] bg-[radial-gradient(circle_at_top,rgba(198,40,40,0.2),transparent_42%)]" />
             <AdminSidebar />
-            <main className="relative flex-1 overflow-y-auto pb-20 pt-14 lg:pb-0 lg:pt-0">
+            <main className="relative flex-1 overflow-x-hidden pb-24 pt-16 lg:pb-6 lg:pt-0">
                 <div className="mx-auto w-full max-w-7xl p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10">
                     {children}
                 </div>

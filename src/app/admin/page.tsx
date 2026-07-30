@@ -6,6 +6,7 @@ import Product from "@/models/Product";
 import Category from "@/models/Category";
 import User from "@/models/User";
 import { formatCurrency } from "@/lib/utils";
+import AdminAnalyticsChartsWrapper from "@/components/admin/AdminAnalyticsChartsWrapper";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,9 @@ export default async function AdminDashboard() {
                 ))}
             </section>
 
+            {/* Analytics Charts — Client Component */}
+            <AdminAnalyticsChartsWrapper />
+
             <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
                 <div className="app-card rounded-[2rem] p-6 sm:p-8">
                     <div className="mb-6 flex items-center justify-between gap-3">
@@ -136,3 +140,5 @@ export default async function AdminDashboard() {
         </div>
     );
 }
+
+

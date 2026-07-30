@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
+import bcrypt from "bcryptjs";
 
 // In-memory OTP brute-force protection (5 attempts → 15 min lockout)
 const otpAttempts = new Map<string, { count: number; lockedUntil?: number }>();
@@ -62,7 +63,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "User is already verified" }, { status: 400 });
         }
 
-        if (user.verifyOtp !== otp) {
+        // SECURITY: OTP is stored as a bcrypt hash — compare with bcrypt, not ===
+        const otpValid = user.verifyOtp ? await bcrypt.compare(otp, user.verifyOtp) : false;
+        if (!otpValid) {
             return NextResponse.json({ success: false, error: "Invalid verification code" }, { status: 400 });
         }
 

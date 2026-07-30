@@ -86,15 +86,18 @@ export async function dispatchPushToUser(
             atLeastOneSuccess = true;
             await PushSubscription.updateOne({ _id: subscription._id }, { $set: { lastUsedAt: new Date() } });
         } catch (error: any) {
-            if (error?.statusCode === 404 || error?.statusCode === 410) {
-                // Subscription has expired or is no longer valid
+            if ([401, 403, 404, 410].includes(error?.statusCode)) {
+                // Expired subscriptions and VAPID-key mismatches cannot recover by retrying.
                 await deactivateSubscription(subscription.endpoint);
             } else if (error?.statusCode >= 500 || error?.statusCode === 429) {
                 // Push service is down or rate limited — we should retry
                 pushServiceError = true;
                 console.error("Push service error", error);
             } else {
-                console.error("Failed to send web push notification", error);
+                console.error("Failed to send web push notification", {
+                    statusCode: error?.statusCode,
+                    message: error?.message,
+                });
             }
         }
     }));

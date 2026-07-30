@@ -22,6 +22,18 @@ async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      // ── Connection pool ───────────────────────────────────────────────────
+      // 10 simultaneous sockets is enough for Vercel serverless functions.
+      // Raise to 20-50 when on a dedicated Atlas M10+ cluster.
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      // ── Timeout guards ────────────────────────────────────────────────────
+      // Fail fast instead of hanging indefinitely when Atlas is unreachable.
+      serverSelectionTimeoutMS: 5_000, // 5 s to find a primary
+      socketTimeoutMS: 45_000,         // 45 s idle socket before closing
+      connectTimeoutMS: 10_000,        // 10 s to open initial TCP connection
+      // ── Heartbeat ─────────────────────────────────────────────────────────
+      heartbeatFrequencyMS: 10_000,    // Detect stale connections every 10 s
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {

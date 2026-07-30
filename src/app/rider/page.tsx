@@ -404,7 +404,7 @@ export default function RiderDashboard() {
 
     return (
         <div className="min-h-screen">
-            <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between shadow-sm">
+            <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-3 sm:px-4 h-14 flex items-center justify-between shadow-sm" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
                 <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-xl overflow-hidden flex-shrink-0">
                         <Image src="/logo2.png" alt="Mana Delivery" width={28} height={28} className="object-contain" />
@@ -429,7 +429,7 @@ export default function RiderDashboard() {
                 </div>
             </header>
 
-            <div className="max-w-2xl mx-auto px-4 py-6 pb-8">
+            <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 0px))" }}>
                 {!isOnline && (
                     <div className="bg-red-600 text-white text-center py-2 px-4 rounded-xl mb-6 flex items-center justify-center gap-2 animate-bounce">
                         <WifiOff className="w-4 h-4" />
@@ -567,22 +567,22 @@ export default function RiderDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 mb-8">
                     <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Active Tasks</p>
-                        <p className="text-4xl font-black text-red-600 tracking-tighter">{orders.length}</p>
+                        <p className="text-3xl sm:text-4xl font-black text-red-600 tracking-tighter">{orders.length}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Completed Today</p>
-                        <p className="text-4xl font-black text-emerald-600 tracking-tighter">{statsData.completedToday}</p>
+                        <p className="text-3xl sm:text-4xl font-black text-emerald-600 tracking-tighter">{statsData.completedToday}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Earned Today</p>
-                        <p className="text-4xl font-black text-purple-600 tracking-tighter"><span className="text-xl mr-1">Rs</span>{statsData.earningsToday}</p>
+                        <p className="text-3xl sm:text-4xl font-black text-purple-600 tracking-tighter"><span className="text-lg sm:text-xl mr-1">Rs</span>{statsData.earningsToday}</p>
                     </div>
                     <div className="bg-gradient-to-br from-indigo-500 to-red-600 p-5 rounded-3xl shadow-lg shadow-red-500/20 text-white">
                         <p className="text-[10px] font-black text-red-100 uppercase tracking-widest mb-2">Total Earned</p>
-                        <p className="text-4xl font-black tracking-tighter"><span className="text-xl mr-1 font-sans text-red-200">Rs</span>{statsData.totalEarnings}</p>
+                        <p className="text-3xl sm:text-4xl font-black tracking-tighter"><span className="text-lg sm:text-xl mr-1 font-sans text-red-200">Rs</span>{statsData.totalEarnings}</p>
                     </div>
                 </div>
 
@@ -608,13 +608,13 @@ export default function RiderDashboard() {
                             return (
                                 <div
                                     key={order._id}
-                                    className={`bg-white dark:bg-gray-900 rounded-[2.5rem] p-6 shadow-xl border overflow-hidden relative ${
+                                    className={`bg-white dark:bg-gray-900 rounded-[1.75rem] sm:rounded-[2.5rem] p-4 sm:p-6 shadow-xl border overflow-hidden relative ${
                                         isNew ? "border-red-500 ring-4 ring-red-500/10" : "border-gray-100 dark:border-gray-800"
                                     }`}
                                 >
                                     {isNew && <div className="absolute top-0 left-0 w-full h-1 bg-red-500 animate-pulse" />}
-                                    <div className="absolute top-0 right-0 p-6">
-                                        <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${
+                                    <div className="mb-3 flex justify-end">
+                                        <span className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest ${
                                             order.deliveryStatus === "delivered"
                                                 ? "bg-green-100 text-green-700"
                                                 : order.deliveryStatus === "assigned"
@@ -629,7 +629,7 @@ export default function RiderDashboard() {
                                         </span>
                                     </div>
 
-                                    <div className="mb-6 pr-24">
+                                    <div className="mb-4 sm:mb-6">
                                         <div className="flex items-start gap-4">
                                             <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
                                                 {orderImage ? (

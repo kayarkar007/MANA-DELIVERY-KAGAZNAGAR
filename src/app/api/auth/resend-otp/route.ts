@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import { sendEmail } from "@/lib/mailer";
+import bcrypt from "bcryptjs";
+import { otpResendLimiter } from "@/lib/rateLimit";
+
 
 export async function POST(req: Request) {
     try {
@@ -10,6 +13,15 @@ export async function POST(req: Request) {
 
         if (!email) {
             return NextResponse.json({ success: false, error: "Email is required" }, { status: 400 });
+        }
+
+        // ── Rate limit: 3 OTP resend requests per email per 10 minutes ─────────
+        const emailKey = `${email}`.toLowerCase().trim();
+        if (!otpResendLimiter.check(emailKey)) {
+            return NextResponse.json(
+                { success: false, error: "Too many OTP requests. Please wait a few minutes before trying again." },
+                { status: 429 }
+            );
         }
 
         const user = await User.findOne({ email });
@@ -22,11 +34,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "This account is already verified." }, { status: 400 });
         }
 
-        // Generate fresh OTP
+        // Generate fresh OTP and hash it
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        // SECURITY: Store bcrypt hash, never the raw OTP string
+        const hashedOtp = await bcrypt.hash(otp, 10);
 
-        user.verifyOtp = otp;
+        user.verifyOtp = hashedOtp;
         user.verifyOtpExpiry = otpExpiry;
         await user.save();
 

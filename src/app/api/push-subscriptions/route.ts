@@ -69,7 +69,7 @@ export async function POST(req: Request) {
                     lastUsedAt: new Date(),
                 },
             },
-            { new: true, upsert: true }
+            { returnDocument: "after", upsert: true }
         );
 
         try {

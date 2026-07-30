@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IProduct extends Document {
     name: string;
+    slug?: string;
     description?: string;
     price: number;
     unit: string;
@@ -19,6 +20,7 @@ export interface IProduct extends Document {
 const ProductSchema: Schema = new Schema(
     {
         name: { type: String, required: true },
+        slug: { type: String, required: false },
         description: { type: String, required: false },
         price: { type: Number, required: true },
         unit: { type: String, required: true },
@@ -35,6 +37,7 @@ const ProductSchema: Schema = new Schema(
 
 // Indexes for performance optimization
 ProductSchema.index({ name: "text", categorySlug: 1 });
+ProductSchema.index({ slug: 1 });
 ProductSchema.index({ inStock: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ isHidden: 1, categorySlug: 1 });

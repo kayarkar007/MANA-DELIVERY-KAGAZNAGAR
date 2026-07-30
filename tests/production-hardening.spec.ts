@@ -40,6 +40,37 @@ test.describe("Production hardening regressions", () => {
         });
     });
 
+    test("Authenticated users cannot bypass payment with a partial wallet order", async ({ page }) => {
+        await login(page, credentials.user.email, credentials.user.password, /\/$/);
+
+        const result = await page.evaluate(async () => {
+            const productsResponse = await fetch("/api/products?categorySlug=playwright-groceries");
+            const productsPayload = await productsResponse.json();
+            const product = productsPayload.data?.find((item: { name?: string }) => item.name === "Playwright Test Apples");
+
+            const orderResponse = await fetch("/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "product",
+                    customerName: "Payment Guard Test",
+                    customerPhone: "9876500001",
+                    address: "Playwright Colony, Kagaznagar",
+                    latitude: 17.385,
+                    longitude: 78.4867,
+                    items: [{ productId: product?._id, quantity: 1 }],
+                    paymentMethod: "wallet",
+                    walletUsed: 0,
+                }),
+            });
+
+            return { status: orderResponse.status, body: await orderResponse.json() };
+        });
+
+        expect(result.status).toBe(400);
+        expect(result.body).toMatchObject({ success: false, error: "Invalid payment method" });
+    });
+
     test("Admins are redirected away from the rider portal", async ({ page }) => {
         await login(page, credentials.admin.email, credentials.admin.password, /\/admin$/);
 

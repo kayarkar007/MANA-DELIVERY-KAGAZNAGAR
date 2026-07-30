@@ -27,7 +27,7 @@ function getNavItems(role?: string): NavItem[] {
     if (role === "rider") {
         return [
             { label: "Rider", href: "/rider", icon: Truck },
-            { label: "Orders", href: "/profile", icon: ShoppingBag },
+            { label: "Earnings", href: "/rider/earnings", icon: ShoppingBag },
             { label: "Profile", href: "/profile", icon: User },
         ];
     }

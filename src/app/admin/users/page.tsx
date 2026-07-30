@@ -12,8 +12,10 @@ export default function AdminUsersPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const searchRef = useRef(search);
+    const requestSequenceRef = useRef(0);
 
     const fetchUsers = async (nextPage = page, nextSearch = searchRef.current) => {
+        const requestSequence = ++requestSequenceRef.current;
         setLoading(true);
         let lastError = "Failed to fetch users";
 
@@ -36,6 +38,8 @@ export default function AdminUsersPage() {
                     throw new Error(data.error || "Failed to fetch users");
                 }
 
+                if (requestSequence !== requestSequenceRef.current) return;
+
                 setUsers(data.data || []);
                 setTotalPages(data.pagination?.totalPages || 1);
                 setLoading(false);
@@ -44,6 +48,8 @@ export default function AdminUsersPage() {
                 lastError = error.message || lastError;
             }
         }
+
+        if (requestSequence !== requestSequenceRef.current) return;
 
         setUsers([]);
         setTotalPages(1);

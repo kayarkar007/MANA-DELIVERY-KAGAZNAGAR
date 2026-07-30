@@ -24,12 +24,13 @@ export const sendEmail = async (to: string, subject: string, html: string): Prom
             host: "smtp.gmail.com",
             port: 587,
             secure: false, // STARTTLS
+            requireTLS: true,
             auth: {
                 user: emailUser,
                 pass: emailPass,
             },
             tls: {
-                rejectUnauthorized: false,
+                minVersion: "TLSv1.2",
             },
         });
 

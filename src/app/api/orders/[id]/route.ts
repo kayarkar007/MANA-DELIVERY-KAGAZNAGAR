@@ -8,6 +8,12 @@ import { getMappedOrderStatus } from "@/lib/orderPresentation";
 import { triggerNotification } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import { createWalletTransaction } from "@/lib/wallet";
+import { processRefund } from "@/lib/refund";
+import { sendEmail } from "@/lib/mailer";
+import { riderAssignedEmail, orderDeliveredEmail } from "@/lib/emailTemplates";
+import { sendOrderStatusSMS } from "@/lib/sms";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { processReferralRewardOnDelivery } from "@/lib/referral";
 import Order from "@/models/Order";
 import User from "@/models/User";
 
@@ -247,6 +253,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
             if (status === "delivered") {
                 order.deliveryStatus = "delivered";
+                if (order.userId) {
+                    processReferralRewardOnDelivery(order.userId, order._id.toString()).catch(() => {});
+                }
             }
 
             if (status === "cancelled") {
@@ -268,13 +277,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             if (refundStatus === "processed" && previousRefundStatus !== "processed") {
                 const refundCredit = getRefundCredit(order);
                 if (refundCredit > 0 && order.userId) {
-                    await createWalletTransaction({
-                        userId: order.userId,
-                        amount: refundCredit,
-                        type: "credit",
-                        source: "refund",
-                        note: `Refund processed for order #${order._id.toString().slice(-6).toUpperCase()}`,
-                        orderId: order._id.toString(),
+                    // Fetch customer email for refund notification (non-blocking)
+                    const orderUser = await User.findById(order.userId).select("email").lean() as any;
+
+                    // processRefund handles wallet credit + email + in-app notification
+                    await processRefund({
+                        orderId:      order._id.toString(),
+                        orderShortId: order._id.toString().slice(-6).toUpperCase(),
+                        userId:       order.userId,
+                        customerName: order.customerName,
+                        customerEmail: orderUser?.email,
+                        refundAmount: refundCredit,
+                        refundReason: order.refundReason,
                     });
                 }
                 order.refundedAt = new Date();
@@ -336,6 +350,75 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 href: "/rider",
                 metadata: { orderId: order._id.toString() },
             });
+        }
+
+        // ── Email notifications on status changes ─────────────────────────────────
+        if (order.userId && (statusChanged || riderAssignmentChanged)) {
+            try {
+                const orderUser = await User.findById(order.userId).select("email").lean() as any;
+                const customerEmail = orderUser?.email;
+
+                if (customerEmail) {
+                    const shortId = order._id.toString().slice(-6).toUpperCase();
+
+                    if (riderAssignmentChanged && order.deliveryStatus === "assigned" && assignedRider) {
+                        // Rider assigned email
+                        await sendEmail(
+                            customerEmail,
+                            `Rider Assigned for Order #${shortId} – Mana Delivery`,
+                            riderAssignedEmail({
+                                customerName: order.customerName,
+                                orderId: shortId,
+                                riderName: assignedRider.name,
+                            })
+                        );
+                    } else if (order.status === "delivered") {
+                        // Order delivered email
+                        await sendEmail(
+                            customerEmail,
+                            `Order #${shortId} Delivered! – Mana Delivery`,
+                            orderDeliveredEmail({
+                                customerName: order.customerName,
+                                orderId: shortId,
+                                orderTotal: order.total,
+                            })
+                        );
+                    }
+                }
+            } catch (emailErr: any) {
+                // Non-fatal — log but don't fail the request
+                console.warn("⚠️  Status-change email error (non-fatal):", emailErr.message);
+            }
+        }
+
+        // ── SMS & WhatsApp notifications on status changes ────────────────────────
+        if (order.customerPhone && (statusChanged || riderAssignmentChanged)) {
+            (async () => {
+                try {
+                    const shortId = order._id.toString().slice(-6).toUpperCase();
+                    await sendOrderStatusSMS(order.customerPhone, shortId, order.status);
+
+                    let waStatus: "placed" | "assigned" | "shipped" | "delivered" | "cancelled" | null = null;
+                    if (riderAssignmentChanged && order.deliveryStatus === "assigned") waStatus = "assigned";
+                    else if (order.status === "shipped") waStatus = "shipped";
+                    else if (order.status === "delivered") waStatus = "delivered";
+                    else if (order.status === "cancelled") waStatus = "cancelled";
+
+                    if (waStatus) {
+                        await sendWhatsAppMessage({
+                            toPhone: order.customerPhone,
+                            customerName: order.customerName,
+                            orderShortId: shortId,
+                            status: waStatus,
+                            riderName: assignedRider?.name,
+                            totalAmount: order.total,
+                            lang: "te",
+                        });
+                    }
+                } catch (smsErr: any) {
+                    console.warn("⚠️ Status-change SMS/WhatsApp error (non-fatal):", smsErr.message);
+                }
+            })();
         }
 
         const hasCustomerFacingChange =

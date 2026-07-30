@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import AuthProvider from "@/components/AuthProvider";
@@ -7,6 +8,12 @@ import { Toaster } from "sonner";
 import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 import WebsiteSchema from "@/components/seo/WebsiteSchema";
 import PushMessageListener from "@/components/PushMessageListener";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 const BASE_URL = "https://manadelivery.in";
 
@@ -41,6 +48,11 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: BASE_URL,
+    languages: {
+      "en-IN": BASE_URL,
+      "te-IN": `${BASE_URL}?lang=te`,
+      "x-default": BASE_URL,
+    },
   },
   openGraph: {
     title: "Mana Delivery – Fastest Delivery in Kagaznagar, Sirpur",
@@ -50,7 +62,8 @@ export const metadata: Metadata = {
     url: BASE_URL,
     images: [
       {
-        url: `${BASE_URL}/og-image.png`,
+        // og-image.webp — 26 KB (was 5.5 MB .png)
+        url: `${BASE_URL}/og-image.webp`,
         width: 1200,
         height: 630,
         alt: "Mana Delivery — Kagaznagar ki apni delivery service",
@@ -65,7 +78,7 @@ export const metadata: Metadata = {
     title: "Mana Delivery – Grocery & Food Delivery in Kagaznagar",
     description:
       "Fast hyperlocal delivery of groceries, food & medicines in Sirpur Kagaznagar. Order online now!",
-    images: [`${BASE_URL}/og-image.png`],
+    images: [`${BASE_URL}/og-image.webp`],
     site: "@manadelivery",
     creator: "@manadelivery",
   },
@@ -104,7 +117,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-IN" suppressHydrationWarning>
+    <html lang="en-IN" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Global JSON-LD structured data */}
         <LocalBusinessSchema />
@@ -112,8 +125,13 @@ export default function RootLayout({
         {/* Preconnect to critical domains */}
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        {/* Razorpay payment SDK */}
+        <link rel="preconnect" href="https://api.razorpay.com" />
+        <link rel="dns-prefetch" href="https://checkout.razorpay.com" />
+        {/* Cloudinary — product image CDN */}
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
-      <body className="overflow-x-hidden font-sans antialiased">
+      <body className={`${inter.className} overflow-x-hidden font-sans antialiased`} suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
             <Toaster position="top-center" richColors />

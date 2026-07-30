@@ -41,9 +41,18 @@ export default function CartDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-full flex-col border-l border-white/45 bg-[rgba(255,252,247,0.94)] shadow-[0_0_65px_rgba(15,23,42,0.12)] backdrop-blur-3xl dark:border-white/8 dark:bg-[rgba(9,16,29,0.94)] sm:max-w-md"
+                        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[90vw] flex-col border-l border-white/45 bg-[rgba(255,252,247,0.94)] shadow-[0_0_65px_rgba(15,23,42,0.12)] backdrop-blur-3xl dark:border-white/8 dark:bg-[rgba(9,16,29,0.94)] sm:max-w-md"
                         style={{ paddingTop: "env(safe-area-inset-top)" }}
                     >
+                        {/* Mobile Dismiss Drag Handle */}
+                        <div
+                            className="flex cursor-pointer items-center justify-center py-2.5 sm:hidden"
+                            onClick={onClose}
+                            title="Tap or drag to close"
+                        >
+                            <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+                        </div>
+
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-4 dark:border-slate-800/90 sm:px-6 sm:py-5">
                             <div>

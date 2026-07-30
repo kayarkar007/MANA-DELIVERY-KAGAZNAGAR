@@ -111,6 +111,9 @@ test.describe.serial("Role-based end-to-end coverage", () => {
         await inputs.nth(1).fill(customerPhone);
         await page.locator("textarea").first().fill("Plot 101, Playwright Colony, Kagaznagar");
 
+        await page.getByRole("button", { name: /continue to payment/i }).click();
+        await page.getByRole("button", { name: /review order/i }).click();
+
         const orderResponsePromise = page.waitForResponse((response) =>
             response.url().includes("/api/orders") && response.request().method() === "POST"
         );
@@ -149,15 +152,26 @@ test.describe.serial("Role-based end-to-end coverage", () => {
 
         await expect(page.getByRole("heading", { name: /admin dashboard/i })).toBeVisible();
 
+        const initialUsersResponse = page.waitForResponse((response) =>
+            response.url().includes("/api/admin/users?") && response.request().method() === "GET"
+        );
         await page.goto("/admin/users", { waitUntil: "domcontentloaded" });
         await expect(page.getByRole("heading", { name: /user management/i })).toBeVisible();
-        await page.getByPlaceholder("Search users").fill(credentials.user.email);
-        await page.getByRole("button", { name: /^search$/i }).click();
-        // Retry search if the user row doesn't appear
+        await initialUsersResponse;
+
+        const searchInput = page.getByPlaceholder("Search users");
         const userCell = page.getByRole("cell", { name: credentials.user.email });
-        if (!(await userCell.isVisible())) {
-            await page.waitForTimeout(2000);
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            await searchInput.fill(credentials.user.email);
+            const filteredUsersResponse = page.waitForResponse((response) => {
+                const url = new URL(response.url());
+                return url.pathname === "/api/admin/users" &&
+                    url.searchParams.get("search") === credentials.user.email &&
+                    response.request().method() === "GET";
+            });
             await page.getByRole("button", { name: /^search$/i }).click();
+            await filteredUsersResponse;
+            if (await userCell.isVisible()) break;
         }
         await expect(userCell).toBeVisible({ timeout: 15000 });
 

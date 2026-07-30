@@ -20,9 +20,17 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     qualities: [40, 45, 50, 75],
     remotePatterns: [
+      // Unsplash — product/shop demo images
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "plus.unsplash.com" },
-      { protocol: "https", hostname: "**" },
+      // Supabase storage (if migrating assets there)
+      { protocol: "https", hostname: "*.supabase.co" },
+      // Cloudinary (if used for product images)
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      // AWS S3 (generic — restrict to your bucket hostname when known)
+      { protocol: "https", hostname: "*.amazonaws.com" },
+      // Google user avatars (for future OAuth)
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
   experimental: {
@@ -32,8 +40,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
-  // HTTP Security + Caching Headers
+  // HTTP Security + Caching Headers (Disabled in dev mode so local IP HTTP testing works)
   async headers() {
+    if (process.env.NODE_ENV === "development") {
+      return [];
+    }
     return [
       // Security headers for all routes
       {
@@ -48,20 +59,41 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
+          {
+            // Content-Security-Policy
+            // ─────────────────────────────────────────────────────────────────
+            // default-src 'self'        → only same-origin resources by default
+            // script-src               → allow Next.js inline scripts (nonce not
+            //                           yet implemented) + trusted CDNs
+            // style-src 'unsafe-inline' → Tailwind CSS-in-JS requires inline styles
+            // img-src                  → allow same-origin, data URIs, and trusted
+            //                           image CDNs whitelisted in remotePatterns
+            // connect-src              → allow Next.js HMR websocket in dev +
+            //                           Razorpay / push subscription APIs
+            // frame-ancestors 'none'   → prevents clickjacking (stronger than X-Frame-Options)
+            // upgrade-insecure-requests → force HTTPS for all sub-resources
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://res.cloudinary.com https://*.amazonaws.com https://lh3.googleusercontent.com https://*.supabase.co",
+              "font-src 'self' data:",
+              "connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com wss://manadelivery.in",
+              "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+              "frame-ancestors 'none'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "upgrade-insecure-requests",
+            ].join("; "),
+          },
         ],
       },
-      // Cache static assets aggressively (images, fonts, icons)
+      // Public assets are not content-hashed, so allow them to refresh after deploys.
       {
         source: "/(.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf))",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
-      },
-      // Cache _next/static chunks (JS/CSS) forever
-      {
-        source: "/_next/static/(.*)",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
         ],
       },
       // Cache sitemap and robots for 24h

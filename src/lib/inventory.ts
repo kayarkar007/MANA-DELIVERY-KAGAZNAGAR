@@ -42,7 +42,7 @@ export async function reserveInventory(items: InventoryItem[], session?: ClientS
             const updated = await Product.findOneAndUpdate(
                 { _id: item.productId, stockQuantity: { $gte: item.quantity } },
                 { $inc: { stockQuantity: -item.quantity } },
-                { new: true, select: "_id stockQuantity", session }
+                { returnDocument: "after", select: "_id stockQuantity", session }
             );
 
             if (!updated) {

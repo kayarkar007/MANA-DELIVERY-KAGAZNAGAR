@@ -18,7 +18,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             const product = await Product.findByIdAndUpdate(
                 id,
                 { $set: { isHidden: Boolean(body.isHidden) } },
-                { new: true }
+                { returnDocument: "after" }
             );
             if (!product) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
             return NextResponse.json({ success: true, data: product });
@@ -43,7 +43,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             updateData.shopId = body.shopId;
         }
 
-        const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
+        const product = await Product.findByIdAndUpdate(id, updateData, { returnDocument: "after" });
         if (!product) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
         return NextResponse.json({ success: true, data: product });
     } catch (error) {
