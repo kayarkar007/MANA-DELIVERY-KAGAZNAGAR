@@ -53,38 +53,11 @@ export default function SmartRouteScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [routeSequence, setRouteSequence] = useState([]);
 
-  useEffect(() => {
-    async function init() {
-      try {
-        // Request GPS location
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        let currentLoc = null;
-        if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({});
-          currentLoc = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
-          setRiderCoords(currentLoc);
-        }
-
-        const res = await getActiveOrders();
-        const activeList = res.data || [];
-        setOrders(activeList);
-
-        // Build Smart Shortest Route Sequence
-        const sequence = buildOptimizedRoute(currentLoc, activeList);
-        setRouteSequence(sequence);
-      } catch (e) {
-        console.error('Route init failed:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    init();
-  }, []);
-
   /**
    * Smart Route Optimizer:
    * 1. Prioritizes Pickups for un-collected items at nearest vendors.
    * 2. Interleaves Deliveries for items already picked up or near the route.
+   * Defined BEFORE useEffect to satisfy ESLint no-use-before-define rule.
    */
   function buildOptimizedRoute(riderLoc, activeOrders) {
     const steps = [];
@@ -137,6 +110,36 @@ export default function SmartRouteScreen({ navigation }) {
     // Sort by shortest distance
     return steps.sort((a, b) => parseFloat(a.distanceKm) - parseFloat(b.distanceKm));
   }
+
+  useEffect(() => {
+    async function init() {
+      try {
+        // Request GPS location
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        let currentLoc = null;
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({});
+          currentLoc = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+          setRiderCoords(currentLoc);
+        }
+
+        const res = await getActiveOrders();
+        const activeList = res.data || [];
+        setOrders(activeList);
+
+        // Build Smart Shortest Route Sequence
+        const sequence = buildOptimizedRoute(currentLoc, activeList);
+        setRouteSequence(sequence);
+      } catch (e) {
+        console.error('Route init failed:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   if (loading) {
     return (

@@ -151,6 +151,33 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
         prevDeliveryStatusRef.current = order.deliveryStatus;
     }, [order?.status, order?.deliveryStatus]);
 
+    const calculateETA = (orderData: any) => {
+        if (!orderData.riderLocation || !orderData.latitude || !orderData.longitude) {
+            setEta("Location not available");
+            return;
+        }
+
+        // Simple Haversine distance calculation
+        const R = 6371; // Earth's radius in km
+        const dLat = (orderData.latitude - orderData.riderLocation.latitude) * Math.PI / 180;
+        const dLon = (orderData.longitude - orderData.riderLocation.longitude) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(orderData.riderLocation.latitude * Math.PI / 180) * Math.cos(orderData.latitude * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+
+        // Assuming average speed of 20km/h in city traffic
+        const timeInMinutes = Math.round((distance / 20) * 60);
+        
+        if (timeInMinutes < 2) {
+            setEta("Arriving soon!");
+        } else {
+            setEta(`${timeInMinutes + 2} - ${timeInMinutes + 5} mins`);
+        }
+    };
+
     const fetchOrder = async () => {
         try {
             const res = await fetch(`/api/orders/${orderId}`);
@@ -192,34 +219,8 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
         return () => {
             eventSource.close();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orderId]);
-
-    const calculateETA = (orderData: any) => {
-        if (!orderData.riderLocation || !orderData.latitude || !orderData.longitude) {
-            setEta("Location not available");
-            return;
-        }
-
-        // Simple Haversine distance calculation
-        const R = 6371; // Earth's radius in km
-        const dLat = (orderData.latitude - orderData.riderLocation.latitude) * Math.PI / 180;
-        const dLon = (orderData.longitude - orderData.riderLocation.longitude) * Math.PI / 180;
-        const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(orderData.riderLocation.latitude * Math.PI / 180) * Math.cos(orderData.latitude * Math.PI / 180) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c;
-
-        // Assuming average speed of 20km/h in city traffic
-        const timeInMinutes = Math.round((distance / 20) * 60);
-        
-        if (timeInMinutes < 2) {
-            setEta("Arriving soon!");
-        } else {
-            setEta(`${timeInMinutes + 2} - ${timeInMinutes + 5} mins`);
-        }
-    };
 
     if (loading || !L) {
         return (

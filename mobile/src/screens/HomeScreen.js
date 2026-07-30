@@ -15,10 +15,6 @@ export default function HomeScreen({ navigation }) {
 
   const { addToCart, cartCount, cartTotal } = useCart();
 
-  useEffect(() => {
-    loadData();
-  }, [selectedCategory]);
-
   async function loadData() {
     setLoading(true);
     try {
@@ -36,6 +32,11 @@ export default function HomeScreen({ navigation }) {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())

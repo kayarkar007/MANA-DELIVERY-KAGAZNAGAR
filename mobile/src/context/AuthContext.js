@@ -8,10 +8,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadSession();
-  }, []);
-
   async function loadSession() {
     try {
       const savedUser = await AsyncStorage.getItem('userData');
@@ -24,6 +20,11 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadSession();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loginWithPhoneOtp(phone, otp) {
     const data = await apiFetch('/auth/phone-otp/verify', {

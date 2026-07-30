@@ -11,12 +11,6 @@ export default function ProfileScreen({ navigation }) {
   const [walletBalance, setWalletBalance] = useState(0);
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, delivered: 0 });
 
-  useEffect(() => {
-    if (user) {
-      fetchProfileData();
-    }
-  }, [user]);
-
   async function fetchProfileData() {
     try {
       // Fetch wallet balance
@@ -43,6 +37,13 @@ export default function ProfileScreen({ navigation }) {
       console.error('Orders fetch failed', e);
     }
   }
+
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   function handleLogout() {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
