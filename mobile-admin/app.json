@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Mana Delivery Admin",
+    "slug": "mana-delivery-admin",
+    "scheme": "manadeliveryadmin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090405"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.manadelivery.admin"
+    },
+    "android": {
+      "package": "com.manadelivery.admin",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#090405"
+      },
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366f1",
+          "androidMode": "default",
+          "androidCollapsedTitle": "#{unread_notifications} admin alerts"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}

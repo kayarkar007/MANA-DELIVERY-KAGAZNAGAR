@@ -23,8 +23,15 @@ const UserSchema = new mongoose.Schema(
         }],
         role: {
             type: String,
-            enum: ["user", "admin", "rider"],
+            enum: ["user", "admin", "rider", "vendor"],
             default: "user",
+        },
+        // Vendor-specific fields (only populated when role = "vendor")
+        shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
+        vendorStatus: {
+            type: String,
+            enum: ["pending", "active", "suspended"],
+            default: "pending",
         },
         currentLocation: {
             latitude: { type: Number },

@@ -45,3 +45,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 🔐 SENSITIVE — Mobile Firebase credentials (NEVER commit these)
+**/google-services.json
+**/GoogleService-Info.plist
+mobile*/.env
+mobile*/node_modules
