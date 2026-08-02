@@ -37,7 +37,10 @@ export async function GET(request: Request) {
         }
         if (shopId) {
             if (mongoose.Types.ObjectId.isValid(shopId)) {
-                query.shopId = new mongoose.Types.ObjectId(shopId);
+                query.$or = [
+                    { shopId: shopId },
+                    { shopId: new mongoose.Types.ObjectId(shopId) }
+                ];
             } else {
                 query.shopId = shopId;
             }
