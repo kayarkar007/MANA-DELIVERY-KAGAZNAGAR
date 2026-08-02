@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import AuthProvider from "@/components/AuthProvider";
@@ -8,12 +7,6 @@ import { Toaster } from "sonner";
 import LocalBusinessSchema from "@/components/seo/LocalBusinessSchema";
 import WebsiteSchema from "@/components/seo/WebsiteSchema";
 import PushMessageListener from "@/components/PushMessageListener";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
 
 const BASE_URL = "https://manadelivery.in";
 
@@ -131,7 +124,7 @@ export default function RootLayout({
         {/* Cloudinary — product image CDN */}
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
-      <body className={`${inter.className} overflow-x-hidden font-sans antialiased`} suppressHydrationWarning>
+      <body className="overflow-x-hidden font-sans antialiased" suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
             <Toaster position="top-center" richColors />
