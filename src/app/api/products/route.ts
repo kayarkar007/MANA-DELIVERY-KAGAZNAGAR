@@ -22,6 +22,11 @@ export async function GET(request: Request) {
 
         await connectToDatabase();
 
+        // Touch Shop model to ensure Mongoose registers schema before populate query
+        if (!Shop) {
+            console.warn("Shop model uninitialized");
+        }
+
         const adminView = searchParams.get("adminView") === "1";
         if (adminView) {
             const auth = await requireAdmin();

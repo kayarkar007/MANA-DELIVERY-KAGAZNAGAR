@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import Wishlist from "@/models/Wishlist";
 import Product from "@/models/Product";
+import Shop from "@/models/Shop";
 import { requireAuthenticatedFlexible } from "@/lib/routeAuth";
 
 export async function GET(req: Request) {
@@ -11,6 +12,10 @@ export async function GET(req: Request) {
         const userId = auth.session.user.id;
 
         await connectToDatabase();
+        if (!Shop) {
+            console.warn("Shop model uninitialized");
+        }
+
 
         const wishlist = await Wishlist.findOne({ userId });
         if (!wishlist || !wishlist.productIds.length) {

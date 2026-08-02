@@ -1,4 +1,11 @@
 import mongoose, { Schema, Document } from "mongoose";
+import Shop from "./Shop";
+
+// Ensure Shop model is registered on mongoose.models for populate
+if (Shop) {
+    // Model initialized
+}
+
 
 export interface IProduct extends Document {
     name: string;
