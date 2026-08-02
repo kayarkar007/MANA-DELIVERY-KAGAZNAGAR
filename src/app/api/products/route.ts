@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectToDatabase from "@/lib/mongoose";
 import { requireAdmin } from "@/lib/routeAuth";
 import Product from "@/models/Product";
@@ -35,7 +36,11 @@ export async function GET(request: Request) {
             query.categorySlug = categorySlug;
         }
         if (shopId) {
-            query.shopId = shopId;
+            if (mongoose.Types.ObjectId.isValid(shopId)) {
+                query.shopId = new mongoose.Types.ObjectId(shopId);
+            } else {
+                query.shopId = shopId;
+            }
         }
         if (search) {
             const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
