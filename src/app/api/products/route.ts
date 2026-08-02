@@ -35,8 +35,9 @@ export async function GET(request: Request) {
 
         let query: Record<string, any> = {};
         if (!adminView) {
-            query.isHidden = { $ne: true };
+            query.isHidden = false;
         }
+
         if (categorySlug) {
             query.categorySlug = categorySlug;
         }

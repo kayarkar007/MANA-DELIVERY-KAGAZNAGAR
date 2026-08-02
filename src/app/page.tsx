@@ -95,8 +95,9 @@ const getCachedCategories = unstable_cache(
         const Product = (await import("@/models/Product")).default;
         const activeSlugs = await Product.distinct("categorySlug", {
             categorySlug: { $exists: true, $ne: "" },
-            isHidden: { $ne: true },
+            isHidden: false,
         });
+
         if (!activeSlugs.length) return [];
         const categories = await Category.find({ slug: { $in: activeSlugs } })
             .select("name slug type image createdAt")

@@ -14,8 +14,9 @@ export async function GET() {
         // Get all distinct categorySlug values from products that are in-stock
         const activeSlugDocs = await Product.distinct("categorySlug", {
             categorySlug: { $exists: true, $ne: "" },
-            isHidden: { $ne: true },
+            isHidden: false,
         });
+
 
         if (!activeSlugDocs.length) {
             return publicJson({ success: true, data: [] }, startedAt, 300);
