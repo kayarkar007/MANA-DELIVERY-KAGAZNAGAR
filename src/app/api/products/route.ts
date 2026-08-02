@@ -27,31 +27,36 @@ export async function GET(request: Request) {
             if ("response" in auth) return auth.response;
         }
 
-        let query: Record<string, any> = {};
+        const conditions: any[] = [];
         if (!adminView) {
-            // Customers never see hidden products
-            query.isHidden = { $in: [false, null, undefined] };
+            conditions.push({ isHidden: { $in: [false, null, undefined] } });
         }
         if (categorySlug) {
-            query.categorySlug = categorySlug;
+            conditions.push({ categorySlug });
         }
         if (shopId) {
             if (mongoose.Types.ObjectId.isValid(shopId)) {
-                query.$or = [
-                    { shopId: shopId },
-                    { shopId: new mongoose.Types.ObjectId(shopId) }
-                ];
+                conditions.push({
+                    $or: [
+                        { shopId: shopId },
+                        { shopId: new mongoose.Types.ObjectId(shopId) }
+                    ]
+                });
             } else {
-                query.shopId = shopId;
+                conditions.push({ shopId });
             }
         }
         if (search) {
             const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            query.$or = [
-                { name: { $regex: escapedSearch, $options: "i" } },
-                { description: { $regex: escapedSearch, $options: "i" } },
-            ];
+            conditions.push({
+                $or: [
+                    { name: { $regex: escapedSearch, $options: "i" } },
+                    { description: { $regex: escapedSearch, $options: "i" } },
+                ]
+            });
         }
+
+        const query = conditions.length > 0 ? { $and: conditions } : {};
 
         // Build sort object based on sort param
         let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
