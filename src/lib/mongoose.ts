@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env.local"
-  );
+function getMongoUri(): string {
+  const uri = process.env.MONGODB_URI;
+  if (!uri && process.env.NODE_ENV === "production" && process.env.VERCEL) {
+    throw new Error(
+      "Please define the MONGODB_URI environment variable inside Vercel Project Settings."
+    );
+  }
+  return uri || "mongodb://127.0.0.1:27017/mana_delivery_build_placeholder";
 }
 
 let cached = (global as any).mongoose;
@@ -36,7 +38,7 @@ async function connectToDatabase() {
       heartbeatFrequencyMS: 10_000,    // Detect stale connections every 10 s
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(getMongoUri(), opts).then((mongoose) => {
       return mongoose;
     });
   }
