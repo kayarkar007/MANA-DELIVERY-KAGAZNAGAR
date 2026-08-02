@@ -76,11 +76,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com https://www.gstatic.com https://apis.google.com https://accounts.google.com https://www.google.com https://recaptcha.net https://www.recaptcha.net",
+              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com https://www.gstatic.com https://apis.google.com https://accounts.google.com https://www.google.com https://recaptcha.net https://www.recaptcha.net https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://res.cloudinary.com https://*.amazonaws.com https://lh3.googleusercontent.com https://*.supabase.co",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com wss://manadelivery.in https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://www.google.com",
+              "connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com wss://manadelivery.in https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://www.google.com https://recaptcha.net https://www.recaptcha.net",
               "frame-src https://api.razorpay.com https://checkout.razorpay.com https://*.firebaseapp.com https://accounts.google.com https://www.google.com https://recaptcha.net https://www.recaptcha.net",
               "frame-ancestors 'none'",
               "object-src 'none'",
