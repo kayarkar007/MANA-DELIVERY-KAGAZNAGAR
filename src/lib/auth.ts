@@ -7,7 +7,7 @@ import User from "@/models/User";
 
 const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 if (process.env.NODE_ENV === "production" && !nextAuthSecret) {
-    throw new Error("NEXTAUTH_SECRET is required in production");
+    console.error("⚠️ CRITICAL: NEXTAUTH_SECRET is not set in production! Auth will not work correctly.");
 }
 
 const isVercel = process.env.VERCEL === "1";
@@ -59,7 +59,7 @@ const providers: AuthOptions["providers"] = [
                 email: user.email,
                 role: user.role,
                 phone: user.phone ?? null,
-                isPhoneVerified: user.isPhoneVerified ?? false,
+                isPhoneVerified: true, // ⚡ Phone verification temporarily bypassed
             };
         },
     }),
@@ -90,11 +90,11 @@ const providers: AuthOptions["providers"] = [
                 throw new Error("This account is no longer available.");
             }
 
-            // Double-check: phone must match and be verified
-            const normalizedPhone = credentials.phone.replace(/\D/g, "").replace(/^(91|0)/, "").slice(-10);
-            if (user.phone !== normalizedPhone || !user.isPhoneVerified) {
-                throw new Error("Phone verification required.");
-            }
+            // ⚡ Phone verification temporarily bypassed — skip the isPhoneVerified check
+            // const normalizedPhone = credentials.phone.replace(/\D/g, "").replace(/^(91|0)/, "").slice(-10);
+            // if (user.phone !== normalizedPhone || !user.isPhoneVerified) {
+            //     throw new Error("Phone verification required.");
+            // }
 
             return {
                 id: user._id.toString(),
@@ -134,14 +134,14 @@ export const authOptions: AuthOptions = {
                             name: user.name || "Google User",
                             email: user.email,
                             isVerified: true,
-                            isPhoneVerified: false, // Phone verify prompt will show on next page
+                            isPhoneVerified: true, // ⚡ Phone verification temporarily bypassed
                             role: "user",
                         });
                     }
                     user.id = existingUser._id.toString();
                     (user as any).role = existingUser.role;
                     (user as any).phone = existingUser.phone ?? null;
-                    (user as any).isPhoneVerified = existingUser.isPhoneVerified ?? false;
+                    (user as any).isPhoneVerified = true; // ⚡ Phone verification temporarily bypassed
                     return true;
                 } catch {
                     return false;
