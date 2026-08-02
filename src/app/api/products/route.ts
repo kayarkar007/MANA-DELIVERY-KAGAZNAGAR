@@ -101,7 +101,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("❌ [/api/products GET] error:", error?.message ?? error);
         return NextResponse.json(
-            { success: false, error: "Failed to fetch products", products: [], data: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 1 } },
+            { success: false, error: error?.message || "Failed to fetch products", products: [], data: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 1 } },
             { status: 200 }
         );
     }
