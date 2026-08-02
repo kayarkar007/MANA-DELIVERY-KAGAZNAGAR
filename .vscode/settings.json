@@ -19,6 +19,9 @@
   "java.autobuild.enabled": false,
   "gradle.autoDetect": "off",
   "gradle.nestedProjects": false,
+  "gradle.projectOpenMode": "none",
+  "java.configuration.detectJdksAtStart": false,
+  "css.lint.unknownAtRules": "ignore",
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/.git/objects/**": true,
