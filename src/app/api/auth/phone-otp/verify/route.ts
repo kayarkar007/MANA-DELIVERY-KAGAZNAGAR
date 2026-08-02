@@ -30,26 +30,56 @@ export async function POST(req: Request) {
 
         // ── 1. Firebase Phone Auth Verification ─────────────────────────────────
         if (firebaseIdToken) {
-            if (!firebaseAdminApp) {
+            let verifiedPhone = "";
+            let isVerified = false;
+
+            if (firebaseAdminApp) {
+                try {
+                    const decodedToken = await getAuth(firebaseAdminApp).verifyIdToken(firebaseIdToken);
+                    verifiedPhone = decodedToken.phone_number ? normalizePhone(decodedToken.phone_number) : "";
+                    isVerified = true;
+                } catch (err: any) {
+                    console.warn("⚠️ Firebase Admin ID token verification failed, trying REST API:", err.message);
+                }
+            }
+
+            // Fallback: Verify token via Firebase Identity Toolkit REST API (uses NEXT_PUBLIC_FIREBASE_API_KEY)
+            if (!isVerified) {
+                const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+                if (apiKey) {
+                    try {
+                        const restRes = await fetch(
+                            `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ idToken: firebaseIdToken }),
+                            }
+                        );
+                        const restData = await restRes.json();
+                        if (restRes.ok && restData.users?.[0]?.phoneNumber) {
+                            verifiedPhone = normalizePhone(restData.users[0].phoneNumber);
+                            isVerified = true;
+                        } else {
+                            console.error("❌ Firebase REST token lookup error:", restData?.error?.message);
+                        }
+                    } catch (restErr: any) {
+                        console.error("❌ Firebase REST token lookup exception:", restErr.message);
+                    }
+                }
+            }
+
+            if (!isVerified) {
                 return NextResponse.json(
-                    { success: false, error: "Phone verification service is unavailable." },
-                    { status: 503 }
+                    { success: false, error: "Firebase token verification failed." },
+                    { status: 401 }
                 );
             }
-            try {
-                const decodedToken = await getAuth(firebaseAdminApp).verifyIdToken(firebaseIdToken);
-                const tokenPhone = decodedToken.phone_number ? normalizePhone(decodedToken.phone_number) : "";
-                if (tokenPhone && tokenPhone !== phone) {
-                    return NextResponse.json(
-                        { success: false, error: "Phone number mismatch in Firebase token." },
-                        { status: 400 }
-                    );
-                }
-            } catch (err: any) {
-                console.warn("⚠️ Firebase ID token verification warning:", err.message);
+
+            if (verifiedPhone && verifiedPhone !== phone) {
                 return NextResponse.json(
-                    { success: false, error: "Phone verification failed." },
-                    { status: 401 }
+                    { success: false, error: "Phone number mismatch in Firebase token." },
+                    { status: 400 }
                 );
             }
 

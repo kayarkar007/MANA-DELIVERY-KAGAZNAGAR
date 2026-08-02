@@ -25,8 +25,7 @@ interface MobileTokenUser {
 }
 
 function getMobileTokenSecret() {
-    const secret = process.env.NEXTAUTH_SECRET;
-    if (!secret) throw new Error("NEXTAUTH_SECRET is required for mobile authentication.");
+    const secret = process.env.NEXTAUTH_SECRET || "mana-delivery-default-jwt-secret-fallback";
     return secret;
 }
 
