@@ -4,26 +4,34 @@
   "java.import.exclusions": [
     "**/node_modules/**",
     "**/mobile/node_modules/**",
+    "**/mobile/**",
     "**/.metadata/**",
     "**/archetype/**",
     "**/META-INF/maven/**"
   ],
   "java.project.exclusion": [
     "**/node_modules/**",
-    "**/mobile/node_modules/**"
+    "**/mobile/node_modules/**",
+    "**/mobile/**"
   ],
   "java.project.resourceFilters": [
-    "node_modules"
+    "node_modules",
+    "mobile"
   ],
   "java.jdt.ls.lombokSupport.enabled": false,
   "java.autobuild.enabled": false,
   "gradle.autoDetect": "off",
   "gradle.nestedProjects": false,
   "gradle.projectOpenMode": "none",
+  "gradle.reuseTerminals": "all",
   "java.configuration.detectJdksAtStart": false,
+  "java.completion.enabled": false,
+  "java.errors.incompleteClasspath.severity": "ignore",
   "css.lint.unknownAtRules": "ignore",
   "files.watcherExclude": {
     "**/node_modules/**": true,
+    "**/mobile/node_modules/**": true,
+    "**/mobile/.gradle/**": true,
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
     "**/.next/**": true
@@ -33,6 +41,7 @@
   },
   "search.exclude": {
     "**/node_modules": true,
-    "**/.next": true
+    "**/.next": true,
+    "**/mobile/node_modules": true
   }
 }
