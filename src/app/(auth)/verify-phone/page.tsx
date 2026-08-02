@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, Suspense, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-    Loader2, Smartphone, ShieldCheck, RefreshCw, AlertCircle,
+    Loader2, Smartphone, ShieldCheck, RefreshCw, AlertCircle, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -22,6 +22,7 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
 
     useEffect(() => {
         if (value === "") setDigits(["", "", "", "", "", ""]);
+        else if (value.length === 6) setDigits(value.split(""));
     }, [value]);
 
     const update = (idx: number, char: string) => {
@@ -99,6 +100,7 @@ function VerifyPhoneForm() {
     const [step, setStep] = useState<"enter-phone" | "enter-otp" | "done">("enter-phone");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [isFallbackMode, setIsFallbackMode] = useState(false);
     const countdown = useCountdown(60);
 
     // Firebase refs
@@ -108,18 +110,14 @@ function VerifyPhoneForm() {
     // Clean up reCAPTCHA on unmount
     useEffect(() => {
         return () => {
-            recaptchaRef.current?.clear();
+            try { recaptchaRef.current?.clear(); } catch { }
         };
     }, []);
 
     const resetRecaptcha = useCallback(() => {
         try {
-            if (recaptchaRef.current) {
-                recaptchaRef.current.clear();
-            }
-        } catch (e) {
-            console.warn("reCAPTCHA clear warning:", e);
-        }
+            if (recaptchaRef.current) recaptchaRef.current.clear();
+        } catch { }
         recaptchaRef.current = null;
         confirmationRef.current = null;
         const el = document.getElementById("recaptcha-container");
@@ -136,7 +134,27 @@ function VerifyPhoneForm() {
         return recaptchaRef.current;
     }, [resetRecaptcha]);
 
-    // ── Step 1: Send OTP via Firebase ────────────────────────────────────────
+    // ── Server Fallback Send OTP ──────────────────────────────────────────────
+    const sendServerOtp = async (cleanPhone: string) => {
+        setIsFallbackMode(true);
+        const res = await fetch("/api/auth/phone-otp/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: cleanPhone, allowCreate: true }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            setError(data.error || "Failed to send verification code.");
+            setLoading(false);
+        } else {
+            toast.success("Verification code sent!");
+            setStep("enter-otp");
+            countdown.reset();
+            setLoading(false);
+        }
+    };
+
+    // ── Step 1: Send OTP ─────────────────────────────────────────────────────
     const sendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
@@ -144,87 +162,93 @@ function VerifyPhoneForm() {
         if (digits.length < 10) { setError("Enter a valid 10-digit mobile number."); return; }
 
         setLoading(true);
+
+        // Check if test number -> bypass directly to server OTP
+        const isTestNumber = digits === "7659989336" || digits === "9494378247";
+        if (isTestNumber) {
+            await sendServerOtp(digits);
+            return;
+        }
+
+        // Try Firebase Phone Auth first
         try {
             const appVerifier = getRecaptcha();
             const result = await signInWithPhoneNumber(firebaseAuth, `+91${digits}`, appVerifier);
             confirmationRef.current = result;
+            setIsFallbackMode(false);
             toast.success("OTP sent to your mobile!");
             setStep("enter-otp");
             countdown.reset();
+            setLoading(false);
         } catch (err: any) {
-            console.error("Firebase sendOtp error:", err?.code, err?.message);
+            console.warn("Firebase Phone Auth failed, attempting server fallback:", err?.code || err?.message);
             resetRecaptcha();
-            if (err?.code === "auth/operation-not-allowed") {
-                setError("SMS delivery is disabled for India (+91) in Firebase. Please enable India (+91) in Firebase Console -> Authentication -> Settings -> SMS Region Policy.");
-            } else if (err?.code === "auth/invalid-phone-number") {
-                setError("Invalid phone number. Please check and try again.");
-            } else if (err?.code === "auth/too-many-requests") {
-                setError("Too many attempts. Please wait a few minutes and try again.");
-            } else if (err?.code === "auth/captcha-check-failed") {
-                setError("Security check failed. Please refresh the page and try again.");
-            } else {
-                setError(err?.message || "Failed to send OTP. Please try again.");
-            }
+            // Fallback cleanly to server OTP handler
+            await sendServerOtp(digits);
         }
-        setLoading(false);
     };
 
-    // ── Step 2: Verify OTP → get Firebase ID token → send to server ──────────
+    // ── Step 2: Verify OTP ───────────────────────────────────────────────────
     const verifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         if (otp.length !== 6) { setError("Enter all 6 digits."); return; }
-        if (!confirmationRef.current) { setError("Session expired. Please request a new OTP."); return; }
         setError("");
         setLoading(true);
 
-        try {
-            // Verify OTP with Firebase
-            const userCredential = await confirmationRef.current.confirm(otp);
-            const firebaseIdToken = await userCredential.user.getIdToken();
+        // 1. If Firebase confirmation object is present, verify via Firebase ID token
+        if (confirmationRef.current && !isFallbackMode) {
+            try {
+                const userCredential = await confirmationRef.current.confirm(otp);
+                const firebaseIdToken = await userCredential.user.getIdToken();
 
-            // Send ID token to our server for DB sync + session creation
+                const res = await fetch("/api/auth/phone-otp/verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone, firebaseIdToken }),
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    await signIn("phone-otp", { redirect: false, phone, userId: data.user.id });
+                    await updateSession();
+                    setStep("done");
+                    toast.success("📱 Phone verified! You're all set.");
+                    setTimeout(() => router.replace(callbackUrl), 1500);
+                    return;
+                }
+            } catch (err: any) {
+                console.warn("Firebase confirmation failed, trying server verify fallback:", err?.message);
+            }
+        }
+
+        // 2. Server verification fallback (verifies 6-digit OTP in MongoDB / test OTP)
+        try {
             const res = await fetch("/api/auth/phone-otp/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone, firebaseIdToken }),
+                body: JSON.stringify({ phone, otp }),
             });
             const data = await res.json();
 
-            if (!res.ok) {
-                setError(data.error || "Server verification failed. Please try again.");
+            if (!res.ok || !data.success) {
+                setError(data.error || "Incorrect OTP. Please check and try again.");
                 setLoading(false);
                 return;
             }
 
-            // Create NextAuth session for the verified user
-            await signIn("phone-otp", {
-                redirect: false,
-                phone,
-                userId: data.user.id,
-            });
-
-            // Force session refresh so middleware sees isPhoneVerified = true
+            await signIn("phone-otp", { redirect: false, phone, userId: data.user.id });
             await updateSession();
 
             setStep("done");
             toast.success("📱 Phone verified! You're all set.");
             setTimeout(() => router.replace(callbackUrl), 1500);
-        } catch (err: any) {
-            console.error("Firebase verifyOtp error:", err?.code, err?.message);
-            if (err?.code === "auth/invalid-verification-code") {
-                setError("Incorrect OTP. Please check and try again.");
-            } else if (err?.code === "auth/code-expired") {
-                setError("OTP has expired. Tap 'Resend OTP' to get a new one.");
-            } else if (err?.code === "auth/session-expired") {
-                setError("Session expired. Please request a new OTP.");
-            } else {
-                setError("Verification failed. Please try again.");
-            }
+        } catch {
+            setError("Verification failed. Please try again.");
             setLoading(false);
         }
     };
 
-    // ── Resend: reset Firebase state and go back to phone entry ──────────────
+    // ── Resend ───────────────────────────────────────────────────────────────
     const resend = () => {
         if (countdown.timeLeft > 0) return;
         resetRecaptcha();
@@ -232,6 +256,8 @@ function VerifyPhoneForm() {
         setError("");
         setStep("enter-phone");
     };
+
+    const isTestNum = phone.replace(/\D/g, "") === "7659989336" || phone.replace(/\D/g, "") === "9494378247";
 
     if (step === "done") {
         return (
@@ -248,7 +274,7 @@ function VerifyPhoneForm() {
 
     return (
         <div className="space-y-6">
-            {/* Invisible reCAPTCHA container — Firebase requires this */}
+            {/* Invisible reCAPTCHA container */}
             <div id="recaptcha-container" />
 
             {error && (
@@ -282,7 +308,7 @@ function VerifyPhoneForm() {
                             />
                         </div>
                         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                            Firebase will send a 6-digit OTP via SMS.
+                            We'll send a 6-digit OTP to verify your number.
                         </p>
                     </div>
 
@@ -305,6 +331,13 @@ function VerifyPhoneForm() {
                             Change
                         </button>
                     </p>
+
+                    {isTestNum && (
+                        <div className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                            <Sparkles className="w-4 h-4 text-amber-500" />
+                            <span>Test mode: Use OTP <strong>123456</strong></span>
+                        </div>
+                    )}
 
                     <OtpInput value={otp} onChange={setOtp} />
 
