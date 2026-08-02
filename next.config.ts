@@ -75,7 +75,7 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com https://www.gstatic.com",
+              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com https://www.gstatic.com https://apis.google.com https://accounts.google.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://res.cloudinary.com https://*.amazonaws.com https://lh3.googleusercontent.com https://*.supabase.co",
               "font-src 'self' data: https://fonts.gstatic.com",
