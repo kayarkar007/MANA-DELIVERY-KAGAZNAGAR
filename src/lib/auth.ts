@@ -167,6 +167,20 @@ export const authOptions: AuthOptions = {
             }
             return session;
         },
+        async redirect({ url, baseUrl }) {
+            // If relative URL, append to baseUrl
+            if (url.startsWith("/")) return `${baseUrl}${url}`;
+
+            // Safety guard: never redirect to placeholder domain
+            if (url.includes("your-app-name")) return `${baseUrl}/login`;
+
+            try {
+                // If same origin, allow redirect
+                if (new URL(url).origin === new URL(baseUrl).origin) return url;
+            } catch { }
+
+            return baseUrl;
+        },
     },
     pages: {
         signIn: "/login",

@@ -308,7 +308,7 @@ export default function ProfilePage() {
                             </div>
 
                             <button
-                                onClick={() => signOut()}
+                                onClick={() => signOut({ callbackUrl: "/login" })}
                                 className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl p-4 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/10 sm:mt-10 sm:p-5"
                             >
                                 <LogOut className="w-4 h-4" /> Sign Out

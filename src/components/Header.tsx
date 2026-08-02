@@ -91,7 +91,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
 
                             {/* Sign out — desktop only */}
                             <button
-                                onClick={() => signOut()}
+                                onClick={() => signOut({ callbackUrl: "/login" })}
                                 aria-label="Sign Out"
                                 className="app-icon-button hidden md:inline-flex"
                                 title="Sign Out"
