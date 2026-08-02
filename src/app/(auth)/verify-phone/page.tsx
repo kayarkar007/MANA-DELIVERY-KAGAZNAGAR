@@ -112,22 +112,29 @@ function VerifyPhoneForm() {
         };
     }, []);
 
-    const getRecaptcha = useCallback((): RecaptchaVerifier => {
-        if (!recaptchaRef.current) {
-            recaptchaRef.current = new RecaptchaVerifier(
-                firebaseAuth,
-                "recaptcha-container",
-                { size: "invisible" }
-            );
-        }
-        return recaptchaRef.current;
-    }, []);
-
     const resetRecaptcha = useCallback(() => {
-        recaptchaRef.current?.clear();
+        try {
+            if (recaptchaRef.current) {
+                recaptchaRef.current.clear();
+            }
+        } catch (e) {
+            console.warn("reCAPTCHA clear warning:", e);
+        }
         recaptchaRef.current = null;
         confirmationRef.current = null;
+        const el = document.getElementById("recaptcha-container");
+        if (el) el.innerHTML = "";
     }, []);
+
+    const getRecaptcha = useCallback((): RecaptchaVerifier => {
+        resetRecaptcha();
+        recaptchaRef.current = new RecaptchaVerifier(
+            firebaseAuth,
+            "recaptcha-container",
+            { size: "invisible" }
+        );
+        return recaptchaRef.current;
+    }, [resetRecaptcha]);
 
     // ── Step 1: Send OTP via Firebase ────────────────────────────────────────
     const sendOtp = async (e: React.FormEvent) => {
@@ -147,14 +154,16 @@ function VerifyPhoneForm() {
         } catch (err: any) {
             console.error("Firebase sendOtp error:", err?.code, err?.message);
             resetRecaptcha();
-            if (err?.code === "auth/invalid-phone-number") {
+            if (err?.code === "auth/operation-not-allowed") {
+                setError("SMS delivery is disabled for India (+91) in Firebase. Please enable India (+91) in Firebase Console -> Authentication -> Settings -> SMS Region Policy.");
+            } else if (err?.code === "auth/invalid-phone-number") {
                 setError("Invalid phone number. Please check and try again.");
             } else if (err?.code === "auth/too-many-requests") {
                 setError("Too many attempts. Please wait a few minutes and try again.");
             } else if (err?.code === "auth/captcha-check-failed") {
                 setError("Security check failed. Please refresh the page and try again.");
             } else {
-                setError("Failed to send OTP. Please try again.");
+                setError(err?.message || "Failed to send OTP. Please try again.");
             }
         }
         setLoading(false);
