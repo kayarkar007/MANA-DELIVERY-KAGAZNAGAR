@@ -28,36 +28,27 @@ export async function GET(request: Request) {
             if ("response" in auth) return auth.response;
         }
 
-        const conditions: any[] = [];
+        let query: Record<string, any> = {};
         if (!adminView) {
-            conditions.push({ isHidden: { $ne: true } });
+            query.isHidden = { $ne: true };
         }
         if (categorySlug) {
-            conditions.push({ categorySlug });
+            query.categorySlug = categorySlug;
         }
         if (shopId) {
             if (mongoose.Types.ObjectId.isValid(shopId)) {
-                conditions.push({
-                    $or: [
-                        { shopId: shopId },
-                        { shopId: new mongoose.Types.ObjectId(shopId) }
-                    ]
-                });
+                query.shopId = new mongoose.Types.ObjectId(shopId);
             } else {
-                conditions.push({ shopId });
+                query.shopId = shopId;
             }
         }
         if (search) {
             const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            conditions.push({
-                $or: [
-                    { name: { $regex: escapedSearch, $options: "i" } },
-                    { description: { $regex: escapedSearch, $options: "i" } },
-                ]
-            });
+            query.$or = [
+                { name: { $regex: escapedSearch, $options: "i" } },
+                { description: { $regex: escapedSearch, $options: "i" } },
+            ];
         }
-
-        const query = conditions.length > 0 ? { $and: conditions } : {};
 
         // Build sort object based on sort param
         let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
