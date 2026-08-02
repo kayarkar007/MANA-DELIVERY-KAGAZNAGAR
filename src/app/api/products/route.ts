@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
         const conditions: any[] = [];
         if (!adminView) {
-            conditions.push({ isHidden: { $in: [false, null, undefined] } });
+            conditions.push({ isHidden: { $ne: true } });
         }
         if (categorySlug) {
             conditions.push({ categorySlug });
@@ -69,7 +69,6 @@ export async function GET(request: Request) {
         const [total, products] = await Promise.all([
             Product.countDocuments(query).maxTimeMS(8_000),
             Product.find(query)
-                .select("name slug description price unit categorySlug shopId inStock stockQuantity lowStockThreshold image createdAt updatedAt")
                 .populate("shopId", "name slug image isActive")
                 .sort(sortObj)
                 .skip((page - 1) * limit)
