@@ -45,14 +45,21 @@ export default function PwaInstallPrompt() {
     }, []);
 
     useEffect(() => {
-        setIsStandalone(isStandaloneMode());
+        const standalone = isStandaloneMode();
+        setIsStandalone(standalone);
 
         const dismissedAt = Number(window.localStorage.getItem(DISMISS_KEY) || 0);
-        setDismissed(Boolean(dismissedAt && Date.now() - dismissedAt < DISMISS_TTL));
+        const alreadyDismissed = Boolean(dismissedAt && Date.now() - dismissedAt < DISMISS_TTL);
+        setDismissed(alreadyDismissed);
 
         const handleBeforeInstallPrompt = (event: Event) => {
-            event.preventDefault();
-            setDeferredPrompt(event as BeforeInstallPromptEvent);
+            // Only intercept the browser's native banner if we intend to show our own.
+            // If already dismissed or in standalone, let the browser handle it naturally
+            // so Chrome doesn't log "Banner not shown" warning.
+            if (!alreadyDismissed && !standalone) {
+                event.preventDefault();
+                setDeferredPrompt(event as BeforeInstallPromptEvent);
+            }
         };
 
         const handleInstalled = () => {
