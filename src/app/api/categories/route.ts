@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import connectToDatabase from "@/lib/mongoose";
 import { requireAdmin } from "@/lib/routeAuth";
 import Category from "@/models/Category";
@@ -31,6 +32,12 @@ export async function POST(request: Request) {
         await connectToDatabase();
         const body = await request.json();
         const category = await Category.create(body);
+
+        revalidateTag("home-categories", "layout");
+
+        revalidatePath("/", "layout");
+
+
         return NextResponse.json({ success: true, data: category });
     } catch (error) {
         return NextResponse.json(

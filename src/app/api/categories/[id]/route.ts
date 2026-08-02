@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import connectToDatabase from "@/lib/mongoose";
 import { requireAdmin } from "@/lib/routeAuth";
 import Category from "@/models/Category";
@@ -14,6 +15,12 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         const body = await request.json();
         const category = await Category.findByIdAndUpdate(id, body, { returnDocument: "after" });
         if (!category) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+
+        revalidateTag("home-categories", "layout");
+
+        revalidatePath("/", "layout");
+
+
         return NextResponse.json({ success: true, data: category });
     } catch (error) {
         return NextResponse.json({ success: false, error: "Failed to update category" }, { status: 400 });
@@ -30,6 +37,12 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
         const id = params.id;
         const category = await Category.findByIdAndDelete(id);
         if (!category) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+
+        revalidateTag("home-categories", "layout");
+
+        revalidatePath("/", "layout");
+
+
         return NextResponse.json({ success: true, data: {} });
     } catch (error) {
         return NextResponse.json({ success: false, error: "Failed to delete category" }, { status: 400 });
