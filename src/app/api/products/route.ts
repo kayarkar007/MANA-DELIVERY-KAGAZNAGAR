@@ -30,7 +30,7 @@ export async function GET(request: Request) {
         let query: Record<string, any> = {};
         if (!adminView) {
             // Customers never see hidden products
-            query.isHidden = { $ne: true };
+            query.isHidden = { $in: [false, null, undefined] };
         }
         if (categorySlug) {
             query.categorySlug = categorySlug;
