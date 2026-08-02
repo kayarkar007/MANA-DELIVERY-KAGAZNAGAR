@@ -2,6 +2,8 @@
 
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useId } from "react";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -26,6 +28,10 @@ export default function ConfirmModal({
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useDialogA11y<HTMLDivElement>(isOpen, onClose);
+
   if (!isOpen) return null;
 
   return (
@@ -45,8 +51,12 @@ export default function ConfirmModal({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          role="dialog"
+          ref={dialogRef}
+          role={isDestructive ? "alertdialog" : "dialog"}
           aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={descriptionId}
+          tabIndex={-1}
           className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-slate-200/80 bg-white p-6 shadow-2xl dark:border-slate-800/80 dark:bg-slate-950 sm:p-8"
         >
           <div className="flex flex-col items-center text-center">
@@ -54,10 +64,10 @@ export default function ConfirmModal({
               <AlertTriangle className="h-7 w-7" />
             </div>
 
-            <h3 className="text-xl font-black text-slate-900 dark:text-white sm:text-2xl">
+            <h3 id={titleId} className="text-xl font-black text-slate-900 dark:text-white sm:text-2xl">
               {title}
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
               {description}
             </p>
 
@@ -66,6 +76,7 @@ export default function ConfirmModal({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
+                data-dialog-initial-focus
                 className="flex-1 app-button app-button-secondary rounded-2xl py-3.5 text-sm font-black disabled:opacity-50"
               >
                 {cancelLabel}

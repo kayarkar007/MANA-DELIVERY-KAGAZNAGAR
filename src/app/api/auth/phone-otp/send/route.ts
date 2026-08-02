@@ -4,6 +4,8 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { sendSMS } from "@/lib/sms";
 import { phoneOtpLimiter } from "@/lib/rateLimit";
+import { isFeatureEnabled } from "@/lib/featureFlags";
+import { getRequestId, logError, logInfo } from "@/lib/observability";
 
 // Normalize phone: strip leading 0/+91, keep 10 digits
 function normalizePhone(raw: string): string {
@@ -11,7 +13,12 @@ function normalizePhone(raw: string): string {
 }
 
 export async function POST(req: Request) {
+    const requestId = getRequestId(req);
     try {
+        if (!isFeatureEnabled("sms")) {
+            return NextResponse.json({ success: false, error: "SMS verification is temporarily unavailable. Please try again later." }, { status: 503 });
+        }
+
         const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
         const allowed = await phoneOtpLimiter.check(ip);
         if (!allowed) {
@@ -37,7 +44,7 @@ export async function POST(req: Request) {
         // 1. Check if user already exists
         let user = await User.findOne({ phone });
 
-        // For Firebase test numbers, auto-initialize test user if missing
+        // For test numbers, always auto-create user if missing + fix OTP to "123456"
         const isTestNumber = phone === "7659989336" || phone === "9494378247";
 
         // If user does not exist and it's NOT a signup verification request or test number:
@@ -81,19 +88,17 @@ export async function POST(req: Request) {
             message: `${otp} is your Mana Delivery OTP. Valid for 10 minutes. Do not share. -Mana Delivery`,
         });
 
-        if (process.env.NODE_ENV !== "production") {
-            console.log(`📱 [OTP Log - Dev] Phone: ${phone} | OTP: ${otp} | Provider: ${smsResult.provider || 'Simulated'}`);
-        }
+        logInfo("auth.otp.sent", { requestId, provider: smsResult.provider || "simulated", isTestNumber });
 
 
         return NextResponse.json(
             { success: true, message: "OTP sent successfully.", isNewUser: !user.name || user.name.startsWith("User ") },
             { status: 200 }
         );
-    } catch (error: any) {
-        console.error("[phone-otp/send]", error);
+    } catch (error) {
+        logError("auth.otp.send_failed", error, { requestId });
         return NextResponse.json(
-            { success: false, error: error.message || "Failed to send OTP." },
+            { success: false, error: "Failed to send OTP." },
             { status: 500 }
         );
     }

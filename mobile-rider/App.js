@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { View, ActivityIndicator } from 'react-native';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { COLORS } from './src/constants/theme';
+import {
+  setupNotificationChannel,
+  registerForPushNotifications,
+  savePushTokenToServer,
+} from './src/utils/notifications';
+
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import OrderDetailScreen from './src/screens/OrderDetailScreen';
@@ -16,40 +25,34 @@ import SmartRouteScreen from './src/screens/SmartRouteScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const TAB_BAR_STYLE = {
-  backgroundColor: '#0f172a',
-  borderTopColor: '#1e293b',
-  height: 68,
-  paddingBottom: 10,
-  paddingTop: 6,
-};
-
 function HomeTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: TAB_BAR_STYLE,
-        tabBarActiveTintColor: '#ef4444',
-        tabBarInactiveTintColor: '#475569',
-        tabBarLabelStyle: { fontWeight: '800', fontSize: 10 },
-      }}
+        tabBarStyle: {
+          backgroundColor: COLORS.background,
+          borderTopColor: COLORS.cardBorder,
+          borderTopWidth: 1,
+          height: 64,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textDark,
+        tabBarLabelStyle: { fontWeight: '800', fontSize: 11 },
+        tabBarIcon: ({ focused, color }) => {
+          let iconName;
+          if (route.name === 'DashboardTab') iconName = focused ? 'bicycle' : 'bicycle-outline';
+          else if (route.name === 'EarningsTab') iconName = focused ? 'wallet' : 'wallet-outline';
+          else if (route.name === 'ProfileTab') iconName = focused ? 'person' : 'person-outline';
+          return <Ionicons name={iconName} size={22} color={color} />;
+        },
+      })}
     >
-      <Tab.Screen
-        name="DashboardTab"
-        component={DashboardScreen}
-        options={{ tabBarLabel: 'Orders', tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📦</Text> }}
-      />
-      <Tab.Screen
-        name="EarningsTab"
-        component={EarningsScreen}
-        options={{ tabBarLabel: 'Earnings', tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>💰</Text> }}
-      />
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Profile', tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>👤</Text> }}
-      />
+      <Tab.Screen name="DashboardTab" component={DashboardScreen} options={{ tabBarLabel: 'Duty Orders' }} />
+      <Tab.Screen name="EarningsTab" component={EarningsScreen} options={{ tabBarLabel: 'Earnings' }} />
+      <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ tabBarLabel: 'Profile' }} />
     </Tab.Navigator>
   );
 }
@@ -57,30 +60,50 @@ function HomeTabs() {
 function RootNavigator() {
   const { user, loading } = useAuth();
 
-  if (loading) return null;
+  useEffect(() => {
+    setupNotificationChannel();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const token = await registerForPushNotifications();
+      await savePushTokenToServer(token);
+    })();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!user ? (
-        <Stack.Screen name="Login" component={LoginScreen} />
-      ) : (
-        <>
-          <Stack.Screen name="Home" component={HomeTabs} />
-          <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ presentation: 'card' }} />
-          <Stack.Screen name="SmartRoute" component={SmartRouteScreen} options={{ presentation: 'card' }} />
-        </>
-      )}
-    </Stack.Navigator>
+    <NavigationContainer>
+      <StatusBar style="light" backgroundColor={COLORS.background} />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!user ? (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        ) : (
+          <>
+            <Stack.Screen name="Home" component={HomeTabs} />
+            <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+            <Stack.Screen name="SmartRoute" component={SmartRouteScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="light" backgroundColor="#090405" />
+    <SafeAreaProvider>
+      <AuthProvider>
         <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

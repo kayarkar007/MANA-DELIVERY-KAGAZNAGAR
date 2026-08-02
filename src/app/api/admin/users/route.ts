@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
-import { requireAdmin } from "@/lib/routeAuth";
+import { requireAdminFlexible } from "@/lib/routeAuth";
 import { createWalletTransaction } from "@/lib/wallet";
 import { triggerNotification } from "@/lib/notifications";
 
 // GET: list all users
 export async function GET(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         await connectToDatabase();
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
 // PATCH: update a user's role
 export async function PATCH(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         const body = await req.json();

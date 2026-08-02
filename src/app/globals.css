@@ -139,7 +139,22 @@ img {
 
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(198, 40, 40, 0.22);
+  box-shadow: 0 0 0 4px rgba(198, 40, 40, 0.32);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .font-display {
@@ -507,4 +522,3 @@ img {
 .animate-voice-pulse {
   animation: voice-pulse 1.4s ease-in-out infinite;
 }
-

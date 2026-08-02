@@ -5,49 +5,34 @@ import connectToDatabase from "@/lib/mongoose";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-    const startTime = Date.now();
-    let dbStatus = "disconnected";
-    let dbLatencyMs = 0;
+    const startedAt = Date.now();
+    let isHealthy = false;
+    let databaseDurationMs = 0;
 
     try {
+        const databaseStartedAt = Date.now();
         await connectToDatabase();
-        const dbStart = Date.now();
         if (mongoose.connection.db) {
             await mongoose.connection.db.admin().ping();
-            dbStatus = "connected";
-            dbLatencyMs = Date.now() - dbStart;
+            isHealthy = true;
         }
-    } catch (err: any) {
-        dbStatus = `error: ${err.message}`;
+        databaseDurationMs = Date.now() - databaseStartedAt;
+    } catch (error) {
+        console.error("Health check failed", error);
     }
-
-    const uptimeSeconds = process.uptime();
-    const memoryUsageMB = {
-        rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
-        heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-    };
-
-    const isHealthy = dbStatus === "connected";
 
     return NextResponse.json(
         {
             status: isHealthy ? "ok" : "degraded",
             timestamp: new Date().toISOString(),
             service: "Mana Delivery API",
-            environment: process.env.NODE_ENV || "development",
-            responseTimeMs: Date.now() - startTime,
-            checks: {
-                database: {
-                    status: dbStatus,
-                    latencyMs: dbLatencyMs,
-                },
-            },
-            system: {
-                uptimeSeconds: Math.round(uptimeSeconds),
-                memoryUsageMB,
-            },
         },
-        { status: isHealthy ? 200 : 503 }
+        {
+            status: isHealthy ? 200 : 503,
+            headers: {
+                "Cache-Control": "no-store",
+                "Server-Timing": `db;dur=${databaseDurationMs}, app;dur=${Date.now() - startedAt}`,
+            },
+        }
     );
 }

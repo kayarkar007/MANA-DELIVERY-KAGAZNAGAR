@@ -7,18 +7,12 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#090405"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.manadelivery.app"
     },
     "android": {
       "package": "com.manadelivery.app",
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#090405",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -27,11 +21,30 @@
         "CAMERA",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#090405"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "25f712ac-f222-440c-8c36-14c525793537"
+      }
+    },
+    "owner": "kk_events_and_water_plant"
   }
 }

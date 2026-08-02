@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireUserFlexible } from "@/lib/routeAuth";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
 import { triggerNotification, notifyAdmins } from "@/lib/notifications";
@@ -8,11 +7,11 @@ import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import { getRazorpayClient, verifyRazorpaySignature } from "@/lib/razorpay";
 
 export async function POST(req: Request) {
+    const auth = await requireUserFlexible();
+    if ("response" in auth) return auth.response;
+
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const userId = auth.session.user.id;
 
         const body = await req.json();
         const orderId = `${body.orderId || ""}`.trim();
@@ -35,7 +34,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
         }
 
-        if (order.userId !== session.user.id) {
+        if (order.userId !== userId) {
             return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
         }
 
@@ -49,8 +48,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "Payment does not belong to the supplied Razorpay order" }, { status: 400 });
         }
 
-        if ((razorpayOrder as any).notes?.appOrderId !== orderId || (razorpayOrder as any).notes?.userId !== session.user.id) {
+        if ((razorpayOrder as any).notes?.appOrderId !== orderId || (razorpayOrder as any).notes?.userId !== userId) {
             return NextResponse.json({ success: false, error: "Payment order does not match this application order" }, { status: 400 });
+        }
+
+        if (order.paymentGatewayOrderId && order.paymentGatewayOrderId !== razorpayOrderId) {
+            return NextResponse.json({ success: false, error: "Payment order does not match the pending gateway order" }, { status: 400 });
         }
 
         if (Number((razorpayPayment as any).amount) !== Math.round(Number(order.total || 0) * 100)) {
@@ -61,11 +64,15 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "Payment is not in a verified state" }, { status: 400 });
         }
 
-        if (order.paymentStatus === "verified" && order.transactionId === razorpayPaymentId) {
-            return NextResponse.json({ success: true, data: order, duplicate: true });
+        if (order.paymentStatus === "verified") {
+            if (order.transactionId === razorpayPaymentId) {
+                return NextResponse.json({ success: true, data: order, duplicate: true });
+            }
+            return NextResponse.json({ success: false, error: "A different payment is already verified for this order" }, { status: 409 });
         }
 
         order.transactionId = razorpayPaymentId;
+        order.paymentGatewayOrderId = razorpayOrderId;
         order.paymentMethod = "razorpay";
         order.paymentStatus = "verified";
         order.statusHistory = [

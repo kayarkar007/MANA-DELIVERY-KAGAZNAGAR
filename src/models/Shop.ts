@@ -34,5 +34,6 @@ const ShopSchema: Schema = new Schema(
 );
 
 ShopSchema.index({ isActive: 1 });
+ShopSchema.index({ isActive: 1, createdAt: -1 });
 
 export default mongoose.models.Shop || mongoose.model<IShop>("Shop", ShopSchema);

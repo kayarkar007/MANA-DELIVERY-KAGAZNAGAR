@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import { requireAdmin } from "@/lib/routeAuth";
 import Shop from "@/models/Shop";
+import { publicJson } from "@/lib/publicResponse";
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
     try {
@@ -37,6 +38,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 }
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+    const startedAt = Date.now();
     try {
         await connectToDatabase();
         const params = await context.params;
@@ -44,13 +46,13 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         
         let shop;
         if (slug.match(/^[0-9a-fA-F]{24}$/)) {
-            shop = await Shop.findById(slug);
+            shop = await Shop.findOne({ _id: slug, isActive: true });
         } else {
-            shop = await Shop.findOne({ slug });
+            shop = await Shop.findOne({ slug, isActive: true });
         }
         
         if (!shop) return NextResponse.json({ success: false, error: "Shop not found" }, { status: 404 });
-        return NextResponse.json({ success: true, data: shop });
+        return publicJson({ success: true, data: shop }, startedAt, 120);
     } catch (error) {
         return NextResponse.json({ success: false, error: "Failed to fetch shop" }, { status: 400 });
     }

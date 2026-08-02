@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import { requireAdmin } from "@/lib/routeAuth";
 import Category from "@/models/Category";
+import { publicJson } from "@/lib/publicResponse";
 
 export async function GET() {
+    const startedAt = Date.now();
     try {
         await connectToDatabase();
-        const categories = await Category.find({}).sort({ createdAt: -1 });
-        return NextResponse.json({ success: true, data: categories });
+        const categories = await Category.find({})
+            .select("name slug type image createdAt updatedAt")
+            .sort({ createdAt: -1 })
+            .limit(100)
+            .maxTimeMS(2_000)
+            .lean();
+        return publicJson({ success: true, data: categories }, startedAt, 300);
     } catch (error) {
         return NextResponse.json(
             { success: false, error: "Failed to fetch categories" },

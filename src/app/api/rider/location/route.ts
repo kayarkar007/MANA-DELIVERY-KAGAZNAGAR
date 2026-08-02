@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireRider } from "@/lib/routeAuth";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
 import User from "@/models/User";
 
 async function getRiderSession() {
-    const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== "rider") {
-        return null;
-    }
-
-    return session;
+    const auth = await requireRider();
+    return "response" in auth ? null : auth.session;
 }
 
 export async function GET() {

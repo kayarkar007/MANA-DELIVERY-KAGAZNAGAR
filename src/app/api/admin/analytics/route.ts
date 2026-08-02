@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
 import User from "@/models/User";
-import { requireAdmin } from "@/lib/routeAuth";
+import { requireAdminFlexible } from "@/lib/routeAuth";
 
 export async function GET(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         await connectToDatabase();

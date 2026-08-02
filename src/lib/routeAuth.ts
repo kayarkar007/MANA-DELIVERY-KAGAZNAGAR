@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import type { Session } from "next-auth";
-import jwt from "jsonwebtoken";
 import { headers } from "next/headers";
+import { verifyMobileAccessToken, type MobileAccessTokenPayload } from "@/lib/mobileAuth";
+import connectToDatabase from "@/lib/mongoose";
+import User from "@/models/User";
 
 type AuthResult =
   | { session: Session; response?: never }
@@ -13,11 +15,18 @@ function unauthorized(message = "Unauthorized", status = 401) {
   return NextResponse.json({ success: false as const, error: message }, { status });
 }
 
+async function isAccountActive(userId?: string) {
+  if (!userId) return false;
+  await connectToDatabase();
+  return Boolean(await User.exists({ _id: userId, privacyErasedAt: { $exists: false } }));
+}
+
 // ── Original functions — UNCHANGED (web app uses these) ──────────────────────
 
 export async function requireUser(): Promise<AuthResult> {
   const session = await getServerSession(authOptions);
   if (!session?.user) return { response: unauthorized() };
+  if (!(await isAccountActive(session.user.id))) return { response: unauthorized("Account unavailable") };
   return { session };
 }
 
@@ -25,6 +34,7 @@ export async function requireAdmin(): Promise<AuthResult> {
   const session = await getServerSession(authOptions);
   if (!session?.user) return { response: unauthorized() };
   if (session.user.role !== "admin") return { response: unauthorized("Forbidden", 403) };
+  if (!(await isAccountActive(session.user.id))) return { response: unauthorized("Account unavailable") };
   return { session };
 }
 
@@ -35,12 +45,12 @@ export async function requireAdmin(): Promise<AuthResult> {
  * Extracts Bearer JWT token from Authorization header (mobile apps).
  * Returns decoded payload or null if invalid/missing.
  */
-function extractBearerToken(authHeader: string | null): any | null {
+function extractBearerToken(authHeader: string | null): MobileAccessTokenPayload | null {
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.replace("Bearer ", "").trim();
   if (!token) return null;
   try {
-    return jwt.verify(token, process.env.NEXTAUTH_SECRET!);
+    return verifyMobileAccessToken(token);
   } catch {
     return null;
   }
@@ -53,9 +63,9 @@ function extractBearerToken(authHeader: string | null): any | null {
 async function requireRoleFlexible(role: string): Promise<AuthResult> {
   // 1. Try NextAuth web session first
   const session = await getServerSession(authOptions);
-  if (session?.user?.role === role) return { session };
+  if (session?.user?.role === role && await isAccountActive(session.user.id)) return { session };
   // Also allow admin to access any role's endpoints
-  if (session?.user?.role === "admin" && role !== "admin") return { session };
+  if (session?.user?.role === "admin" && role !== "admin" && await isAccountActive(session.user.id)) return { session };
 
   // 2. Fall back to Bearer JWT (mobile apps)
   const headerStore = await headers();
@@ -63,11 +73,13 @@ async function requireRoleFlexible(role: string): Promise<AuthResult> {
   const decoded = extractBearerToken(authHeader);
 
   if (!decoded) return { response: unauthorized() };
+  if (!(await isAccountActive(decoded.id))) return { response: unauthorized("Account unavailable") };
   if (decoded.role !== role && decoded.role !== "admin") {
     return { response: unauthorized("Forbidden", 403) };
   }
 
   // Build a minimal session-like object from JWT payload
+  const expiresAt = decoded.exp ?? Math.floor(Date.now() / 1000);
   const mobileSession = {
     user: {
       id: decoded.id,
@@ -77,10 +89,40 @@ async function requireRoleFlexible(role: string): Promise<AuthResult> {
       phone: decoded.phone ?? null,
       isPhoneVerified: decoded.isPhoneVerified ?? false,
     },
-    expires: new Date(decoded.exp * 1000).toISOString(),
+    expires: new Date(expiresAt * 1000).toISOString(),
   } as unknown as Session;
 
   return { session: mobileSession };
+}
+
+export async function requireAuthenticatedFlexible(): Promise<AuthResult> {
+  const session = await getServerSession(authOptions);
+  if (session?.user && await isAccountActive(session.user.id)) return { session };
+
+  const headerStore = await headers();
+  const decoded = extractBearerToken(headerStore.get("authorization"));
+  if (!decoded) return { response: unauthorized() };
+  if (!(await isAccountActive(decoded.id))) return { response: unauthorized("Account unavailable") };
+
+  const expiresAt = decoded.exp ?? Math.floor(Date.now() / 1000);
+
+  return {
+    session: {
+      user: {
+        id: decoded.id,
+        name: decoded.name,
+        email: decoded.email ?? null,
+        role: decoded.role,
+        phone: decoded.phone ?? null,
+        isPhoneVerified: decoded.isPhoneVerified,
+      },
+      expires: new Date(expiresAt * 1000).toISOString(),
+    } as unknown as Session,
+  };
+}
+
+export async function requireUserFlexible(): Promise<AuthResult> {
+  return requireRoleFlexible("user");
 }
 
 /** For Rider mobile app routes — accepts rider session OR Bearer JWT with role=rider */

@@ -205,7 +205,7 @@ export default function SearchBar() {
             />
 
             {/* Voice search button */}
-            <div className="absolute right-[4.2rem] flex items-center sm:right-[8.5rem]">
+            <div className="absolute right-14 flex items-center sm:right-[7.5rem]">
                 {mounted && hasVoiceSupport && (
                     <button
                         type="button"
@@ -224,16 +224,11 @@ export default function SearchBar() {
 
             <button
                 type="submit"
-                className="app-button app-button-primary absolute inset-y-2 right-2 hidden items-center gap-2 whitespace-nowrap rounded-[1.35rem] px-6 leading-none sm:flex"
+                className="app-button app-button-primary absolute inset-y-2 right-2 flex items-center justify-center gap-2 rounded-[1.35rem] px-3.5 sm:px-6 leading-none"
+                aria-label="Search"
             >
-                Search
-            </button>
-            <button
-                type="submit"
-                className="absolute right-2 top-2 flex h-[calc(100%-1rem)] w-11 items-center justify-center rounded-[1rem] bg-slate-950 text-white dark:bg-white dark:text-slate-950 sm:hidden"
-                aria-label="Submit search"
-            >
-                <Search className="h-4 w-4" />
+                <Search className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Search</span>
             </button>
 
             {/* ═══ Suggestions dropdown (no query) ═══ */}

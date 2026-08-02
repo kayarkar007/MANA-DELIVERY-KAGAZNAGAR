@@ -66,17 +66,19 @@ export async function processRefund(input: ProcessRefundInput): Promise<ProcessR
 
     // ── 1. Credit wallet ─────────────────────────────────────────────────────
     try {
-        const { balanceAfter } = await createWalletTransaction({
+        const { balanceAfter, duplicate } = await createWalletTransaction({
             userId: input.userId,
             amount: input.refundAmount,
             type: "credit",
             source: "refund",
             note: `Refund processed for order #${input.orderShortId}`,
             orderId: input.orderId,
+            referenceId: `refund:${input.orderId}`,
         });
 
         result.walletCredited = true;
         result.newWalletBalance = balanceAfter;
+        if (duplicate) return result;
     } catch (walletError: any) {
         console.error("❌ Refund wallet credit failed:", walletError.message);
         result.error = `Wallet credit failed: ${walletError.message}`;

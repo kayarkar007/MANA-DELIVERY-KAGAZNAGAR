@@ -297,6 +297,14 @@ export default function ProfilePage() {
                                     </div>
                                     <ChevronRight className="w-5 h-5 text-rose-500 group-hover:translate-x-1 transition-transform" />
                                 </Link>
+
+                                <Link href="/profile/privacy" className="flex items-center justify-between rounded-3xl border border-sky-100 bg-sky-50 p-6 transition-all hover:bg-sky-100 dark:border-sky-900/20 dark:bg-sky-900/10 dark:hover:bg-sky-900/20">
+                                    <div className="flex items-center gap-4">
+                                        <ShieldAlert className="h-6 w-6 text-sky-600" />
+                                        <span className="text-xs font-black uppercase tracking-widest text-sky-900 dark:text-sky-400">Privacy & Data</span>
+                                    </div>
+                                    <ChevronRight className="h-5 w-5 text-sky-600" />
+                                </Link>
                             </div>
 
                             <button

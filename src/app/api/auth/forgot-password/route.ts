@@ -8,16 +8,22 @@ import { forgotPasswordLimiter } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
-        await connectToDatabase();
         const { email } = await req.json();
 
         // ── Rate limit: 3 password-reset emails per IP per 15 minutes ────────
         const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
-        if (!forgotPasswordLimiter.check(ip)) {
-            // Return the same generic message to avoid confirming email existence
+        const allowed = await forgotPasswordLimiter.check(ip);
+        if (!allowed) {
+            const retryAfter = await forgotPasswordLimiter.retryAfter(ip);
             return NextResponse.json(
-                { success: true, message: "If that email exists, a reset link has been sent." },
-                { status: 200 }
+                { success: false, error: "Too many password reset requests. Please try again later." },
+                {
+                    status: 429,
+                    headers: {
+                        "Cache-Control": "no-store",
+                        "Retry-After": String(Math.max(1, retryAfter)),
+                    },
+                }
             );
         }
 
@@ -25,7 +31,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "Email is required" }, { status: 400 });
         }
 
-        const user = await User.findOne({ email });
+        const emailKey = `${email}`.toLowerCase().trim();
+        await connectToDatabase();
+        const user = await User.findOne({ email: emailKey });
 
         if (!user) {
             // We still return success to prevent email enumeration attacks
@@ -45,7 +53,7 @@ export async function POST(req: Request) {
                        (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 
                        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
         
-        const resetLink = `${baseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+        const resetLink = `${baseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(emailKey)}`;
 
 
         const html = `
@@ -62,13 +70,14 @@ export async function POST(req: Request) {
             </div>
         `;
         
-        await sendEmail(email, "Reset your Mana Delivery Password", html);
+        await sendEmail(emailKey, "Reset your Mana Delivery Password", html);
 
         return NextResponse.json({ success: true, message: "If that email exists, a reset link has been sent." }, { status: 200 });
 
-    } catch (error: any) {
+    } catch (error) {
+        console.error("Password reset request failed", error);
         return NextResponse.json(
-            { success: false, error: error.message || "Failed to process request." },
+            { success: false, error: "Failed to process request." },
             { status: 500 }
         );
     }

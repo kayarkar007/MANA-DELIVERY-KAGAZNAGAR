@@ -3,19 +3,33 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import mongoose, { Schema } from "mongoose";
 import type { FullConfig } from "@playwright/test";
+const TEST_LOCATION = {
+    latitude: 19.3316,
+    longitude: 79.4831,
+};
+const TEST_CATEGORY_SLUG = "playwright-groceries";
+const TEST_PRODUCT_NAME = "Playwright Test Apples";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_TEST_URI = process.env.MONGODB_TEST_URI;
 
-if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI is not configured in .env.local");
+if (!MONGODB_TEST_URI) {
+    throw new Error("MONGODB_TEST_URI is required for Playwright tests.");
+}
+
+const mongodbTestUri = MONGODB_TEST_URI;
+const testDatabaseName = new URL(mongodbTestUri).pathname.replace(/^\/+/, "");
+if (!/(^|[-_])test$/i.test(testDatabaseName)) {
+    throw new Error("MONGODB_TEST_URI must target a database ending in -test or _test.");
 }
 
 const userSchema = new Schema({
     name: String,
     email: { type: String, unique: true },
     password: String,
+    phone: String,
+    isPhoneVerified: Boolean,
     whatsapp: String,
     address: String,
     savedAddresses: [
@@ -122,13 +136,13 @@ const RiderPayout = mongoose.models.RiderPayout || mongoose.model("RiderPayout",
 
 const TEST_CATEGORY = {
     name: "Playwright Groceries",
-    slug: "playwright-groceries",
+    slug: TEST_CATEGORY_SLUG,
     type: "product",
     image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800",
 };
 
 const TEST_PRODUCT = {
-    name: "Playwright Test Apples",
+    name: TEST_PRODUCT_NAME,
     description: "Deterministic product used for end-to-end checkout validation.",
     price: 149,
     unit: "1 kg",
@@ -150,8 +164,8 @@ const TEST_USERS = {
             {
                 label: "Home",
                 address: "Plot 101, Playwright Colony, Kagaznagar",
-                lat: 17.385,
-                lng: 78.4867,
+                lat: TEST_LOCATION.latitude,
+                lng: TEST_LOCATION.longitude,
             },
         ],
         role: "user",
@@ -189,12 +203,14 @@ async function upsertUser(input: typeof TEST_USERS.user) {
                 name: input.name,
                 email: input.email,
                 password,
+                phone: input.whatsapp,
                 whatsapp: input.whatsapp,
                 address: input.address,
                 savedAddresses: input.savedAddresses,
                 role: input.role,
                 walletBalance: input.walletBalance,
                 isVerified: true,
+                isPhoneVerified: true,
                 verifyOtp: undefined,
                 verifyOtpExpiry: undefined,
                 resetToken: undefined,
@@ -215,7 +231,7 @@ async function upsertUser(input: typeof TEST_USERS.user) {
 }
 
 export default async function globalSetup(_: FullConfig) {
-    await mongoose.connect(MONGODB_URI as string);
+    await mongoose.connect(mongodbTestUri);
 
     try {
         const [user, admin, rider] = await Promise.all([

@@ -3,22 +3,31 @@ import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { sendEmail } from "@/lib/mailer";
-import { signupLimiter, otpResendLimiter } from "@/lib/rateLimit";
+import { signupLimiter } from "@/lib/rateLimit";
+import { hasAcceptedCurrentPolicies } from "@/lib/privacy";
 
 
 export async function POST(req: Request) {
     try {
         // ── Rate limit: 5 signups per IP per 15 minutes ───────────────────────
         const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
-        if (!signupLimiter.check(ip)) {
+        const allowed = await signupLimiter.check(ip);
+        if (!allowed) {
+            const retryAfter = await signupLimiter.retryAfter(ip);
             return NextResponse.json(
                 { success: false, error: "Too many signup attempts. Please try again later." },
-                { status: 429 }
+                {
+                    status: 429,
+                    headers: {
+                        "Cache-Control": "no-store",
+                        "Retry-After": String(Math.max(1, retryAfter)),
+                    },
+                }
             );
         }
 
         await connectToDatabase();
-        const { name, email, password, phone, address, referralCode } = await req.json();
+        const { name, email, password, phone, address, referralCode, privacyPolicyVersion, termsVersion, marketingConsent } = await req.json();
         const cleanPhone = phone ? phone.replace(/\D/g, "").slice(-10) : undefined;
 
 
@@ -27,6 +36,13 @@ export async function POST(req: Request) {
         if (!isStrong) {
             return NextResponse.json(
                 { success: false, error: "Password does not meet security requirements." },
+                { status: 400 }
+            );
+        }
+
+        if (!hasAcceptedCurrentPolicies({ privacyPolicyVersion, termsVersion })) {
+            return NextResponse.json(
+                { success: false, error: "Please accept the Privacy Policy and Terms of Service to create an account." },
                 { status: 400 }
             );
         }
@@ -71,6 +87,12 @@ export async function POST(req: Request) {
             isVerified: false,
             verifyOtp: hashedOtp,
             verifyOtpExpiry: otpExpiry,
+            privacyPolicyVersion,
+            privacyPolicyAcceptedAt: new Date(),
+            termsVersion,
+            termsAcceptedAt: new Date(),
+            marketingConsent: marketingConsent === true,
+            marketingConsentUpdatedAt: new Date(),
         });
 
         // 6. Send OTP Email — MUST succeed
@@ -79,10 +101,11 @@ export async function POST(req: Request) {
         if (!emailResult.success) {
             // Delete the user so they can retry cleanly
             await User.deleteOne({ _id: newUser._id });
+            console.error("Failed to send signup verification email", emailResult.error);
             return NextResponse.json(
                 {
                     success: false,
-                    error: `Registration failed: Could not send verification email. Please check email configuration. (${emailResult.error})`,
+                    error: "Registration failed because the verification email could not be sent. Please try again later.",
                 },
                 { status: 500 }
             );
@@ -92,9 +115,10 @@ export async function POST(req: Request) {
             { success: true, message: "Account created! Check your email for the OTP.", email },
             { status: 201 }
         );
-    } catch (error: any) {
+    } catch (error) {
+        console.error("Signup failed", error);
         return NextResponse.json(
-            { success: false, error: error.message || "Failed to register user." },
+            { success: false, error: "Failed to register user." },
             { status: 500 }
         );
     }

@@ -4,6 +4,7 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { firebaseAdminApp } from "@/lib/firebaseAdmin";
 import { getAuth } from "firebase-admin/auth";
+import { createMobileAccessToken } from "@/lib/mobileAuth";
 
 function normalizePhone(raw: string): string {
     return raw.replace(/\D/g, "").replace(/^(91|0)/, "").slice(-10);
@@ -28,7 +29,13 @@ export async function POST(req: Request) {
         let user = await User.findOne({ phone });
 
         // ── 1. Firebase Phone Auth Verification ─────────────────────────────────
-        if (firebaseIdToken && firebaseAdminApp) {
+        if (firebaseIdToken) {
+            if (!firebaseAdminApp) {
+                return NextResponse.json(
+                    { success: false, error: "Phone verification service is unavailable." },
+                    { status: 503 }
+                );
+            }
             try {
                 const decodedToken = await getAuth(firebaseAdminApp).verifyIdToken(firebaseIdToken);
                 const tokenPhone = decodedToken.phone_number ? normalizePhone(decodedToken.phone_number) : "";
@@ -40,7 +47,10 @@ export async function POST(req: Request) {
                 }
             } catch (err: any) {
                 console.warn("⚠️ Firebase ID token verification warning:", err.message);
-                // Continue if phone is verified client side
+                return NextResponse.json(
+                    { success: false, error: "Phone verification failed." },
+                    { status: 401 }
+                );
             }
 
             if (!user) {
@@ -60,6 +70,7 @@ export async function POST(req: Request) {
             return NextResponse.json({
                 success: true,
                 message: "Firebase Phone verified successfully.",
+                token: createMobileAccessToken(user),
                 user: {
                     id: user._id.toString(),
                     name: user.name,
@@ -72,35 +83,6 @@ export async function POST(req: Request) {
         }
 
         // ── 2. Fallback local OTP / Dev verification ─────────────────────────────
-        if (body.isVerifiedDirectly) {
-            if (!user) {
-                user = await User.create({
-                    name: `User ${phone.slice(-4)}`,
-                    phone,
-                    whatsapp: phone,
-                    isPhoneVerified: true,
-                    role: "user",
-                });
-            } else {
-                user.isPhoneVerified = true;
-                if (!user.whatsapp) user.whatsapp = phone;
-                await user.save();
-            }
-
-            return NextResponse.json({
-                success: true,
-                message: "Phone verified successfully.",
-                user: {
-                    id: user._id.toString(),
-                    name: user.name,
-                    email: user.email ?? null,
-                    phone: user.phone,
-                    role: user.role,
-                    isPhoneVerified: true,
-                },
-            });
-        }
-
         if (!/^\d{6}$/.test(otp)) {
             return NextResponse.json(
                 { success: false, error: "Please enter the 6-digit OTP." },
@@ -108,8 +90,9 @@ export async function POST(req: Request) {
             );
         }
 
-        // Test numbers (7659989336, 9494378247) always accept "123456"
-        const isTestNumber = (phone === "7659989336" || phone === "9494378247") && otp === "123456";
+        // Test numbers (7659989336, 9494378247) always accept "123456" in any env
+        const isTestNumber =
+            (phone === "7659989336" || phone === "9494378247") && otp === "123456";
 
         if (!isTestNumber) {
             if (!user || !user.phoneOtp || !user.phoneOtpExpiry) {
@@ -135,6 +118,16 @@ export async function POST(req: Request) {
             }
         }
 
+        if (!user) {
+            user = await User.create({
+                name: `User ${phone.slice(-4)}`,
+                phone,
+                whatsapp: phone,
+                isPhoneVerified: true,
+                role: "user",
+            });
+        }
+
         // Mark phone as verified, clear OTP
         user.isPhoneVerified = true;
         user.phoneOtp = undefined;
@@ -145,6 +138,7 @@ export async function POST(req: Request) {
         return NextResponse.json({
             success: true,
             message: "Phone verified successfully.",
+            token: createMobileAccessToken(user),
             user: {
                 id: user._id.toString(),
                 name: user.name,

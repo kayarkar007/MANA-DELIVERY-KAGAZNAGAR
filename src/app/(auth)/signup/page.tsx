@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowLeft, Check, X, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from "@/lib/privacy";
 
 import { useSearchParams } from "next/navigation";
 
@@ -24,6 +25,8 @@ export default function SignupPage() {
         referralCode: "",
         password: "",
         confirmPassword: "",
+        policyAccepted: false,
+        marketingConsent: false,
     });
 
     const isLengthValid = form.password.length >= 8;
@@ -50,6 +53,10 @@ export default function SignupPage() {
             toast.error("Please enter a valid 10-digit mobile number.");
             return;
         }
+        if (!form.policyAccepted) {
+            toast.error("Please accept the Privacy Policy and Terms of Service.");
+            return;
+        }
 
         setLoading(true);
 
@@ -64,6 +71,9 @@ export default function SignupPage() {
                     phone: form.phone.replace(/\D/g, "").slice(-10),
                     address: form.address,
                     referralCode: form.referralCode,
+                    privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+                    termsVersion: TERMS_VERSION,
+                    marketingConsent: form.marketingConsent,
                 }),
             });
 
@@ -271,9 +281,34 @@ export default function SignupPage() {
                     )}
                 </div>
 
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
+                    <label className="flex cursor-pointer items-start gap-3 text-xs font-medium leading-5 text-slate-600 dark:text-slate-300">
+                        <input
+                            type="checkbox"
+                            required
+                            checked={form.policyAccepted}
+                            onChange={(e) => setForm({ ...form, policyAccepted: e.target.checked })}
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                        />
+                        <span>
+                            I agree to the <Link href="/terms" target="_blank" className="font-bold text-red-600 hover:underline">Terms of Service</Link>{" "}
+                            and <Link href="/privacy" target="_blank" className="font-bold text-red-600 hover:underline">Privacy Policy</Link>.
+                        </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-3 text-xs font-medium leading-5 text-slate-600 dark:text-slate-300">
+                        <input
+                            type="checkbox"
+                            checked={form.marketingConsent}
+                            onChange={(e) => setForm({ ...form, marketingConsent: e.target.checked })}
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                        />
+                        <span>Send me optional offers and service updates. You can opt out anytime.</span>
+                    </label>
+                </div>
+
                 <button
                     type="submit"
-                    disabled={loading || !isPasswordStrong || !passwordsMatch}
+                    disabled={loading || !isPasswordStrong || !passwordsMatch || !form.policyAccepted}
                     className="w-full app-button app-button-primary rounded-2xl py-4 text-sm sm:text-base font-black shadow-lg shadow-red-500/20 disabled:opacity-50 mt-2"
                 >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Create Account →"}

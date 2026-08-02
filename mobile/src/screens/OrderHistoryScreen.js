@@ -1,321 +1,278 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, Text, View, FlatList, TouchableOpacity,
-  SafeAreaView, StatusBar, ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../api/client';
-import { useAuth } from '../context/AuthContext';
-
-const STATUS_COLORS = {
-  pending: '#f59e0b',
-  confirmed: '#3b82f6',
-  processing: '#8b5cf6',
-  shipped: '#06b6d4',
-  delivered: '#22c55e',
-  cancelled: '#ef4444',
-};
+import { COLORS, SHADOWS } from '../constants/theme';
 
 export default function OrderHistoryScreen({ navigation }) {
-  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (user) fetchOrders();
-  }, [user]);
-
-  async function fetchOrders() {
+  async function loadOrders() {
     try {
-      const data = await apiFetch('/orders?limit=50');
-      if (data.success) {
-        setOrders(data.data || []);
-      }
+      const data = await apiFetch('/orders');
+      setOrders(data.orders || data.data || []);
     } catch (e) {
-      console.error('Failed to fetch orders', e);
+      console.error('Failed to load orders', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchOrders();
+  useEffect(() => {
+    loadOrders();
   }, []);
 
-  if (!user) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#090405" />
-        <View style={styles.center}>
-          <Text style={styles.emptyEmoji}>🔐</Text>
-          <Text style={styles.emptyTitle}>Login Required</Text>
-          <Text style={styles.emptySub}>Please login to view your orders.</Text>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => navigation.navigate('Login')}
-          >
-            <Text style={styles.actionBtnText}>Login Now</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadOrders();
+  };
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#090405" />
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#ef4444" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  function renderOrderCard({ item }) {
-    const shortId = item._id.slice(-6).toUpperCase();
-    const date = new Date(item.createdAt).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-    const statusColor = STATUS_COLORS[item.status] || '#94a3b8';
-    const itemCount = item.items?.reduce((sum, i) => sum + (i.quantity || 1), 0) || 0;
+  function renderOrderItem({ item }) {
+    const status = item.status || 'placed';
+    const isDelivered = status === 'delivered';
+    const isCancelled = status === 'cancelled';
 
     return (
       <TouchableOpacity
         style={styles.orderCard}
+        activeOpacity={0.9}
         onPress={() => navigation.navigate('OrderTracking', { orderId: item._id })}
       >
-        <View style={styles.orderHeader}>
-          <Text style={styles.orderId}>#{shortId}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '22' }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {item.status?.toUpperCase()}
+        <View style={styles.orderHeaderRow}>
+          <View style={styles.orderIconBg}>
+            <Ionicons
+              name={isDelivered ? 'checkmark-done-circle' : 'receipt'}
+              size={20}
+              color={isDelivered ? COLORS.accent : COLORS.primary}
+            />
+          </View>
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={styles.orderTitle}>ORDER #{item._id?.slice(-6)?.toUpperCase()}</Text>
+            <Text style={styles.orderDate}>
+              {new Date(item.createdAt || Date.now()).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.statusBadge,
+              isDelivered ? styles.badgeSuccess : isCancelled ? styles.badgeDanger : styles.badgeActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusBadgeText,
+                isDelivered && { color: COLORS.accent },
+                isCancelled && { color: COLORS.danger },
+              ]}
+            >
+              {status.replace(/_/g, ' ').toUpperCase()}
             </Text>
           </View>
         </View>
 
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderDate}>📅 {date}</Text>
-          <Text style={styles.orderItems}>🛒 {itemCount} items</Text>
-        </View>
+        <View style={styles.divider} />
 
-        {/* Items Preview */}
-        <View style={styles.itemsPreview}>
-          {item.items?.slice(0, 3).map((orderItem, i) => (
-            <Text key={i} style={styles.itemPreviewText} numberOfLines={1}>
-              • {orderItem.name} ×{orderItem.quantity}
-            </Text>
-          ))}
-          {item.items?.length > 3 && (
-            <Text style={styles.moreItems}>+{item.items.length - 3} more</Text>
-          )}
-        </View>
-
-        <View style={styles.orderFooter}>
-          <Text style={styles.orderTotal}>₹{(item.total || 0).toFixed(2)}</Text>
-          <Text style={styles.paymentMethod}>
-            💳 {(item.paymentMethod || 'cod').toUpperCase()}
+        <View style={styles.detailsRow}>
+          <Text style={styles.itemCountText}>
+            {item.items?.length || 1} Item(s) • Kagaznagar Delivery
           </Text>
+          <Text style={styles.totalPrice}>₹{item.totalAmount || item.total}</Text>
         </View>
 
-        <View style={styles.trackRow}>
-          <Text style={styles.trackText}>View Details →</Text>
+        <View style={styles.trackBtnRow}>
+          <Text style={styles.trackBtnText}>Track Status & Delivery OTP</Text>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
         </View>
       </TouchableOpacity>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#090405" />
-
-      {/* Header */}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header Bar */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>My Orders</Text>
-        <View style={{ width: 50 }} />
+
+        <TouchableOpacity onPress={onRefresh}>
+          <Ionicons name="refresh" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
-      {orders.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyEmoji}>📭</Text>
-          <Text style={styles.emptyTitle}>No Orders Yet</Text>
-          <Text style={styles.emptySub}>Your order history will appear here.</Text>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => navigation.navigate('MainTabs')}
-          >
-            <Text style={styles.actionBtnText}>Start Shopping</Text>
-          </TouchableOpacity>
+      {loading ? (
+        <View style={styles.loadingView}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       ) : (
         <FlatList
           data={orders}
           keyExtractor={(item) => item._id}
-          renderItem={renderOrderCard}
+          renderItem={renderOrderItem}
           contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#ef4444"
-            />
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+          ListEmptyComponent={
+            <View style={styles.emptyView}>
+              <Ionicons name="receipt-outline" size={56} color={COLORS.textDark} />
+              <Text style={styles.emptyTitle}>No Orders Yet</Text>
+              <Text style={styles.emptySub}>Your past and live delivery orders will appear here.</Text>
+              <TouchableOpacity style={styles.browseBtn} onPress={() => navigation.navigate('Home')}>
+                <Text style={styles.browseBtnText}>Explore Store</Text>
+              </TouchableOpacity>
+            </View>
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090405',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
-  },
-  backText: {
-    color: '#ef4444',
-    fontWeight: '800',
-    fontSize: 14,
+    borderBottomColor: COLORS.cardBorder,
   },
   headerTitle: {
-    color: '#ffffff',
-    fontWeight: '900',
     fontSize: 18,
+    fontWeight: '900',
+    color: COLORS.text,
+  },
+  loadingView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 30,
   },
   orderCard: {
-    backgroundColor: '#160d10',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 14,
+    backgroundColor: COLORS.card,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#2e1417',
+    borderColor: COLORS.cardBorder,
+    padding: 14,
+    marginBottom: 12,
+    ...SHADOWS.small,
   },
-  orderHeader: {
+  orderHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
   },
-  orderId: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 18,
+  orderIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.inputBg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  statusText: {
-    fontWeight: '900',
-    fontSize: 11,
-  },
-  orderInfo: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 10,
+  orderTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.text,
   },
   orderDate: {
-    color: '#94a3b8',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
-  orderItems: {
-    color: '#94a3b8',
-    fontSize: 12,
-    fontWeight: '600',
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  itemsPreview: {
-    marginBottom: 12,
+  badgeActive: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
   },
-  itemPreviewText: {
-    color: '#64748b',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 2,
+  badgeSuccess: {
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
   },
-  moreItems: {
-    color: '#475569',
-    fontSize: 12,
-    fontWeight: '700',
-    fontStyle: 'italic',
+  badgeDanger: {
+    backgroundColor: 'rgba(248, 113, 113, 0.15)',
   },
-  orderFooter: {
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: COLORS.primary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.cardBorder,
+    marginVertical: 10,
+  },
+  detailsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#2e1417',
+    justifyContent: 'space-between',
   },
-  orderTotal: {
-    color: '#ef4444',
-    fontWeight: '900',
-    fontSize: 20,
-  },
-  paymentMethod: {
-    color: '#94a3b8',
-    fontWeight: '700',
+  itemCountText: {
     fontSize: 12,
+    color: COLORS.textMuted,
+    fontWeight: '600',
   },
-  trackRow: {
-    alignItems: 'flex-end',
-    marginTop: 10,
-  },
-  trackText: {
-    color: '#ef4444',
+  totalPrice: {
+    fontSize: 16,
     fontWeight: '900',
-    fontSize: 13,
+    color: COLORS.text,
   },
-  emptyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
+  trackBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  trackBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.primary,
+    marginRight: 4,
+  },
+  emptyView: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
   emptyTitle: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginTop: 12,
   },
   emptySub: {
-    color: '#94a3b8',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 24,
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 4,
   },
-  actionBtn: {
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 16,
+  browseBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginTop: 16,
   },
-  actionBtnText: {
-    color: '#ffffff',
+  browseBtnText: {
+    color: COLORS.white,
     fontWeight: '900',
-    fontSize: 14,
+    fontSize: 13,
   },
 });

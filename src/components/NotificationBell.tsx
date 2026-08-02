@@ -138,6 +138,7 @@ export default function NotificationBell() {
             {open && (
                 <div
                     ref={panelRef}
+                    data-testid="notification-panel"
                     className="fixed inset-x-2 z-[100] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:inset-x-auto sm:right-4 sm:w-[22rem] sm:max-w-[calc(100vw-2rem)]"
                     style={{ top: "calc(env(safe-area-inset-top, 0px) + 4rem)", maxHeight: "calc(100vh - env(safe-area-inset-top, 0px) - 6rem)" }}
                 >

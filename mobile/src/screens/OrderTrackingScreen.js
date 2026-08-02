@@ -1,513 +1,438 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, TouchableOpacity,
-  SafeAreaView, ScrollView, StatusBar, ActivityIndicator, RefreshControl,
+  StyleSheet, Text, View, ScrollView, TouchableOpacity,
+  ActivityIndicator, RefreshControl, Alert, Clipboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { apiFetch } from '../api/client';
-import { useAuth } from '../context/AuthContext';
-
-const STATUS_STEPS = [
-  { key: 'pending', label: 'Order Placed', emoji: '📝' },
-  { key: 'confirmed', label: 'Confirmed', emoji: '✅' },
-  { key: 'processing', label: 'Preparing', emoji: '👨‍🍳' },
-  { key: 'shipped', label: 'Out for Delivery', emoji: '🛵' },
-  { key: 'delivered', label: 'Delivered', emoji: '📦' },
-];
-
-function getStepIndex(status) {
-  const idx = STATUS_STEPS.findIndex((s) => s.key === status);
-  return idx >= 0 ? idx : 0;
-}
+import { COLORS, SHADOWS } from '../constants/theme';
 
 export default function OrderTrackingScreen({ route, navigation }) {
-  const { orderId } = route.params;
-  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { orderId } = route.params || {};
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const intervalRef = useRef(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchOrder();
-    // Poll every 15 seconds for live updates
-    intervalRef.current = setInterval(fetchOrder, 15000);
-    return () => clearInterval(intervalRef.current);
-  }, [orderId]);
-
-  async function fetchOrder() {
+  async function fetchOrderDetails() {
+    if (!orderId) return;
     try {
       const data = await apiFetch(`/orders/${orderId}`);
-      if (data.success && data.data) {
-        setOrder(data.data);
-        setError('');
-        // Stop polling once delivered or cancelled
-        if (['delivered', 'cancelled'].includes(data.data.status)) {
-          clearInterval(intervalRef.current);
-        }
+      if (data.order || data.success) {
+        setOrder(data.order || data.data);
       }
     } catch (e) {
-      setError(e.message || 'Failed to load order');
+      console.error('Failed to fetch order', e);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#090405" />
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#ef4444" />
-          <Text style={styles.loadingText}>Loading order...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  useEffect(() => {
+    fetchOrderDetails();
+    const interval = setInterval(fetchOrderDetails, 10000); // Auto refresh every 10s
+    return () => clearInterval(interval);
+  }, [orderId]);
 
-  if (error || !order) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#090405" />
-        <View style={styles.center}>
-          <Text style={styles.errorEmoji}>😕</Text>
-          <Text style={styles.errorTitle}>Couldn't load order</Text>
-          <Text style={styles.errorSub}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={fetchOrder}>
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchOrderDetails();
+  };
 
-  const shortId = order._id.slice(-6).toUpperCase();
-  const currentStep = getStepIndex(order.status);
-  const isCancelled = order.status === 'cancelled';
+  const status = order?.status || 'placed';
+
+  const steps = [
+    { key: 'placed', label: 'Order Placed', icon: 'checkmark-circle' },
+    { key: 'confirmed', label: 'Accepted by Vendor', icon: 'storefront' },
+    { key: 'assigned', label: 'Rider Assigned', icon: 'bicycle' },
+    { key: 'out_for_delivery', label: 'Out for Delivery', icon: 'navigate' },
+    { key: 'delivered', label: 'Delivered', icon: 'ribbon' },
+  ];
+
+  const statusIndex = {
+    placed: 0,
+    confirmed: 1,
+    assigned: 2,
+    out_for_delivery: 3,
+    delivered: 4,
+    cancelled: -1,
+  }[status] ?? 0;
+
+  function copyOtpToClipboard(otp) {
+    if (otp) {
+      Clipboard.setString(otp.toString());
+      Alert.alert('Copied!', 'Delivery OTP copied to clipboard.');
+    }
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#090405" />
-
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('MainTabs')}>
+          <Ionicons name="arrow-back" size={22} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Order #{shortId}</Text>
-        <View style={{ width: 50 }} />
+        <Text style={styles.headerTitle}>Live Order Tracker</Text>
+        <TouchableOpacity onPress={onRefresh}>
+          <Ionicons name="refresh" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={fetchOrder}
-            tintColor="#ef4444"
-          />
-        }
-      >
-        {/* Status Badge */}
-        <View style={styles.statusBadgeRow}>
-          <View
-            style={[
-              styles.statusBadge,
-              isCancelled ? styles.cancelledBadge : styles.activeBadge,
-            ]}
-          >
-            <Text style={styles.statusBadgeText}>
-              {isCancelled ? '❌ Cancelled' : `${STATUS_STEPS[currentStep]?.emoji} ${STATUS_STEPS[currentStep]?.label}`}
-            </Text>
-          </View>
+      {loading ? (
+        <View style={styles.loadingView}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Fetching order tracking updates...</Text>
         </View>
+      ) : !order ? (
+        <View style={styles.loadingView}>
+          <Ionicons name="alert-circle-outline" size={48} color={COLORS.danger} />
+          <Text style={styles.loadingText}>Order details could not be loaded.</Text>
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+        >
+          {/* Order ID & Status Header Card */}
+          <View style={styles.statusCard}>
+            <View style={styles.statusRow}>
+              <View>
+                <Text style={styles.orderIdLabel}>ORDER #{order._id?.slice(-6)?.toUpperCase()}</Text>
+                <Text style={styles.orderTime}>
+                  Placed on {new Date(order.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+              <View style={[styles.statusBadge, status === 'delivered' ? styles.badgeSuccess : styles.badgeActive]}>
+                <Text style={styles.statusBadgeText}>{status.replace(/_/g, ' ').toUpperCase()}</Text>
+              </View>
+            </View>
 
-        {/* Stepper */}
-        {!isCancelled && (
-          <View style={styles.stepperCard}>
-            {STATUS_STEPS.map((step, i) => {
-              const isCompleted = i <= currentStep;
-              const isCurrent = i === currentStep;
+            {/* Delivery OTP Highlight Card */}
+            {order.deliveryOtp && status !== 'delivered' && status !== 'cancelled' && (
+              <View style={styles.otpCard}>
+                <View style={styles.otpLeft}>
+                  <Ionicons name="key-outline" size={24} color={COLORS.gold} />
+                  <View style={{ marginLeft: 10 }}>
+                    <Text style={styles.otpTitle}>DELIVERY VERIFICATION OTP</Text>
+                    <Text style={styles.otpSub}>Share with rider upon arrival</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.otpBadge}
+                  onPress={() => copyOtpToClipboard(order.deliveryOtp)}
+                >
+                  <Text style={styles.otpText}>{order.deliveryOtp}</Text>
+                  <Ionicons name="copy-outline" size={14} color={COLORS.gold} style={{ marginLeft: 4 }} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* Stepper Progress Card */}
+          <View style={styles.cardSection}>
+            <Text style={styles.sectionHeader}>Delivery Status Timeline</Text>
+            {steps.map((step, index) => {
+              const isPassed = index <= statusIndex;
+              const isCurrent = index === statusIndex;
+
               return (
                 <View key={step.key} style={styles.stepRow}>
-                  {/* Dot + Line */}
-                  <View style={styles.stepIndicator}>
+                  <View style={styles.stepIconColumn}>
                     <View
                       style={[
-                        styles.stepDot,
-                        isCompleted && styles.stepDotCompleted,
-                        isCurrent && styles.stepDotCurrent,
+                        styles.stepIconBg,
+                        isPassed && styles.stepIconPassed,
+                        isCurrent && styles.stepIconCurrent,
                       ]}
                     >
-                      {isCompleted && <Text style={styles.stepCheck}>✓</Text>}
-                    </View>
-                    {i < STATUS_STEPS.length - 1 && (
-                      <View
-                        style={[
-                          styles.stepLine,
-                          isCompleted && styles.stepLineCompleted,
-                        ]}
+                      <Ionicons
+                        name={step.icon}
+                        size={16}
+                        color={isPassed ? COLORS.white : COLORS.textDark}
                       />
+                    </View>
+                    {index < steps.length - 1 && (
+                      <View style={[styles.stepLine, isPassed && styles.stepLinePassed]} />
                     )}
                   </View>
-                  {/* Label */}
-                  <View style={styles.stepContent}>
-                    <Text
-                      style={[
-                        styles.stepLabel,
-                        isCompleted && styles.stepLabelCompleted,
-                        isCurrent && styles.stepLabelCurrent,
-                      ]}
-                    >
-                      {step.emoji} {step.label}
+
+                  <View style={styles.stepTextColumn}>
+                    <Text style={[styles.stepLabel, isPassed && styles.stepLabelPassed]}>
+                      {step.label}
                     </Text>
+                    {isCurrent && (
+                      <Text style={styles.stepCurrentSub}>In Progress (Express Delivery)</Text>
+                    )}
                   </View>
                 </View>
               );
             })}
           </View>
-        )}
 
-        {/* Order Details Card */}
-        <View style={styles.detailCard}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
-
-          {order.items?.map((item, i) => (
-            <View key={i} style={styles.itemRow}>
-              <Text style={styles.itemName}>
-                {item.name} × {item.quantity}
-              </Text>
-              <Text style={styles.itemPrice}>
-                ₹{(item.price * item.quantity).toFixed(2)}
-              </Text>
+          {/* Delivery Address Details */}
+          <View style={styles.cardSection}>
+            <Text style={styles.sectionHeader}>Delivery Address</Text>
+            <View style={styles.addressRow}>
+              <Ionicons name="location-sharp" size={18} color={COLORS.primary} />
+              <Text style={styles.addressText}>{order.deliveryAddress || 'Kagaznagar Express Zone'}</Text>
             </View>
-          ))}
+          </View>
 
-          <View style={styles.divider} />
+          {/* Itemized Order Summary */}
+          <View style={styles.cardSection}>
+            <Text style={styles.sectionHeader}>Order Items</Text>
+            {order.items?.map((item, idx) => (
+              <View key={idx} style={styles.itemRow}>
+                <Text style={styles.itemName}>{item.name} x {item.quantity}</Text>
+                <Text style={styles.itemPrice}>₹{item.price * item.quantity}</Text>
+              </View>
+            ))}
 
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Subtotal</Text>
-            <Text style={styles.billVal}>₹{(order.subtotal || 0).toFixed(2)}</Text>
-          </View>
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Delivery Fee</Text>
-            <Text style={styles.billVal}>₹{(order.deliveryFee || 30).toFixed(2)}</Text>
-          </View>
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Tax</Text>
-            <Text style={styles.billVal}>₹{(order.tax || 0).toFixed(2)}</Text>
-          </View>
-          {order.discountAmount > 0 && (
-            <View style={styles.billRow}>
-              <Text style={styles.billLabel}>Discount</Text>
-              <Text style={[styles.billVal, { color: '#22c55e' }]}>
-                -₹{order.discountAmount.toFixed(2)}
-              </Text>
+            <View style={styles.divider} />
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Payable Amount</Text>
+              <Text style={styles.summaryValue}>₹{order.totalAmount || order.total}</Text>
             </View>
-          )}
-          <View style={[styles.billRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalVal}>₹{(order.total || 0).toFixed(2)}</Text>
           </View>
-        </View>
-
-        {/* Delivery Info */}
-        <View style={styles.detailCard}>
-          <Text style={styles.sectionTitle}>Delivery Details</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>📍</Text>
-            <Text style={styles.infoText}>{order.address || 'Kagaznagar'}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>👤</Text>
-            <Text style={styles.infoText}>{order.customerName}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>📞</Text>
-            <Text style={styles.infoText}>{order.customerPhone}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>💳</Text>
-            <Text style={styles.infoText}>
-              {(order.paymentMethod || 'cod').toUpperCase()}
-            </Text>
-          </View>
-        </View>
-
-        {/* Delivery OTP */}
-        {order.deliveryOtp && !isCancelled && order.status !== 'delivered' && (
-          <View style={styles.otpCard}>
-            <Text style={styles.otpTitle}>🔐 Delivery OTP</Text>
-            <Text style={styles.otpCode}>{order.deliveryOtp}</Text>
-            <Text style={styles.otpHint}>
-              Share this OTP with the delivery person to confirm delivery.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090405',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  loadingText: {
-    color: '#94a3b8',
-    marginTop: 12,
-    fontWeight: '600',
-  },
-  errorEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  errorTitle: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 20,
-  },
-  errorSub: {
-    color: '#94a3b8',
-    fontSize: 14,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  retryBtn: {
-    marginTop: 20,
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 16,
-  },
-  retryText: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 14,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: COLORS.cardBorder,
   },
-  backText: {
-    color: '#ef4444',
-    fontWeight: '800',
-    fontSize: 14,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  loadingView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    color: COLORS.textMuted,
+    marginTop: 10,
+    fontSize: 13,
   },
   scrollContent: {
+    padding: 16,
     paddingBottom: 40,
   },
-  statusBadgeRow: {
+  statusCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    padding: 16,
+    ...SHADOWS.small,
+  },
+  statusRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
+    justifyContent: 'space-between',
+  },
+  orderIdLabel: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: COLORS.text,
+  },
+  orderTime: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
   statusBadge: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
-  activeBadge: {
-    backgroundColor: '#14532d',
+  badgeActive: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
   },
-  cancelledBadge: {
-    backgroundColor: '#7f1d1d',
+  badgeSuccess: {
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
   },
   statusBadgeText: {
-    color: '#ffffff',
+    fontSize: 10,
     fontWeight: '900',
-    fontSize: 16,
+    color: COLORS.primary,
   },
-  stepperCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: '#160d10',
-    borderRadius: 24,
-    padding: 20,
+  otpCard: {
+    backgroundColor: COLORS.goldBg,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#2e1417',
+    borderColor: COLORS.gold,
+    padding: 12,
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  otpLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  otpTitle: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: COLORS.gold,
+  },
+  otpSub: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+  },
+  otpBadge: {
+    backgroundColor: COLORS.inputBg,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.gold,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  otpText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: COLORS.gold,
+    letterSpacing: 2,
+  },
+  cardSection: {
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    padding: 16,
+    marginTop: 14,
+  },
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginBottom: 12,
   },
   stepRow: {
     flexDirection: 'row',
-    minHeight: 52,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  stepIndicator: {
+  stepIconColumn: {
     alignItems: 'center',
-    width: 32,
+    marginRight: 12,
   },
-  stepDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#1e293b',
+  stepIconBg: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.inputBg,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#334155',
   },
-  stepDotCompleted: {
-    backgroundColor: '#22c55e',
-    borderColor: '#22c55e',
+  stepIconPassed: {
+    backgroundColor: COLORS.accent,
   },
-  stepDotCurrent: {
-    backgroundColor: '#ef4444',
-    borderColor: '#ef4444',
-  },
-  stepCheck: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 12,
+  stepIconCurrent: {
+    backgroundColor: COLORS.primary,
   },
   stepLine: {
     width: 2,
-    flex: 1,
-    backgroundColor: '#334155',
+    height: 24,
+    backgroundColor: COLORS.cardBorder,
     marginVertical: 2,
   },
-  stepLineCompleted: {
-    backgroundColor: '#22c55e',
+  stepLinePassed: {
+    backgroundColor: COLORS.accent,
   },
-  stepContent: {
-    flex: 1,
-    paddingLeft: 14,
-    paddingBottom: 12,
+  stepTextColumn: {
     justifyContent: 'center',
+    paddingTop: 4,
   },
   stepLabel: {
-    color: '#64748b',
+    fontSize: 13,
+    color: COLORS.textDark,
+    fontWeight: '600',
+  },
+  stepLabelPassed: {
+    color: COLORS.text,
+    fontWeight: '800',
+  },
+  stepCurrentSub: {
+    fontSize: 11,
+    color: COLORS.primary,
     fontWeight: '700',
-    fontSize: 14,
+    marginTop: 2,
   },
-  stepLabelCompleted: {
-    color: '#94a3b8',
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  stepLabelCurrent: {
-    color: '#ffffff',
-    fontWeight: '900',
-  },
-  detailCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: '#160d10',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#2e1417',
-  },
-  sectionTitle: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 16,
-    marginBottom: 14,
+  addressText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    marginLeft: 8,
+    flex: 1,
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   itemName: {
-    color: '#cbd5e1',
-    fontWeight: '700',
-    fontSize: 14,
-    flex: 1,
+    fontSize: 13,
+    color: COLORS.text,
+    fontWeight: '600',
   },
   itemPrice: {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 14,
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: '700',
   },
   divider: {
     height: 1,
-    backgroundColor: '#2e1417',
-    marginVertical: 12,
+    backgroundColor: COLORS.cardBorder,
+    marginVertical: 10,
   },
-  billRow: {
+  summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
   },
-  billLabel: {
-    color: '#94a3b8',
+  summaryLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '800',
+    color: COLORS.text,
   },
-  billVal: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  totalRow: {
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#2e1417',
-  },
-  totalLabel: {
-    color: '#ffffff',
-    fontWeight: '900',
+  summaryValue: {
     fontSize: 16,
-  },
-  totalVal: {
-    color: '#ef4444',
     fontWeight: '900',
-    fontSize: 20,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  infoEmoji: {
-    fontSize: 18,
-  },
-  infoText: {
-    color: '#cbd5e1',
-    fontWeight: '700',
-    fontSize: 14,
-    flex: 1,
-  },
-  otpCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: '#1a2332',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#1e3a5f',
-    alignItems: 'center',
-  },
-  otpTitle: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  otpCode: {
-    color: '#38bdf8',
-    fontWeight: '900',
-    fontSize: 36,
-    letterSpacing: 10,
-  },
-  otpHint: {
-    color: '#64748b',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 10,
-    fontWeight: '600',
+    color: COLORS.accent,
   },
 });

@@ -9,10 +9,27 @@ export async function apiFetch(endpoint, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || `Request failed: ${response.status}`);
-  return data;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      signal: controller.signal,
+      headers,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 401) await clearSession();
+      throw new Error(data.error || `Request failed: ${response.status}`);
+    }
+    return data;
+  } catch (error) {
+    if (error?.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function saveSession(token, user) {
@@ -26,5 +43,15 @@ export async function clearSession() {
 
 export async function getStoredUser() {
   const s = await AsyncStorage.getItem('vendorUser');
-  return s ? JSON.parse(s) : null;
+  const token = await AsyncStorage.getItem('vendorToken');
+  if (!s || !token || token.split('.').length !== 3) {
+    await clearSession();
+    return null;
+  }
+  try {
+    return JSON.parse(s);
+  } catch {
+    await clearSession();
+    return null;
+  }
 }

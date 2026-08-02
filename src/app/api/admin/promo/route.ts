@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import PromoCode from "@/models/PromoCode";
-import { requireAdmin } from "@/lib/routeAuth";
+import { requireAdminFlexible } from "@/lib/routeAuth";
 
 export async function GET() {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         await connectToDatabase();
@@ -18,7 +18,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         await connectToDatabase();
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         const { searchParams } = new URL(req.url);

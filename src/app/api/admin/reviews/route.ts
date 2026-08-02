@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/routeAuth";
+import { requireAdminFlexible } from "@/lib/routeAuth";
 import connectToDatabase from "@/lib/mongoose";
 import Review from "@/models/Review";
 import { triggerNotification } from "@/lib/notifications";
 
 export async function GET(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         await connectToDatabase();
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         await connectToDatabase();
@@ -93,7 +93,7 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const auth = await requireAdmin();
+        const auth = await requireAdminFlexible();
         if ("response" in auth) return auth.response;
 
         await connectToDatabase();

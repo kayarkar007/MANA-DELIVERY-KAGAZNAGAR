@@ -56,6 +56,13 @@ const UserSchema = new mongoose.Schema(
         verifyOtp: { type: String },
         verifyOtpExpiry: { type: Date },
         resetToken: { type: String },
+        privacyPolicyVersion: { type: String },
+        privacyPolicyAcceptedAt: { type: Date },
+        termsVersion: { type: String },
+        termsAcceptedAt: { type: Date },
+        marketingConsent: { type: Boolean, default: false },
+        marketingConsentUpdatedAt: { type: Date },
+        privacyErasedAt: { type: Date },
     },
     { timestamps: true }
 );
@@ -73,7 +80,8 @@ UserSchema.pre("save", function (this: any) {
     }
 });
 
+UserSchema.index({ privacyErasedAt: 1 });
+
 const UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 
 export default UserModel;
-

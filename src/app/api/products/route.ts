@@ -2,18 +2,20 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import { requireAdmin } from "@/lib/routeAuth";
 import Product from "@/models/Product";
+import { publicJson } from "@/lib/publicResponse";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+    const startedAt = Date.now();
     try {
         const { searchParams } = new URL(request.url);
         // Accept both categorySlug and category (legacy alias)
         const categorySlug = searchParams.get("categorySlug") || searchParams.get("category");
         const shopId = searchParams.get("shopId");
-        const search = `${searchParams.get("search") || ""}`.trim();
+        const search = `${searchParams.get("search") || ""}`.trim().slice(0, 100);
         const page = Math.max(1, Number(searchParams.get("page")) || 1);
-        const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 100));
+        const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit")) || 50));
         const sortParam = searchParams.get("sort") || "newest";
 
         await connectToDatabase();
@@ -36,13 +38,12 @@ export async function GET(request: Request) {
             query.shopId = shopId;
         }
         if (search) {
+            const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             query.$or = [
-                { name: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
+                { name: { $regex: escapedSearch, $options: "i" } },
+                { description: { $regex: escapedSearch, $options: "i" } },
             ];
         }
-
-        const total = await Product.countDocuments(query);
 
         // Build sort object based on sort param
         let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
@@ -52,20 +53,26 @@ export async function GET(request: Request) {
         else if (sortParam === "name_desc") sortObj = { name: -1 };
         else if (sortParam === "popular") sortObj = { salesCount: -1, createdAt: -1 };
 
-        const products = await Product.find(query)
-            .populate("shopId")
-            .sort(sortObj)
-            .skip((page - 1) * limit)
-            .limit(limit);
+        const [total, products] = await Promise.all([
+            Product.countDocuments(query).maxTimeMS(2_000),
+            Product.find(query)
+                .select("name slug description price unit categorySlug shopId inStock stockQuantity lowStockThreshold image createdAt updatedAt")
+                .populate("shopId", "name slug image isActive")
+                .sort(sortObj)
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .maxTimeMS(2_000)
+                .lean(),
+        ]);
 
         const normalizedProducts = products.map((product: any) => ({
-            ...product.toObject(),
+            ...product,
             stockQuantity: product.stockQuantity ?? (product.inStock ? 10 : 0),
             lowStockThreshold: product.lowStockThreshold ?? 5,
             inStock: product.stockQuantity !== undefined ? product.stockQuantity > 0 : product.inStock,
         }));
 
-        return NextResponse.json({
+        const payload = {
             success: true,
             data: normalizedProducts,
             pagination: {
@@ -74,7 +81,11 @@ export async function GET(request: Request) {
                 total,
                 totalPages: Math.max(1, Math.ceil(total / limit)),
             },
-        });
+        };
+
+        return adminView
+            ? NextResponse.json(payload, { headers: { "Cache-Control": "private, no-store" } })
+            : publicJson(payload, startedAt, search ? 30 : 60);
     } catch (error) {
         return NextResponse.json(
             { success: false, error: "Failed to fetch products" },

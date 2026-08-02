@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { requireAdminFlexible, requireAuthenticatedFlexible } from "@/lib/routeAuth";
 import connectToDatabase from "@/lib/mongoose";
 import { hydrateOrderItemImages } from "@/lib/orderData";
 import { getInventoryItems, restoreInventory } from "@/lib/inventory";
@@ -14,6 +13,8 @@ import { riderAssignedEmail, orderDeliveredEmail } from "@/lib/emailTemplates";
 import { sendOrderStatusSMS } from "@/lib/sms";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { processReferralRewardOnDelivery } from "@/lib/referral";
+import { canTransitionDeliveryStatus, canTransitionOrderStatus, isDeliveryStatus, isOrderStatus } from "@/lib/orderState";
+import { hideDeliveryOtp, revealDeliveryOtpForOwner } from "@/lib/deliveryOtp";
 import Order from "@/models/Order";
 import User from "@/models/User";
 
@@ -38,11 +39,9 @@ function getRefundCredit(order: any) {
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireAuthenticatedFlexible();
+        if ("response" in auth) return auth.response;
+        const { session } = auth;
 
         const resolvedParams = await params;
         await connectToDatabase();
@@ -58,7 +57,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         const hydratedOrder = await hydrateOrderItemImages(order);
-        return NextResponse.json({ success: true, data: hydratedOrder });
+        const ownerId = order.userId?.toString?.() ?? order.userId;
+        const responseOrder = ownerId === session.user.id
+            ? revealDeliveryOtpForOwner(hydratedOrder)
+            : hideDeliveryOtp(hydratedOrder);
+        return NextResponse.json({ success: true, data: responseOrder });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
@@ -67,11 +70,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const resolvedParams = await params;
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireAuthenticatedFlexible();
+        if ("response" in auth) return auth.response;
+        const { session } = auth;
 
         await connectToDatabase();
 
@@ -147,11 +148,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const resolvedParams = await params;
-        const session = await getServerSession(authOptions);
-
-        if (!session || session.user.role !== "admin") {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireAdminFlexible();
+        if ("response" in auth) return auth.response;
+        const { session } = auth;
 
         const body = await req.json();
         const status = body.status as string | undefined;
@@ -161,10 +160,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const refundReason = body.refundReason as string | undefined;
 
         if (status) {
-            const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
-            if (!validStatuses.includes(status)) {
+            if (!isOrderStatus(status)) {
                 return NextResponse.json({ success: false, error: "Invalid status" }, { status: 400 });
             }
+        }
+
+        if (deliveryStatus && !isDeliveryStatus(deliveryStatus)) {
+            return NextResponse.json({ success: false, error: "Invalid delivery status" }, { status: 400 });
         }
 
         if (refundStatus) {
@@ -186,6 +188,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const previousRefundStatus = order.refundStatus;
         const previousRiderId = order.riderId?.toString?.() ?? "";
         const inventoryItems = order.type === "product" ? getInventoryItems(order.items) : [];
+
+        if (status && !canTransitionOrderStatus(order.status, status)) {
+            return NextResponse.json({ success: false, error: `Cannot move order from ${order.status} to ${status}` }, { status: 400 });
+        }
+
+        if (deliveryStatus && !canTransitionDeliveryStatus(order.deliveryStatus, deliveryStatus)) {
+            return NextResponse.json({ success: false, error: `Cannot move delivery from ${order.deliveryStatus} to ${deliveryStatus}` }, { status: 400 });
+        }
 
         let assignedRider: any = null;
         let riderAssignmentChanged = false;

@@ -31,6 +31,9 @@ const WalletTransactionSchema = new Schema<IWalletTransaction>({
 }, { timestamps: true });
 
 WalletTransactionSchema.index({ userId: 1, createdAt: -1 });
-WalletTransactionSchema.index({ referenceId: 1 }, { sparse: true });
+WalletTransactionSchema.index(
+    { userId: 1, source: 1, referenceId: 1 },
+    { unique: true, partialFilterExpression: { referenceId: { $type: "string" } } }
+);
 
 export default mongoose.models.WalletTransaction || mongoose.model<IWalletTransaction>("WalletTransaction", WalletTransactionSchema);

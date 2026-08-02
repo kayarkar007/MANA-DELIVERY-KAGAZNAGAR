@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import connectToDatabase from "@/lib/mongoose";
-import { requireUser } from "@/lib/routeAuth";
+import { requireUserFlexible } from "@/lib/routeAuth";
 import { hydrateOrderItemImages } from "@/lib/orderData";
 import { triggerNotification, notifyAdmins } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
@@ -17,6 +17,7 @@ import { orderConfirmationEmail } from "@/lib/emailTemplates";
 import { sendOrderStatusSMS } from "@/lib/sms";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { isWithinServiceZone, isKagaznagarAddress, KAGAZNAGAR_CENTER } from "@/lib/geolocation";
+import { createDeliveryOtp, hideDeliveryOtp, revealDeliveryOtpForOwner } from "@/lib/deliveryOtp";
 
 
 function formatCurrency(value: number) {
@@ -78,16 +79,24 @@ export async function POST(request: Request) {
     let reservedInventory: InventoryItem[] = [];
 
     try {
-        const auth = await requireUser();
+        const auth = await requireUserFlexible();
         if ("response" in auth) return auth.response;
 
         const userId = auth.session.user.id;
 
         // ── Rate limit: 20 orders per user per 10 minutes ────────────────────
-        if (!orderLimiter.check(userId)) {
+        const allowed = await orderLimiter.check(userId);
+        if (!allowed) {
+            const retryAfter = await orderLimiter.retryAfter(userId);
             return NextResponse.json(
                 { success: false, error: "Too many order requests. Please wait a moment before trying again." },
-                { status: 429 }
+                {
+                    status: 429,
+                    headers: {
+                        "Cache-Control": "no-store",
+                        "Retry-After": String(Math.max(1, retryAfter)),
+                    },
+                }
             );
         }
 
@@ -96,8 +105,8 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         const type = body.type;
-        const customerName = `${body.customerName || ""}`.trim();
-        const customerPhone = `${body.customerPhone || ""}`.trim();
+        const customerName = `${body.customerName || auth.session.user.name || "Customer"}`.trim();
+        const customerPhone = `${body.customerPhone || auth.session.user.phone || "9494378247"}`.trim();
         const address = `${body.address || body.deliveryAddress || ""}`.trim();
         const deliveryAddress = address;
         let latitude = Number(body.latitude);
@@ -293,7 +302,7 @@ export async function POST(request: Request) {
                 await reserveInventory(reservedInventory, mongoSession);
             }
 
-            const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+            const deliveryOtp = createDeliveryOtp();
 
             const order = await Order.create([{
                 type,
@@ -330,7 +339,9 @@ export async function POST(request: Request) {
                         actorId: userId,
                     }),
                 ],
-                deliveryOtp,
+                deliveryOtp: deliveryOtp.encrypted,
+                deliveryOtpHash: deliveryOtp.hash,
+                deliveryOtpExpiresAt: deliveryOtp.expiresAt,
             }], { session: mongoSession });
 
             orderObj = order[0];
@@ -493,7 +504,7 @@ Order Tracking ID: #${orderObj._id.toString().slice(-6).toUpperCase()}`;
             metadata: { orderId: orderObj._id.toString(), type },
         });
 
-        return NextResponse.json({ success: true, data: orderObj, redirectUrl });
+        return NextResponse.json({ success: true, data: revealDeliveryOtpForOwner(orderObj), redirectUrl });
     } catch (error: any) {
         return NextResponse.json(
             { success: false, error: error.message || "Failed to place order" },
@@ -506,7 +517,7 @@ export async function GET(req: Request) {
     try {
         await connectToDatabase();
 
-        const auth = await requireUser();
+        const auth = await requireUserFlexible();
         if ("response" in auth) return auth.response;
 
         const { searchParams } = new URL(req.url);
@@ -557,10 +568,13 @@ export async function GET(req: Request) {
             .skip((page - 1) * limit)
             .limit(limit);
         const hydratedOrders = await hydrateOrderItemImages(orders);
+        const responseOrders = isAdmin
+            ? hydratedOrders.map((order: any) => hideDeliveryOtp(order))
+            : hydratedOrders.map((order: any) => revealDeliveryOtpForOwner(order));
 
         return NextResponse.json({
             success: true,
-            data: hydratedOrders,
+            data: responseOrders,
             pagination: {
                 page,
                 limit,

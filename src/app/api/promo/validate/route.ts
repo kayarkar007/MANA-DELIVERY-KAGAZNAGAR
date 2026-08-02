@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import PromoCode from "@/models/PromoCode";
+import { isFeatureEnabled } from "@/lib/featureFlags";
 
 export async function POST(req: Request) {
     try {
+        if (!isFeatureEnabled("promotions")) {
+            return NextResponse.json({ success: false, error: "Promotions are temporarily unavailable." }, { status: 503 });
+        }
+
         const { code, cartTotal } = await req.json();
 
         if (!code || typeof cartTotal !== "number") {

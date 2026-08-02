@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import nextDynamic from "next/dynamic";
+import { unstable_cache } from "next/cache";
 import * as motion from "framer-motion/client";
 import { ArrowRight, Clock3, MapPin, ShieldCheck, ShoppingBag, Search, Truck, CreditCard, Star, Quote, Zap, Package, Sparkles } from "lucide-react";
 import { getServerSession } from "next-auth";
@@ -88,8 +89,8 @@ const howItWorks = [
     },
 ];
 
-async function getCategories() {
-    try {
+const getCachedCategories = unstable_cache(
+    async () => {
         await connectToDatabase();
         const Product = (await import("@/models/Product")).default;
         const activeSlugs = await Product.distinct("categorySlug", {
@@ -98,30 +99,59 @@ async function getCategories() {
         });
         if (!activeSlugs.length) return [];
         const categories = await Category.find({ slug: { $in: activeSlugs } })
+            .select("name slug type image createdAt")
             .sort({ createdAt: -1 })
             .lean();
         return JSON.parse(JSON.stringify(categories));
+    },
+    ["home-categories"],
+    { revalidate: 300 }
+);
+
+async function getCategories() {
+    try {
+        return await getCachedCategories();
     } catch (error) {
         console.error("Failed to fetch categories:", error);
         return [];
     }
 }
 
+const getCachedShops = unstable_cache(
+    async () => {
+        await connectToDatabase();
+        const shops = await Shop.find({ isActive: true })
+            .select("name slug description image createdAt")
+            .sort({ createdAt: -1 })
+            .limit(30)
+            .lean();
+        return JSON.parse(JSON.stringify(shops));
+    },
+    ["home-shops"],
+    { revalidate: 300 }
+);
+
 async function getShops() {
     try {
-        await connectToDatabase();
-        const shops = await Shop.find({ isActive: true }).sort({ createdAt: -1 }).lean();
-        return JSON.parse(JSON.stringify(shops));
+        return await getCachedShops();
     } catch (error) {
         console.error("Failed to fetch shops:", error);
         return [];
     }
 }
 
-async function getDeliveredCount() {
-    try {
+const getCachedDeliveredCount = unstable_cache(
+    async () => {
         await connectToDatabase();
         return await Order.countDocuments({ status: "delivered" });
+    },
+    ["home-delivered-count"],
+    { revalidate: 300 }
+);
+
+async function getDeliveredCount() {
+    try {
+        return await getCachedDeliveredCount();
     } catch {
         return 0;
     }

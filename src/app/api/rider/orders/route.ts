@@ -1,28 +1,20 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireRider } from "@/lib/routeAuth";
 import connectToDatabase from "@/lib/mongoose";
 import { hydrateOrderItemImages } from "@/lib/orderData";
 import { getMappedOrderStatus } from "@/lib/orderPresentation";
 import { triggerNotification, notifyAdmins } from "@/lib/notifications";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
+import { canTransitionDeliveryStatus } from "@/lib/orderState";
+import { hideDeliveryOtp, isValidDeliveryOtp } from "@/lib/deliveryOtp";
 import Order from "@/models/Order";
 import RiderShift from "@/models/RiderShift";
 
-const allowedTransitions: Record<string, string[]> = {
-    assigned: ["accepted", "declined"],
-    accepted: ["picked_up"],
-    picked_up: ["out_for_delivery"],
-    out_for_delivery: ["delivered"],
-};
-
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session || session.user.role !== "rider") {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireRider();
+        if ("response" in auth) return auth.response;
+        const { session } = auth;
 
         await connectToDatabase();
 
@@ -63,7 +55,7 @@ export async function GET(req: Request) {
 
         const hydratedOrders = await hydrateOrderItemImages(orders);
 
-        return NextResponse.json({ success: true, data: hydratedOrders, stats });
+        return NextResponse.json({ success: true, data: hydratedOrders.map((order: any) => hideDeliveryOtp(order)), stats });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
@@ -71,17 +63,16 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session || session.user.role !== "rider") {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireRider();
+        if ("response" in auth) return auth.response;
+        const { session } = auth;
 
         const { orderId, deliveryStatus, estimatedDeliveryTime, deliveryOtp } = await req.json();
 
         await connectToDatabase();
 
-        const order = await Order.findOne({ _id: orderId, riderId: session.user.id });
+        const order = await Order.findOne({ _id: orderId, riderId: session.user.id })
+            .select("+deliveryOtpHash +deliveryOtpExpiresAt +deliveryOtpAttempts");
         if (!order) {
             return NextResponse.json({ success: false, error: "Order not found or not assigned to you" }, { status: 404 });
         }
@@ -90,8 +81,7 @@ export async function PATCH(req: Request) {
         const previousStatus = order.status;
 
         if (order.deliveryStatus !== deliveryStatus) {
-            const allowedNextStates = allowedTransitions[order.deliveryStatus] || [];
-            if (!allowedNextStates.includes(deliveryStatus)) {
+            if (!canTransitionDeliveryStatus(order.deliveryStatus, deliveryStatus)) {
                 return NextResponse.json(
                     { success: false, error: `Cannot move order from ${order.deliveryStatus} to ${deliveryStatus}` },
                     { status: 400 }
@@ -99,15 +89,29 @@ export async function PATCH(req: Request) {
             }
         }
 
-        if (deliveryStatus === "delivered" && order.deliveryOtp && order.deliveryOtp !== deliveryOtp) {
-            return NextResponse.json(
-                { success: false, error: "Invalid Delivery PIN. Ask customer for the 4-digit code." },
-                { status: 400 }
-            );
+        if (deliveryStatus === "delivered") {
+            if (order.deliveryOtpAttempts >= 5) {
+                return NextResponse.json({ success: false, error: "Delivery PIN verification is locked. Contact support." }, { status: 429 });
+            }
+
+            if (order.deliveryOtpExpiresAt && order.deliveryOtpExpiresAt < new Date()) {
+                return NextResponse.json({ success: false, error: "Delivery PIN has expired. Contact support." }, { status: 400 });
+            }
+
+            if (!isValidDeliveryOtp(`${deliveryOtp || ""}`, order.deliveryOtpHash, order.deliveryOtp)) {
+                order.deliveryOtpAttempts = (order.deliveryOtpAttempts || 0) + 1;
+                await order.save();
+                return NextResponse.json({ success: false, error: "Invalid Delivery PIN." }, { status: 400 });
+            }
         }
 
         order.deliveryStatus = deliveryStatus;
         order.status = getMappedOrderStatus(deliveryStatus, order.status) as any;
+        if (deliveryStatus === "delivered") {
+            order.set("deliveryOtp", undefined);
+            order.set("deliveryOtpHash", undefined);
+            order.set("deliveryOtpExpiresAt", undefined);
+        }
         order.statusHistory = [
             ...(order.statusHistory || []),
             buildOrderHistoryEntry({
@@ -164,7 +168,7 @@ export async function PATCH(req: Request) {
         }
 
         const hydratedOrder = await hydrateOrderItemImages(order);
-        return NextResponse.json({ success: true, data: hydratedOrder });
+        return NextResponse.json({ success: true, data: hideDeliveryOtp(hydratedOrder) });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }

@@ -1,20 +1,17 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
+import { requireUserFlexible } from "@/lib/routeAuth";
 import User from "@/models/User";
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user?.email) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireUserFlexible();
+        if ("response" in auth) return auth.response;
 
         await connectToDatabase();
 
-        const user = await User.findOne({ email: session.user.email }).select("-password");
+        const userId = auth.session.user.id;
+        const user = await User.findById(userId).select("-password");
 
         if (!user) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
@@ -28,7 +25,7 @@ export async function GET(req: Request) {
             whatsapp: user.whatsapp || "",
             address: user.address || "",
             savedAddresses: user.savedAddresses || [],
-            walletBalance: user.walletBalance || 0
+            walletBalance: user.walletBalance || 0,
         };
 
         return NextResponse.json({ success: true, data: userData });
@@ -39,40 +36,60 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireUserFlexible();
+        if ("response" in auth) return auth.response;
 
         const body = await req.json();
-        const { action, addressData, addressId } = body;
+        const { action, addressData, addressId, name, phone, whatsapp } = body;
 
         await connectToDatabase();
-        const user = await User.findOne({ email: session.user.email });
+        const userId = auth.session.user.id;
+        const user = await User.findById(userId);
         if (!user) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
 
         if (action === "ADD_ADDRESS") {
             if (!user.savedAddresses) user.savedAddresses = [];
-            user.savedAddresses.push(addressData);
+            const safeAddress = {
+                label: addressData.label || "Home",
+                address: addressData.address || "",
+                lat: Number(addressData.lat) || 19.3315,
+                lng: Number(addressData.lng) || 79.4828,
+            };
+            user.savedAddresses.push(safeAddress);
             await user.save();
         } else if (action === "DELETE_ADDRESS") {
             if (user.savedAddresses) {
-                user.savedAddresses = user.savedAddresses.filter((a: any) => a._id.toString() !== addressId);
+                user.savedAddresses = user.savedAddresses.filter(
+                    (a: any) => a._id.toString() !== addressId
+                );
                 await user.save();
             }
         } else if (action === "SET_DEFAULT") {
             user.address = addressData.address;
-            user.currentLocation = { 
-                latitude: addressData.lat, 
-                longitude: addressData.lng, 
-                updatedAt: new Date() 
+            user.currentLocation = {
+                latitude: addressData.lat,
+                longitude: addressData.lng,
+                updatedAt: new Date(),
             };
+            await user.save();
+        } else if (action === "UPDATE_PROFILE") {
+            if (name) user.name = name;
+            if (phone) user.phone = phone;
+            if (whatsapp !== undefined) user.whatsapp = whatsapp;
             await user.save();
         }
 
-        return NextResponse.json({ success: true, data: user });
+        return NextResponse.json({ success: true, data: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone || "",
+            whatsapp: user.whatsapp || "",
+            address: user.address || "",
+            savedAddresses: user.savedAddresses || [],
+            walletBalance: user.walletBalance || 0,
+        }});
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
-

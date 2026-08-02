@@ -1,23 +1,32 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import mongoose from "mongoose";
 import connectToDatabase from "@/lib/mongoose";
 import Order from "@/models/Order";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
+import { requireAdminFlexible } from "@/lib/routeAuth";
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const auth = await requireAdminFlexible();
+        if ("response" in auth) return auth.response;
+        const { session } = auth;
 
-        if (!session || session.user.role !== "admin") {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
-
-        const body = await req.json();
+        const body = await req.json() as { orderIds?: unknown; status?: unknown };
         const { orderIds, status } = body;
 
-        if (!Array.isArray(orderIds) || orderIds.length === 0 || !status) {
+        if (!Array.isArray(orderIds) || orderIds.length === 0 || typeof status !== "string") {
             return NextResponse.json({ success: false, error: "orderIds array and status are required" }, { status: 400 });
+        }
+
+        const uniqueOrderIds = [...new Set(orderIds)];
+        if (
+            uniqueOrderIds.length > 100 ||
+            uniqueOrderIds.some((orderId) => typeof orderId !== "string" || !mongoose.isValidObjectId(orderId))
+        ) {
+            return NextResponse.json(
+                { success: false, error: "Provide up to 100 valid order IDs." },
+                { status: 400 }
+            );
         }
 
         const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
@@ -47,7 +56,7 @@ export async function POST(req: Request) {
         }
 
         const result = await Order.updateMany(
-            { _id: { $in: orderIds } },
+            { _id: { $in: uniqueOrderIds } },
             updateFields
         );
 
@@ -56,7 +65,8 @@ export async function POST(req: Request) {
             updatedCount: result.modifiedCount,
             message: `Successfully updated ${result.modifiedCount} orders to ${status}`,
         });
-    } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    } catch (error) {
+        console.error("Failed to bulk update orders", error);
+        return NextResponse.json({ success: false, error: "Unable to update order status." }, { status: 500 });
     }
 }

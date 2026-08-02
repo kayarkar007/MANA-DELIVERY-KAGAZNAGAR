@@ -41,5 +41,7 @@ ProductSchema.index({ slug: 1 });
 ProductSchema.index({ inStock: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ isHidden: 1, categorySlug: 1 });
+ProductSchema.index({ isHidden: 1, shopId: 1, createdAt: -1 });
+ProductSchema.index({ isHidden: 1, price: 1, createdAt: -1 });
 
 export default mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);

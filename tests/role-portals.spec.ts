@@ -1,4 +1,8 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
+const TEST_LOCATION = {
+    latitude: 19.3316,
+    longitude: 79.4831,
+};
 
 const credentials = {
     user: {
@@ -40,6 +44,7 @@ async function attachPopupCloser(context: BrowserContext) {
 
 async function login(page: Page, email: string, password: string, destination: RegExp) {
     await page.goto("/login");
+    await page.getByRole("button", { name: /email/i }).click().catch(() => {});
     await page.getByPlaceholder("you@example.com").fill(email);
     await page.getByPlaceholder("Enter your password").fill(password);
     await page.getByRole("button", { name: /sign in/i }).click();
@@ -225,7 +230,7 @@ test.describe.serial("Role-based end-to-end coverage", () => {
 
     test("Rider portal: duty, shift, accept order, dispatch, and deliver with OTP", async ({ browser }) => {
         const context = await browser.newContext({
-            geolocation: { latitude: 17.385, longitude: 78.4867 },
+            geolocation: TEST_LOCATION,
             permissions: ["geolocation"],
         });
         await attachPopupCloser(context);

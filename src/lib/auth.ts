@@ -36,6 +36,10 @@ const providers: AuthOptions["providers"] = [
                 throw new Error("No account found with this email.");
             }
 
+            if (user.privacyErasedAt) {
+                throw new Error("This account is no longer available.");
+            }
+
             if (!user.password) {
                 throw new Error("This account uses Google login. Please sign in with Google.");
             }
@@ -80,6 +84,10 @@ const providers: AuthOptions["providers"] = [
 
             if (!user) {
                 throw new Error("User not found.");
+            }
+
+            if (user.privacyErasedAt) {
+                throw new Error("This account is no longer available.");
             }
 
             // Double-check: phone must match and be verified

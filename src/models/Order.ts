@@ -29,6 +29,7 @@ export interface IOrder extends Document {
     tipAmount?: number;
     paymentMethod?: "cod" | "upi" | "wallet" | "razorpay";
     transactionId?: string;
+    paymentGatewayOrderId?: string;
     paymentStatus?: "pending" | "verified" | "failed" | "refunded" | "cod_pending";
     refundStatus?: "none" | "requested" | "approved" | "rejected" | "processed";
     refundReason?: string;
@@ -55,6 +56,9 @@ export interface IOrder extends Document {
         at: Date;
     }>;
     deliveryOtp?: string;
+    deliveryOtpHash?: string;
+    deliveryOtpExpiresAt?: Date;
+    deliveryOtpAttempts?: number;
     estimatedDeliveryTime?: Date;
     createdAt: Date;
     updatedAt: Date;
@@ -91,6 +95,7 @@ const OrderSchema: Schema = new Schema(
         tipAmount: { type: Number, default: 0 },
         paymentMethod: { type: String, enum: ["cod", "upi", "wallet", "razorpay"], default: "cod" },
         transactionId: { type: String },
+        paymentGatewayOrderId: { type: String },
         paymentStatus: {
             type: String,
             enum: ["pending", "verified", "failed", "refunded", "cod_pending"],
@@ -131,6 +136,9 @@ const OrderSchema: Schema = new Schema(
             },
         ],
         deliveryOtp: { type: String },
+        deliveryOtpHash: { type: String, select: false },
+        deliveryOtpExpiresAt: { type: Date, select: false },
+        deliveryOtpAttempts: { type: Number, default: 0, select: false },
         estimatedDeliveryTime: { type: Date }
     },
     { timestamps: true }
@@ -142,5 +150,6 @@ OrderSchema.index({ riderId: 1, deliveryStatus: 1 });
 OrderSchema.index({ deliveryStatus: 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ status: 1, createdAt: -1 }); // Admin order filtering by status
+OrderSchema.index({ paymentGatewayOrderId: 1 }, { sparse: true });
 
 export default mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
+import { createMobileAccessToken } from "@/lib/mobileAuth";
 
 /**
  * POST /api/auth/mobile-login
@@ -12,7 +12,7 @@ import User from "@/models/User";
  *   1. Email + Password login
  *   2. Phone login (after OTP already verified — passes userId)
  *
- * Returns a 30-day JWT token for use in mobile apps (Authorization: Bearer <token>).
+ * Returns a 7-day JWT token for use in mobile apps (Authorization: Bearer <token>).
  * Does NOT affect web app auth (which uses NextAuth cookie sessions).
  *
  * Request body:
@@ -22,11 +22,14 @@ import User from "@/models/User";
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { loginType, email, password, userId, phone, expectedRole } = body;
+        const { loginType: rawLoginType, email, password, expectedRole } = body;
 
-        if (!loginType || !["email", "phone"].includes(loginType)) {
+        // Auto-detect loginType if not explicitly provided (backward compatibility)
+        const loginType = rawLoginType || (email ? "email" : null);
+
+        if (loginType !== "email") {
             return NextResponse.json(
-                { success: false, error: "loginType must be 'email' or 'phone'" },
+                { success: false, error: "loginType must be 'email'" },
                 { status: 400 }
             );
         }
@@ -77,32 +80,6 @@ export async function POST(request: Request) {
         }
 
         // ── Phone Login (after OTP verification) ──────────────────────────────
-        if (loginType === "phone") {
-            if (!userId || !phone) {
-                return NextResponse.json(
-                    { success: false, error: "userId and phone are required for phone login" },
-                    { status: 400 }
-                );
-            }
-
-            user = await User.findById(userId).lean();
-
-            if (!user) {
-                return NextResponse.json(
-                    { success: false, error: "User not found." },
-                    { status: 404 }
-                );
-            }
-
-            const normalizedPhone = phone.replace(/\D/g, "").replace(/^(91|0)/, "").slice(-10);
-            if (user.phone !== normalizedPhone || !user.isPhoneVerified) {
-                return NextResponse.json(
-                    { success: false, error: "Phone verification required." },
-                    { status: 401 }
-                );
-            }
-        }
-
         if (!user) {
             return NextResponse.json({ success: false, error: "Authentication failed." }, { status: 401 });
         }
@@ -119,19 +96,7 @@ export async function POST(request: Request) {
         }
 
         // ── Generate JWT Token (30 days) ───────────────────────────────────────
-        const tokenPayload = {
-            id: user._id.toString(),
-            name: user.name,
-            email: user.email ?? null,
-            role: user.role,
-            phone: user.phone ?? null,
-            isPhoneVerified: user.isPhoneVerified ?? false,
-            shopId: user.shopId?.toString() ?? null,
-        };
-
-        const token = jwt.sign(tokenPayload, process.env.NEXTAUTH_SECRET!, {
-            expiresIn: "30d",
-        });
+        const token = createMobileAccessToken(user);
 
         return NextResponse.json({
             success: true,

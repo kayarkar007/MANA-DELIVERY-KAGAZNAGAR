@@ -5,8 +5,10 @@ import Order from "@/models/Order";
 import { buildOrderHistoryEntry } from "@/lib/orderHistory";
 import { processRefund } from "@/lib/refund";
 import User from "@/models/User";
+import { getRequestId, logError, logInfo, logWarn } from "@/lib/observability";
 
 export async function POST(req: Request) {
+    const requestId = getRequestId(req);
     try {
         const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
         if (!secret) {
@@ -20,7 +22,9 @@ export async function POST(req: Request) {
             .update(rawBody)
             .digest("hex");
 
-        if (expectedSignature !== signature) {
+        const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+        const signatureBuffer = Buffer.from(signature, "utf8");
+        if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
             return NextResponse.json({ success: false, error: "Invalid webhook signature" }, { status: 400 });
         }
 
@@ -33,13 +37,32 @@ export async function POST(req: Request) {
         const paymentId = paymentEntity?.id || refundEntity?.payment_id;
 
         if (!appOrderId) {
+            logWarn("payment.webhook.ignored", { requestId, reason: "missing_app_order" });
             return NextResponse.json({ success: true, ignored: true });
         }
 
         await connectToDatabase();
         const order = await Order.findById(appOrderId);
         if (!order) {
+            logWarn("payment.webhook.ignored", { requestId, reason: "order_not_found", orderId: appOrderId });
             return NextResponse.json({ success: true, ignored: true });
+        }
+
+        if (paymentEntity?.notes?.appOrderId && paymentEntity.notes.appOrderId !== order._id.toString()) {
+            return NextResponse.json({ success: true, ignored: true });
+        }
+
+        if (paymentEntity?.order_id && order.paymentGatewayOrderId && paymentEntity.order_id !== order.paymentGatewayOrderId) {
+            return NextResponse.json({ success: true, ignored: true });
+        }
+
+        if (
+            (event === "payment.captured" && order.paymentStatus === "verified" && order.transactionId === paymentId) ||
+            (event === "payment.failed" && order.paymentStatus === "failed" && order.transactionId === paymentId) ||
+            (event === "refund.processed" && order.refundStatus === "processed")
+        ) {
+            logInfo("payment.webhook.duplicate", { requestId, orderId: appOrderId, event });
+            return NextResponse.json({ success: true, duplicate: true });
         }
 
         if (event === "payment.captured") {
@@ -72,6 +95,10 @@ export async function POST(req: Request) {
             order.transactionId = paymentId;
         }
 
+        if (paymentEntity?.order_id && !order.paymentGatewayOrderId) {
+            order.paymentGatewayOrderId = paymentEntity.order_id;
+        }
+
         order.statusHistory = [
             ...(order.statusHistory || []),
             buildOrderHistoryEntry({
@@ -84,8 +111,11 @@ export async function POST(req: Request) {
         ];
         await order.save();
 
+        logInfo("payment.webhook.processed", { requestId, orderId: appOrderId, event });
+
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    } catch (error) {
+        logError("payment.webhook.failed", error, { requestId });
+        return NextResponse.json({ success: false, error: "Webhook processing failed" }, { status: 500 });
     }
 }

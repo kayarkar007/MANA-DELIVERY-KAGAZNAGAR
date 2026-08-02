@@ -8,7 +8,6 @@ import { otpResendLimiter } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
-        await connectToDatabase();
         const { email } = await req.json();
 
         if (!email) {
@@ -17,14 +16,23 @@ export async function POST(req: Request) {
 
         // ── Rate limit: 3 OTP resend requests per email per 10 minutes ─────────
         const emailKey = `${email}`.toLowerCase().trim();
-        if (!otpResendLimiter.check(emailKey)) {
+        const allowed = await otpResendLimiter.check(emailKey);
+        if (!allowed) {
+            const retryAfter = await otpResendLimiter.retryAfter(emailKey);
             return NextResponse.json(
                 { success: false, error: "Too many OTP requests. Please wait a few minutes before trying again." },
-                { status: 429 }
+                {
+                    status: 429,
+                    headers: {
+                        "Cache-Control": "no-store",
+                        "Retry-After": String(Math.max(1, retryAfter)),
+                    },
+                }
             );
         }
 
-        const user = await User.findOne({ email });
+        await connectToDatabase();
+        const user = await User.findOne({ email: emailKey });
 
         if (!user) {
             return NextResponse.json({ success: false, error: "No account found with this email." }, { status: 404 });
@@ -86,17 +94,19 @@ export async function POST(req: Request) {
         const emailResult = await sendEmail(email, "New Verification Code – Mana Delivery", html);
 
         if (!emailResult.success) {
+            console.error("Failed to resend verification email", emailResult.error);
             return NextResponse.json(
-                { success: false, error: `Could not send email: ${emailResult.error}` },
+                { success: false, error: "Could not send the verification email. Please try again later." },
                 { status: 500 }
             );
         }
 
         return NextResponse.json({ success: true, message: "New OTP sent to your email!" }, { status: 200 });
 
-    } catch (error: any) {
+    } catch (error) {
+        console.error("OTP resend failed", error);
         return NextResponse.json(
-            { success: false, error: error.message || "Failed to resend OTP." },
+            { success: false, error: "Failed to resend OTP." },
             { status: 500 }
         );
     }

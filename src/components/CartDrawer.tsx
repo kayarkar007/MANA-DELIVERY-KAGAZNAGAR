@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { calculatePricing, formatCurrency } from "@/lib/utils";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 export default function CartDrawer({
     isOpen,
@@ -17,6 +18,7 @@ export default function CartDrawer({
     const { cart, updateQuantity, cartTotal } = useCart();
     const { data: session } = useSession();
     const pricing = calculatePricing(cartTotal);
+    const dialogRef = useDialogA11y<HTMLElement>(isOpen, onClose);
 
     return (
         <AnimatePresence>
@@ -34,9 +36,11 @@ export default function CartDrawer({
 
                     {/* Drawer */}
                     <motion.aside
+                        ref={dialogRef}
                         role="dialog"
                         aria-modal="true"
-                        aria-label="Shopping Cart"
+                        aria-labelledby="cart-drawer-title"
+                        tabIndex={-1}
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
@@ -45,19 +49,20 @@ export default function CartDrawer({
                         style={{ paddingTop: "env(safe-area-inset-top)" }}
                     >
                         {/* Mobile Dismiss Drag Handle */}
-                        <div
-                            className="flex cursor-pointer items-center justify-center py-2.5 sm:hidden"
+                        <button
+                            type="button"
+                            className="flex w-full items-center justify-center py-2.5 sm:hidden"
                             onClick={onClose}
-                            title="Tap or drag to close"
+                            aria-label="Close cart"
                         >
                             <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
-                        </div>
+                        </button>
 
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-4 dark:border-slate-800/90 sm:px-6 sm:py-5">
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Current basket</p>
-                                <h2 className="font-display mt-1.5 flex items-center gap-2.5 text-xl font-black text-slate-900 dark:text-white sm:text-2xl">
+                                <h2 id="cart-drawer-title" className="font-display mt-1.5 flex items-center gap-2.5 text-xl font-black text-slate-900 dark:text-white sm:text-2xl">
                                     <ShoppingBag className="h-5 w-5 text-red-600 dark:text-red-400" />
                                     Your Cart
                                 </h2>
@@ -66,6 +71,7 @@ export default function CartDrawer({
                                 onClick={onClose}
                                 className="app-icon-button h-11 w-11 rounded-2xl"
                                 aria-label="Close cart"
+                                data-dialog-initial-focus
                             >
                                 <X className="h-5 w-5" />
                             </button>

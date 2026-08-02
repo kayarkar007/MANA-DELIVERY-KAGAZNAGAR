@@ -104,10 +104,11 @@ export function rateLimit({ windowMs, max, prefix = "rl" }: RateLimitOptions) {
         // ── In-memory fallback ─────────────────────────────────────────────
         memCleanup();
         const now = Date.now();
-        const existing = memStore.get(key);
+        const memoryKey = `${prefix}:${key}`;
+        const existing = memStore.get(memoryKey);
 
         if (!existing || now >= existing.expiresAt) {
-            memStore.set(key, { count: 1, expiresAt: now + windowMs });
+            memStore.set(memoryKey, { count: 1, expiresAt: now + windowMs });
             return true;
         }
         if (existing.count >= max) return false;
@@ -130,7 +131,7 @@ export function rateLimit({ windowMs, max, prefix = "rl" }: RateLimitOptions) {
             }
         }
 
-        const entry = memStore.get(key);
+        const entry = memStore.get(`${prefix}:${key}`);
         if (!entry) return 0;
         const remaining = Math.ceil((entry.expiresAt - Date.now()) / 1000);
         return remaining > 0 ? remaining : 0;

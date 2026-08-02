@@ -1,407 +1,336 @@
 import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, TouchableOpacity,
-  SafeAreaView, ScrollView, StatusBar, Alert,
+  StyleSheet, Text, View, ScrollView, TouchableOpacity,
+  Alert, ActivityIndicator, TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../api/client';
+import { COLORS, SHADOWS } from '../constants/theme';
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { user, logout, setUser } = useAuth();
   const [walletBalance, setWalletBalance] = useState(0);
-  const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, delivered: 0 });
+  const [orderCount, setOrderCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  async function fetchProfileData() {
+  async function loadProfileData() {
+    if (!user) return;
+    setLoading(true);
     try {
-      // Fetch wallet balance
-      const walletData = await apiFetch('/wallet');
-      if (walletData.success) {
-        setWalletBalance(walletData.balance || 0);
+      const [walletRes, ordersRes] = await Promise.allSettled([
+        apiFetch('/wallet'),
+        apiFetch('/orders'),
+      ]);
+      if (walletRes.status === 'fulfilled') {
+        setWalletBalance(walletRes.value?.balance || 0);
+      }
+      if (ordersRes.status === 'fulfilled') {
+        const orders = ordersRes.value?.data || ordersRes.value?.orders || [];
+        setOrderCount(Array.isArray(orders) ? orders.length : 0);
       }
     } catch (e) {
-      console.error('Wallet fetch failed', e);
-    }
-
-    try {
-      // Fetch order stats
-      const ordersData = await apiFetch('/orders?limit=100');
-      if (ordersData.success && ordersData.data) {
-        const orders = ordersData.data;
-        setOrderStats({
-          total: orders.length,
-          pending: orders.filter((o) => ['pending', 'confirmed', 'processing', 'shipped'].includes(o.status)).length,
-          delivered: orders.filter((o) => o.status === 'delivered').length,
-        });
-      }
-    } catch (e) {
-      console.error('Orders fetch failed', e);
+      console.warn('Profile data load failed', e);
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
+    loadProfileData();
     if (user) {
-      fetchProfileData();
+      setEditName(user.name || '');
+      setEditPhone(user.phone || '');
     }
   }, [user]);
+
+  async function saveProfile() {
+    if (!editName.trim()) {
+      Alert.alert('Required', 'Please enter your name.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await apiFetch('/user/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          action: 'UPDATE_PROFILE',
+          name: editName.trim(),
+          phone: editPhone.trim(),
+        }),
+      });
+      if (res?.success && res?.data) {
+        // Update context with new data if setUser is available
+        if (setUser) setUser({ ...user, name: res.data.name, phone: res.data.phone });
+      }
+      setEditMode(false);
+      Alert.alert('Updated!', 'Your profile has been updated.');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function handleLogout() {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'MainTabs' }],
-          });
-        },
-      },
+      { text: 'Logout', style: 'destructive', onPress: async () => { await logout(); } },
     ]);
   }
 
-  if (!user) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#090405" />
-        <View style={styles.center}>
-          <Text style={styles.emptyEmoji}>👤</Text>
-          <Text style={styles.emptyTitle}>Not Logged In</Text>
-          <Text style={styles.emptySub}>Login to manage your profile and orders.</Text>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => navigation.navigate('Login')}
-          >
-            <Text style={styles.actionBtnText}>Login Now</Text>
-          </TouchableOpacity>
+  const activeUser = user;
+
+  const MenuRow = ({ icon, label, badge, color, onPress }) => (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.75}>
+      <View style={[styles.menuIconBg, color && { backgroundColor: color + '22' }]}>
+        <Ionicons name={icon} size={18} color={color || COLORS.text} />
+      </View>
+      <Text style={styles.menuItemText}>{label}</Text>
+      {badge != null && badge > 0 && (
+        <View style={styles.orderBadge}>
+          <Text style={styles.orderBadgeText}>{badge}</Text>
         </View>
-      </SafeAreaView>
-    );
-  }
+      )}
+      <Ionicons name="chevron-forward" size={16} color={COLORS.textDark} />
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#090405" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Account</Text>
+        {user && (
+          <TouchableOpacity onPress={() => setEditMode(!editMode)} style={styles.editBtn}>
+            <Feather name={editMode ? "x" : "edit-2"} size={17} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user.name ? user.name.charAt(0).toUpperCase() : '?'}
-            </Text>
-          </View>
-          <Text style={styles.userName}>{user.name || 'Customer'}</Text>
-          <Text style={styles.userPhone}>📱 +91 {user.phone || 'Not set'}</Text>
-          {user.email && <Text style={styles.userEmail}>✉️ {user.email}</Text>}
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>
-              {user.role === 'admin' ? '👑 Admin' : user.role === 'rider' ? '🛵 Rider' : '🛒 Customer'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Stats Cards */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{orderStats.total}</Text>
-            <Text style={styles.statLabel}>Total Orders</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statValue, { color: '#f59e0b' }]}>{orderStats.pending}</Text>
-            <Text style={styles.statLabel}>Active</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statValue, { color: '#22c55e' }]}>{orderStats.delivered}</Text>
-            <Text style={styles.statLabel}>Delivered</Text>
-          </View>
-        </View>
-
-        {/* Wallet Card */}
-        <View style={styles.walletCard}>
-          <View style={styles.walletHeader}>
-            <Text style={styles.walletTitle}>💰 Wallet Balance</Text>
-            <Text style={styles.walletAmount}>₹{walletBalance.toFixed(2)}</Text>
-          </View>
-          <Text style={styles.walletHint}>
-            Use wallet balance during checkout for instant payments.
+      {!user ? (
+        <View style={styles.guestView}>
+          <Ionicons name="person-circle-outline" size={80} color={COLORS.primary} />
+          <Text style={styles.guestTitle}>Welcome to Mana Delivery</Text>
+          <Text style={styles.guestSub}>
+            Log in to manage orders, view wallet balance, and save delivery addresses.
           </Text>
-        </View>
-
-        {/* Menu Items */}
-        <View style={styles.menuSection}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => navigation.navigate('OrderHistory')}
-          >
-            <Text style={styles.menuEmoji}>📋</Text>
-            <Text style={styles.menuText}>My Orders</Text>
-            <Text style={styles.menuArrow}>→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuEmoji}>📍</Text>
-            <Text style={styles.menuText}>Saved Addresses</Text>
-            <Text style={styles.menuArrow}>→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuEmoji}>🔔</Text>
-            <Text style={styles.menuText}>Notifications</Text>
-            <Text style={styles.menuArrow}>→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuEmoji}>❤️</Text>
-            <Text style={styles.menuText}>Wishlist</Text>
-            <Text style={styles.menuArrow}>→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuEmoji}>🎟️</Text>
-            <Text style={styles.menuText}>Referral Code</Text>
-            <Text style={styles.menuValue}>{user.referralCode || '—'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuEmoji}>🆘</Text>
-            <Text style={styles.menuText}>Help & Support</Text>
-            <Text style={styles.menuArrow}>→</Text>
+          <TouchableOpacity style={styles.loginBtn} onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginBtnText}>Log In / Sign Up</Text>
           </TouchableOpacity>
         </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Profile Card */}
+          <View style={styles.profileCard}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarInitial}>
+                {activeUser.name ? activeUser.name[0].toUpperCase() : 'U'}
+              </Text>
+            </View>
+            <View style={styles.userInfo}>
+              {editMode ? (
+                <>
+                  <TextInput
+                    style={styles.editInput}
+                    value={editName}
+                    onChangeText={setEditName}
+                    placeholder="Full Name"
+                    placeholderTextColor={COLORS.textDark}
+                  />
+                  <TextInput
+                    style={[styles.editInput, { marginTop: 6 }]}
+                    value={editPhone}
+                    onChangeText={setEditPhone}
+                    placeholder="Phone Number"
+                    placeholderTextColor={COLORS.textDark}
+                    keyboardType="phone-pad"
+                  />
+                  <TouchableOpacity style={styles.saveProfileBtn} onPress={saveProfile} disabled={saving}>
+                    {saving ? (
+                      <ActivityIndicator size="small" color={COLORS.white} />
+                    ) : (
+                      <Text style={styles.saveProfileBtnTxt}>Save Changes</Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.userName}>{activeUser.name || 'Mana Customer'}</Text>
+                  <Text style={styles.userEmail}>{activeUser.email || activeUser.phone}</Text>
+                  {activeUser.phone && <Text style={styles.userPhone}>📞 {activeUser.phone}</Text>}
+                  <View style={styles.verifiedRow}>
+                    <Ionicons name="checkmark-circle" size={14} color={COLORS.accent} />
+                    <Text style={styles.verifiedText}>Verified Customer • Kagaznagar</Text>
+                  </View>
+                </>
+              )}
+            </View>
+          </View>
 
-        {/* App Info */}
-        <View style={styles.appInfoCard}>
-          <Text style={styles.appInfoTitle}>🛵 Mana Delivery</Text>
-          <Text style={styles.appInfoSub}>Kagaznagar Express Delivery</Text>
-          <Text style={styles.appInfoVersion}>Version 1.2.0</Text>
-        </View>
+          {/* Wallet Card */}
+          <TouchableOpacity style={styles.walletCard} onPress={() => navigation.navigate('Wallet')} activeOpacity={0.88}>
+            <View style={styles.walletLeft}>
+              <View style={styles.walletIconBg}>
+                <Ionicons name="wallet" size={20} color={COLORS.gold} />
+              </View>
+              <View style={{ marginLeft: 12 }}>
+                <Text style={styles.walletTitle}>MANA WALLET</Text>
+                <Text style={styles.walletAmount}>₹{walletBalance.toFixed(2)}</Text>
+                <Text style={styles.walletSub}>Tap to view transactions & top up</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.gold} />
+          </TouchableOpacity>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>🚪 Logout</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNum}>{orderCount}</Text>
+              <Text style={styles.statLbl}>Orders</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNum}>₹{walletBalance}</Text>
+              <Text style={styles.statLbl}>Wallet</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNum}>5⭐</Text>
+              <Text style={styles.statLbl}>Rating</Text>
+            </View>
+          </View>
+
+          {/* Account Menu */}
+          <View style={styles.menuSection}>
+            <Text style={styles.menuTitle}>Account</Text>
+            <MenuRow icon="receipt-outline" label="My Orders & Tracking" badge={orderCount} color={COLORS.primary} onPress={() => navigation.navigate('OrdersTab')} />
+            <MenuRow icon="location-outline" label="Saved Addresses" color={COLORS.accent} onPress={() => navigation.navigate('Address')} />
+            <MenuRow icon="heart-outline" label="My Wishlist" color="#EC4899" onPress={() => navigation.navigate('Wishlist')} />
+            <MenuRow icon="wallet-outline" label="Wallet & Transactions" color={COLORS.gold} onPress={() => navigation.navigate('Wallet')} />
+          </View>
+
+          <View style={[styles.menuSection, { marginTop: 12 }]}>
+            <Text style={styles.menuTitle}>Help</Text>
+            <MenuRow icon="headset-outline" label="Help & Customer Support" color={COLORS.primary} onPress={() => navigation.navigate('Support')} />
+            <MenuRow icon="information-circle-outline" label="About Mana Delivery" color={COLORS.textMuted} onPress={() => Alert.alert('About', 'Mana Delivery — Fast local delivery in Kagaznagar.\n\nVersion 1.0.0')} />
+          </View>
+
+          {/* Logout */}
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={18} color={COLORS.danger} style={{ marginRight: 6 }} />
+            <Text style={styles.logoutBtnText}>Log Out</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#090405',
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+  headerTitle: { fontSize: 20, fontWeight: '900', color: COLORS.text },
+  editBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.cardBorder,
+    alignItems: 'center', justifyContent: 'center',
   },
-  scrollContent: {
-    paddingBottom: 40,
+
+  guestView: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
+  guestTitle: { fontSize: 20, fontWeight: '900', color: COLORS.text, marginTop: 12 },
+  guestSub: { fontSize: 13, color: COLORS.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 18 },
+  loginBtn: { backgroundColor: COLORS.primary, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 12, marginTop: 20 },
+  loginBtnText: { color: COLORS.white, fontWeight: '900', fontSize: 14 },
+
+  scrollContent: { padding: 16, paddingBottom: 40 },
+
+  profileCard: {
+    backgroundColor: COLORS.card, borderRadius: 20,
+    borderWidth: 1, borderColor: COLORS.cardBorder,
+    padding: 16, flexDirection: 'row', alignItems: 'flex-start', ...SHADOWS.small,
   },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+  avatarCircle: {
+    width: 54, height: 54, borderRadius: 27,
+    backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center',
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#ef4444',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 14,
+  avatarInitial: { color: COLORS.white, fontSize: 22, fontWeight: '900' },
+  userInfo: { marginLeft: 14, flex: 1 },
+  userName: { fontSize: 17, fontWeight: '900', color: COLORS.text },
+  userEmail: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  userPhone: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  verifiedRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  verifiedText: { fontSize: 11, color: COLORS.accent, fontWeight: '700', marginLeft: 4 },
+  editInput: {
+    backgroundColor: COLORS.inputBg, borderWidth: 1, borderColor: COLORS.inputBorder,
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+    color: COLORS.text, fontSize: 14,
   },
-  avatarText: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 32,
+  saveProfileBtn: {
+    backgroundColor: COLORS.primary, borderRadius: 10,
+    paddingVertical: 8, alignItems: 'center', marginTop: 8,
   },
-  userName: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 24,
-    marginBottom: 6,
-  },
-  userPhone: {
-    color: '#94a3b8',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  userEmail: {
-    color: '#64748b',
-    fontWeight: '600',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  roleBadge: {
-    marginTop: 10,
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  roleText: {
-    color: '#94a3b8',
-    fontWeight: '800',
-    fontSize: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#160d10',
-    borderRadius: 20,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2e1417',
-  },
-  statValue: {
-    color: '#ef4444',
-    fontWeight: '900',
-    fontSize: 28,
-  },
-  statLabel: {
-    color: '#94a3b8',
-    fontWeight: '700',
-    fontSize: 11,
-    marginTop: 4,
-  },
+  saveProfileBtnTxt: { color: COLORS.white, fontWeight: '800', fontSize: 13 },
+
   walletCard: {
-    marginHorizontal: 16,
-    backgroundColor: '#14210e',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#1a3a0e',
-    marginBottom: 16,
+    backgroundColor: COLORS.card, borderRadius: 20,
+    borderWidth: 1, borderColor: COLORS.gold,
+    padding: 16, marginTop: 14,
+    flexDirection: 'row', alignItems: 'center', ...SHADOWS.small,
   },
-  walletHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+  walletLeft: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  walletIconBg: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: COLORS.goldBg, alignItems: 'center', justifyContent: 'center',
   },
-  walletTitle: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 16,
+  walletTitle: { fontSize: 11, fontWeight: '900', color: COLORS.gold, letterSpacing: 0.5 },
+  walletAmount: { fontSize: 24, fontWeight: '900', color: COLORS.text },
+  walletSub: { fontSize: 11, color: COLORS.textMuted },
+
+  statsRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  statCard: {
+    flex: 1, backgroundColor: COLORS.card, borderRadius: 14,
+    borderWidth: 1, borderColor: COLORS.cardBorder,
+    padding: 14, alignItems: 'center', ...SHADOWS.small,
   },
-  walletAmount: {
-    color: '#22c55e',
-    fontWeight: '900',
-    fontSize: 24,
-  },
-  walletHint: {
-    color: '#64748b',
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  statNum: { fontSize: 18, fontWeight: '900', color: COLORS.text },
+  statLbl: { fontSize: 11, color: COLORS.textMuted, marginTop: 3 },
+
   menuSection: {
-    marginHorizontal: 16,
-    backgroundColor: '#160d10',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#2e1417',
-    overflow: 'hidden',
-    marginBottom: 16,
+    backgroundColor: COLORS.card, borderRadius: 20,
+    borderWidth: 1, borderColor: COLORS.cardBorder,
+    padding: 14, marginTop: 14,
+  },
+  menuTitle: {
+    fontSize: 11, fontWeight: '800', color: COLORS.textDark,
+    textTransform: 'uppercase', marginBottom: 6, letterSpacing: 0.5,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: COLORS.cardBorder,
   },
-  menuEmoji: {
-    fontSize: 18,
-    marginRight: 14,
+  menuIconBg: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: COLORS.inputBg, alignItems: 'center', justifyContent: 'center', marginRight: 12,
   },
-  menuText: {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 15,
-    flex: 1,
+  menuItemText: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.text },
+  orderBadge: {
+    backgroundColor: COLORS.primary, borderRadius: 10,
+    minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 5, marginRight: 6,
   },
-  menuArrow: {
-    color: '#64748b',
-    fontWeight: '900',
-    fontSize: 16,
-  },
-  menuValue: {
-    color: '#94a3b8',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  appInfoCard: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    marginBottom: 8,
-  },
-  appInfoTitle: {
-    color: '#ef4444',
-    fontWeight: '900',
-    fontSize: 16,
-  },
-  appInfoSub: {
-    color: '#64748b',
-    fontWeight: '600',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  appInfoVersion: {
-    color: '#334155',
-    fontWeight: '700',
-    fontSize: 11,
-    marginTop: 6,
-  },
+  orderBadgeText: { color: '#fff', fontSize: 11, fontWeight: '900' },
   logoutBtn: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-    backgroundColor: '#1e293b',
-    paddingVertical: 16,
-    borderRadius: 20,
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(248,113,113,0.1)', borderWidth: 1,
+    borderColor: COLORS.danger, borderRadius: 14, paddingVertical: 14, marginTop: 20,
   },
-  logoutText: {
-    color: '#ef4444',
-    fontWeight: '900',
-    fontSize: 15,
-  },
-  emptyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  emptySub: {
-    color: '#94a3b8',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  actionBtn: {
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 16,
-  },
-  actionBtnText: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 14,
-  },
+  logoutBtnText: { color: COLORS.danger, fontSize: 14, fontWeight: '900' },
 });

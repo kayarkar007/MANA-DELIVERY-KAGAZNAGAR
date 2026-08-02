@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isFeatureEnabled } from "@/lib/featureFlags";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -16,6 +17,7 @@ export async function GET() {
         success: true,
         data: {
             razorpayConfigured,
+            paymentsEnabled: isFeatureEnabled("payments"),
             keyId: process.env.RAZORPAY_KEY_ID || null,
             minimumWalletTopup: 50,
         },

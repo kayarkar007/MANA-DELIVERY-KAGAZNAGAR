@@ -1,4 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
+const TEST_LOCATION = {
+    latitude: 19.3316,
+    longitude: 79.4831,
+};
 
 const credentials = {
     user: {
@@ -13,6 +17,7 @@ const credentials = {
 
 async function login(page: Page, email: string, password: string, destination: RegExp) {
     await page.goto("/login");
+    await page.getByRole("button", { name: /email/i }).click().catch(() => {});
     await page.getByPlaceholder("you@example.com").fill(email);
     await page.getByPlaceholder("Enter your password").fill(password);
     await page.getByRole("button", { name: /sign in/i }).click();
@@ -27,8 +32,8 @@ test.describe("Production hardening regressions", () => {
                 customerName: "Guest",
                 customerPhone: "9999999999",
                 address: "Unauthorized Street",
-                latitude: 17.385,
-                longitude: 78.4867,
+                latitude: TEST_LOCATION.latitude,
+                longitude: TEST_LOCATION.longitude,
                 items: [{ productId: "507f191e810c19729de860ea", quantity: 1 }],
                 paymentMethod: "cod",
             },
@@ -56,8 +61,8 @@ test.describe("Production hardening regressions", () => {
                     customerName: "Payment Guard Test",
                     customerPhone: "9876500001",
                     address: "Playwright Colony, Kagaznagar",
-                    latitude: 17.385,
-                    longitude: 78.4867,
+                    latitude: TEST_LOCATION.latitude,
+                    longitude: TEST_LOCATION.longitude,
                     items: [{ productId: product?._id, quantity: 1 }],
                     paymentMethod: "wallet",
                     walletUsed: 0,
@@ -90,7 +95,7 @@ test.describe("Production hardening regressions", () => {
             const bell = page.locator('[aria-label="Notifications"]').first();
             await bell.click();
 
-            const panel = page.getByText("Notifications").locator('xpath=ancestor::div[contains(@class,"z-50")][1]');
+            const panel = page.getByTestId("notification-panel");
             await expect(panel).toBeVisible();
 
             const box = await panel.boundingBox();

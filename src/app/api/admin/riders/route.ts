@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
+import { requireAdminFlexible } from "@/lib/routeAuth";
 
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session || session.user.role !== "admin") {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireAdminFlexible();
+        if ("response" in auth) return auth.response;
 
         await connectToDatabase();
 

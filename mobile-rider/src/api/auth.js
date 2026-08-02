@@ -12,18 +12,6 @@ export async function loginWithEmail(email, password) {
   return data;
 }
 
-/** Login with phone + OTP (call after OTP verify) */
-export async function loginWithPhone(userId, phone) {
-  const data = await apiFetch('/auth/mobile-login', {
-    method: 'POST',
-    body: JSON.stringify({ loginType: 'phone', userId, phone, expectedRole: 'rider' }),
-  });
-  if (data.success) {
-    await saveSession(data.token, data.user);
-  }
-  return data;
-}
-
 export async function logout() {
   await clearSession();
 }

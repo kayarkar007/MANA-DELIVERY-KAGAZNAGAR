@@ -13,6 +13,22 @@ const PHONE_VERIFY_EXEMPT = [
 ];
 
 export async function middleware(request: NextRequest) {
+    const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-request-id", requestId);
+    const next = () => {
+        const response = NextResponse.next({ request: { headers: requestHeaders } });
+        response.headers.set("x-request-id", requestId);
+        return response;
+    };
+    const redirect = (url: URL) => {
+        const response = NextResponse.redirect(url);
+        response.headers.set("x-request-id", requestId);
+        return response;
+    };
+
+    if (request.nextUrl.pathname.startsWith("/api/")) return next();
+
     const token = await getToken({
         req: request,
         secret: process.env.NEXTAUTH_SECRET,
@@ -24,7 +40,7 @@ export async function middleware(request: NextRequest) {
         const loginUrl = new URL("/login", request.url);
         const callbackUrl = `${pathname}${request.nextUrl.search}`;
         loginUrl.searchParams.set("callbackUrl", callbackUrl);
-        return NextResponse.redirect(loginUrl);
+        return redirect(loginUrl);
     }
 
     // ── Phone Verification Gate ────────────────────────────────────────────────
@@ -34,21 +50,21 @@ export async function middleware(request: NextRequest) {
     if (!isExempt && !token.isPhoneVerified) {
         const verifyUrl = new URL("/verify-phone", request.url);
         verifyUrl.searchParams.set("callbackUrl", `${pathname}${request.nextUrl.search}`);
-        return NextResponse.redirect(verifyUrl);
+        return redirect(verifyUrl);
     }
 
     // ── Role-based route protection at the Edge ────────────────────────────────
     const isAdminRoute = pathname.startsWith("/admin");
     if (isAdminRoute && token.role !== "admin") {
-        return NextResponse.redirect(new URL("/", request.url));
+        return redirect(new URL("/", request.url));
     }
 
     const isRiderRoute = pathname.startsWith("/rider");
     if (isRiderRoute && token.role !== "rider" && token.role !== "admin") {
-        return NextResponse.redirect(new URL("/", request.url));
+        return redirect(new URL("/", request.url));
     }
 
-    return NextResponse.next();
+    return next();
 }
 
 export const config = {
@@ -62,5 +78,6 @@ export const config = {
         "/rider",
         "/rider/:path*",
         "/verify-phone",
+        "/api/:path*",
     ],
 };

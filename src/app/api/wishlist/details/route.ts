@@ -2,19 +2,17 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import Wishlist from "@/models/Wishlist";
 import Product from "@/models/Product";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { requireAuthenticatedFlexible } from "@/lib/routeAuth";
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const auth = await requireAuthenticatedFlexible();
+        if ("response" in auth) return auth.response;
+        const userId = auth.session.user.id;
 
         await connectToDatabase();
 
-        const wishlist = await Wishlist.findOne({ userId: session.user.id });
+        const wishlist = await Wishlist.findOne({ userId });
         if (!wishlist || !wishlist.productIds.length) {
             return NextResponse.json({ success: true, data: [] }, { status: 200 });
         }
@@ -29,4 +27,3 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
-

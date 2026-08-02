@@ -239,7 +239,6 @@ export default function LoginPage() {
                     phone,
                     otp,
                     firebaseIdToken,
-                    isVerifiedDirectly: !!firebaseIdToken,
                 }),
             });
             const data = await res.json();

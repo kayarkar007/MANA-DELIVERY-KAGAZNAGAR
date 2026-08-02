@@ -9,15 +9,15 @@ test.describe('Authentication Security Flow', () => {
         await page.waitForTimeout(1000);
 
         // Fill non-password details
-        await page.fill('input[placeholder="John Doe"]', 'Playwright Tester');
+        await page.locator('input[type="text"]').first().fill('Playwright Tester');
         await page.fill('input[placeholder="you@example.com"]', 'playwright@localu.com');
-        await page.fill('input[placeholder="+91 9876543210"]', '9876543210');
+        await page.fill('input[placeholder="9876543210"]', '9876543210');
 
         // Test Weak Password
         await page.locator('input[type="password"]').first().fill('weak123');
         await page.locator('input[type="password"]').nth(1).fill('weak123');
 
-        const submitBtn = page.getByRole('button', { name: /Sign Up/i });
+        const submitBtn = page.getByRole('button', { name: /Create Account/i });
         
         // The button should be explicitly disabled because 'weak123' fails the Regex requirement.
         await expect(submitBtn).toBeDisabled();
@@ -27,7 +27,7 @@ test.describe('Authentication Security Flow', () => {
         await page.locator('input[type="password"]').nth(1).fill('Localu@2026!');
 
         // Check if the strength checklist updates dynamically to green validation classes
-        await expect(page.locator('text=At least 8 characters').locator('xpath=..').locator('svg').first()).toHaveClass(/text-green-500/);
+        await expect(page.locator('text=At least 8 characters').locator('xpath=..').locator('svg').first()).toHaveClass(/text-emerald-500/);
         
         // Wait for state updates to unleash the submit button
         await page.waitForTimeout(500);

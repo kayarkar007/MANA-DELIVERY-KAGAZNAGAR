@@ -4,6 +4,7 @@ const projectRoot = process.cwd();
 export default defineConfig({
   testDir: './tests',
   globalSetup: './tests/global.setup.ts',
+  globalTeardown: './tests/global.teardown.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

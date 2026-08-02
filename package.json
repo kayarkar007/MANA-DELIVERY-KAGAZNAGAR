@@ -7,7 +7,11 @@
     "build": "next build",
     "postbuild": "node post-build.js",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "release:preflight": "node scripts/release-preflight.mjs",
+    "security:secrets": "node scripts/secret-scan.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:web": "playwright test tests/auth.spec.ts tests/checkout.spec.ts tests/launch-audit.spec.ts tests/production-hardening.spec.ts tests/role-portals.spec.ts --reporter=line"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

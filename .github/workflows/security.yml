@@ -1,0 +1,67 @@
+name: Security Evidence
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-and-sbom:
+    name: Dependency audit and SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scan for committed secrets
+        run: npm run security:secrets
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Generate CycloneDX SBOM
+        run: npm sbom --omit=dev --sbom-format=cyclonedx > sbom.cdx.json
+
+      - name: Upload SBOM evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-sbom
+          path: sbom.cdx.json
+          if-no-files-found: error
+
+  codeql:
+    name: CodeQL SAST
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+
+      - name: Analyze code
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"

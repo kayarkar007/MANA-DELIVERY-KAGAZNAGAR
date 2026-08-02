@@ -25,8 +25,9 @@ Localu is a premium hyperlocal delivery platform built with Next.js, featuring g
 
 ### Prerequisites
 
-
-```
+- Node.js 20 LTS
+- MongoDB database for development and a separate database for Playwright tests
+- Environment variables copied from `.env.example`
 
 ### Installation
 
@@ -45,6 +46,20 @@ npx tsx scripts/seed.ts
 
 ```bash
 npm run dev
+```
+
+### Testing
+
+Configure `MONGODB_TEST_URI` with a dedicated database whose name ends in `-test` or `_test`. Playwright refuses to run against any other database.
+
+```bash
+npm run test:e2e:web
+```
+
+Run the complete suite, including mobile API coverage, with:
+
+```bash
+npm run test:e2e
 ```
 
 ## Production Seeding

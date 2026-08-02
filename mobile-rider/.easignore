@@ -1,4 +1,3 @@
-node_modules
+android
 .expo
-dist
-web-build
+node_modules

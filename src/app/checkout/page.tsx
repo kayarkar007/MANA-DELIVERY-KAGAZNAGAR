@@ -456,15 +456,16 @@ export default function CheckoutPage() {
 
                         <div className="mt-5 space-y-3">
                             <div className="flex items-center justify-between gap-3">
-                                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 inline-flex items-center gap-2">
+                                <label htmlFor="delivery-address" className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 inline-flex items-center gap-2">
                                     <MapPin className="h-3.5 w-3.5" /> Address
-                                </span>
+                                </label>
                                 <button type="button" onClick={handleLocate} disabled={locating} className="app-button app-button-secondary rounded-[1rem] px-3 py-2 text-[10px]">
                                     {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LocateFixed className="h-3.5 w-3.5" />}
                                     Auto detect
                                 </button>
                             </div>
                             <textarea
+                                id="delivery-address"
                                 value={form.address}
                                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                                 required
@@ -472,7 +473,10 @@ export default function CheckoutPage() {
                                 className="app-textarea text-sm font-semibold"
                             />
                             {savedAddresses.length > 0 && (
+                                <>
+                                <label htmlFor="saved-address" className="sr-only">Choose saved address</label>
                                 <select
+                                    id="saved-address"
                                     defaultValue=""
                                     onChange={(e) => {
                                         const selected = savedAddresses.find((item) => item._id === e.target.value);
@@ -489,6 +493,7 @@ export default function CheckoutPage() {
                                         </option>
                                     ))}
                                 </select>
+                                </>
                             )}
                         </div>
                     </section>
@@ -514,9 +519,10 @@ export default function CheckoutPage() {
 
                         <div className="space-y-6">
                             <div className="space-y-3">
-                                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promo code</span>
+                                <label htmlFor="promo-code" className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promo code</label>
                                 <div className="flex flex-col gap-3 sm:flex-row">
                                     <input
+                                        id="promo-code"
                                         value={appliedPromo ? appliedPromo.code : promoCode}
                                         onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                                         disabled={!!appliedPromo}
@@ -648,7 +654,11 @@ export default function CheckoutPage() {
                                             <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
                                                 Scan the QR, pay the exact amount, then paste your transaction reference below.
                                             </p>
+                                            <label htmlFor="upi-transaction-id" className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                                                UPI transaction reference
+                                            </label>
                                             <input
+                                                id="upi-transaction-id"
                                                 value={transactionId}
                                                 onChange={(e) => setTransactionId(e.target.value)}
                                                 placeholder="Enter UTR / reference number"
