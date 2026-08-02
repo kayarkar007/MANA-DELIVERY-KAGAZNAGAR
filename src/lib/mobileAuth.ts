@@ -30,9 +30,10 @@ function getMobileTokenSecret() {
 }
 
 export function createMobileAccessToken(user: MobileTokenUser) {
+    const userId = user._id ? (typeof user._id === "string" ? user._id : user._id.toString()) : "";
     return jwt.sign(
         {
-            id: user._id.toString(),
+            id: userId,
             name: user.name ?? null,
             email: user.email ?? null,
             role: user.role ?? "user",

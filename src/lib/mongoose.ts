@@ -2,12 +2,13 @@ import mongoose from "mongoose";
 
 function getMongoUri(): string {
   const uri = process.env.MONGODB_URI;
-  if (!uri && process.env.NODE_ENV === "production" && process.env.VERCEL) {
+  if (!uri) {
+    console.error("❌ MONGODB_URI is missing in environment variables!");
     throw new Error(
-      "Please define the MONGODB_URI environment variable inside Vercel Project Settings."
+      "Database connection failed: MONGODB_URI is not configured in environment variables."
     );
   }
-  return uri || "mongodb://127.0.0.1:27017/mana_delivery_build_placeholder";
+  return uri;
 }
 
 let cached = (global as any).mongoose;
