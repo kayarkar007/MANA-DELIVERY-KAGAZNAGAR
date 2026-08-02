@@ -51,3 +51,5 @@ next-env.d.ts
 **/GoogleService-Info.plist
 mobile*/.env
 mobile*/node_modules
+
+.vercel

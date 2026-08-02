@@ -86,10 +86,11 @@ export async function GET(request: Request) {
         return adminView
             ? NextResponse.json(payload, { headers: { "Cache-Control": "private, no-store" } })
             : publicJson(payload, startedAt, search ? 30 : 60);
-    } catch (error) {
+    } catch (error: any) {
+        console.error("❌ [/api/products GET] error:", error?.message ?? error);
         return NextResponse.json(
-            { success: false, error: "Failed to fetch products" },
-            { status: 400 }
+            { success: false, error: "Failed to fetch products", products: [], data: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 1 } },
+            { status: 200 }
         );
     }
 }
