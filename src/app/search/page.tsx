@@ -4,10 +4,12 @@ import Image from "next/image";
 import { ArrowLeft, SearchX, ShoppingBag } from "lucide-react";
 import connectToDatabase from "@/lib/mongoose";
 import Product from "@/models/Product";
+import Shop from "@/models/Shop";
 import AddToCartButton from "@/components/AddToCartButton";
 import { formatCurrency } from "@/lib/utils";
 
 export const revalidate = 0;
+
 
 export async function generateMetadata({
   searchParams,
@@ -39,9 +41,13 @@ export async function generateMetadata({
 async function performSearch(params: { q?: string; minPrice?: string; maxPrice?: string; sort?: string }) {
     try {
         await connectToDatabase();
+        if (!Shop) {
+            console.warn("Shop model uninitialized");
+        }
         if (!params.q && !params.minPrice && !params.maxPrice) return [];
 
-        const dbQuery: any = { isHidden: { $ne: true } };
+        const dbQuery: any = { isHidden: false };
+
 
         if (params.q) {
             const searchRegex = new RegExp(params.q, "i");

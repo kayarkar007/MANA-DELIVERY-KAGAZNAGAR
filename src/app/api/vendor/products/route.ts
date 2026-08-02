@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import connectToDatabase from "@/lib/mongoose";
 import Product from "@/models/Product";
 import { requireVendor } from "@/lib/routeAuth";
+
 
 /** GET /api/vendor/products — List all products for vendor's shop */
 export async function GET(request: Request) {
@@ -80,7 +82,11 @@ export async function POST(request: Request) {
             isHidden: isHidden ?? false,
         });
 
+        revalidateTag("home-categories", "layout");
+        revalidatePath("/", "layout");
+
         return NextResponse.json({ success: true, data: product }, { status: 201 });
+
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }

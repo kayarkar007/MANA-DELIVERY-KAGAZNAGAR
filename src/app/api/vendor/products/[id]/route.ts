@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import connectToDatabase from "@/lib/mongoose";
 import Product from "@/models/Product";
 import { requireVendor } from "@/lib/routeAuth";
+
 
 /** GET /api/vendor/products/[id] — Get single product (must belong to vendor's shop) */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -55,6 +57,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
 
         const updated = await Product.findByIdAndUpdate(id, updates, { new: true, runValidators: true }).lean();
+        
+        revalidateTag("home-categories", "layout");
+        revalidatePath("/", "layout");
+
         return NextResponse.json({ success: true, data: updated });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -77,7 +83,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
             return NextResponse.json({ success: false, error: "Product not found or not yours." }, { status: 404 });
         }
 
+        revalidateTag("home-categories", "layout");
+        revalidatePath("/", "layout");
+
         return NextResponse.json({ success: true, message: "Product deleted successfully." });
+
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
