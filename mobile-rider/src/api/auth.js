@@ -2,14 +2,18 @@ import { apiFetch, saveSession, clearSession, getStoredUser } from './client';
 
 /** Login with email + password (role must be rider) */
 export async function loginWithEmail(email, password) {
-  const data = await apiFetch('/auth/mobile-login', {
-    method: 'POST',
-    body: JSON.stringify({ loginType: 'email', email, password, expectedRole: 'rider' }),
-  });
-  if (data.success) {
-    await saveSession(data.token, data.user);
+  try {
+    const data = await apiFetch('/auth/mobile-login', {
+      method: 'POST',
+      body: JSON.stringify({ loginType: 'email', email, password, expectedRole: 'rider' }),
+    });
+    if (data?.success) {
+      await saveSession(data.token, data.user);
+    }
+    return data || { success: false, error: 'No response from server' };
+  } catch (err) {
+    return { success: false, error: err.message || 'Login failed. Check your credentials.' };
   }
-  return data;
 }
 
 export async function logout() {
@@ -17,3 +21,4 @@ export async function logout() {
 }
 
 export { getStoredUser };
+
