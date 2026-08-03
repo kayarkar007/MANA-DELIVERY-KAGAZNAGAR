@@ -47,7 +47,7 @@ export async function registerForPushNotifications() {
   if (finalStatus !== "granted") return null;
 
   const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: "mana-delivery-customer",
+    projectId: "25f712ac-f222-440c-8c36-14c525793537",
   }).catch(() => null);
 
   return tokenData?.data || null;
@@ -70,7 +70,7 @@ export async function savePushTokenToServer(pushToken) {
   } catch (_) {}
 }
 
-// Setup notification tap handler — returns unsubscribe function
+// Setup notification tap handler ï¿½ returns unsubscribe function
 export function setupNotificationTapHandler(navigationRef) {
   const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
     const data = response.notification.request.content.data;

@@ -2,6 +2,7 @@ import connectToDatabase from "@/lib/mongoose";
 import Notification from "@/models/Notification";
 import User from "@/models/User";
 import { dispatchPushToUser } from "@/lib/webPush";
+import { sendFCMNotification } from "@/lib/fcm";
 
 type NotificationInput = {
     recipientId: string;
@@ -40,7 +41,7 @@ export async function triggerNotification(input: NotificationInput) {
         retryCount: 0,
     });
 
-    // Attempt instant delivery
+    // Attempt instant delivery via Web Push (VAPID) — for browser/PWA users
     const result = await dispatchPushToUser(input.recipientId, {
         title: input.title,
         body: input.message,
@@ -52,6 +53,31 @@ export async function triggerNotification(input: NotificationInput) {
             type: input.type,
         },
     });
+
+    // Also send FCM push to mobile apps (Customer / Vendor / Rider Android apps)
+    // Fire-and-forget: mobile push failure doesn't affect web push status
+    (async () => {
+        try {
+            const userRecord = await User.findById(input.recipientId).select("fcmToken").lean() as { fcmToken?: string } | null;
+            if (userRecord?.fcmToken) {
+                await sendFCMNotification({
+                    token: userRecord.fcmToken,
+                    title: input.title,
+                    body: input.message,
+                    data: {
+                        ...(input.metadata ? Object.fromEntries(
+                            Object.entries(input.metadata).map(([k, v]) => [k, String(v)])
+                        ) : {}),
+                        notificationId: notification._id.toString(),
+                        type: input.type || "system",
+                        href: input.href || "/",
+                    },
+                });
+            }
+        } catch (fcmErr) {
+            console.error("[FCM] Mobile push failed silently:", fcmErr);
+        }
+    })();
 
     if (result.success) {
         notification.status = "delivered";

@@ -38,7 +38,7 @@ export async function registerForPushNotifications() {
   if (finalStatus !== 'granted') return null;
 
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId: "b8ff9736-9c4b-4f76-9197-82ea1c9a9cd5" });
     return tokenData.data;
   } catch (e) {
     console.error('Failed to get Vendor push token', e);

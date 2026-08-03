@@ -35,7 +35,7 @@ export async function sendFCMNotification({
                 priority: "high",
                 notification: {
                     sound: "default",
-                    channelId: "orders_channel",
+                    channelId: "mana-delivery-orders",
                     clickAction: "FLUTTER_NOTIFICATION_CLICK",
                 },
             },

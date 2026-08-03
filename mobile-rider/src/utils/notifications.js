@@ -38,7 +38,7 @@ export async function registerForPushNotifications() {
   if (finalStatus !== 'granted') return null;
 
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId: "f3f0cd8a-1ff0-4dc6-abc0-e86e03efd1cc" });
     return tokenData.data;
   } catch (e) {
     console.error('Failed to get Rider push token', e);
