@@ -6,12 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#090405"
-    },
+    "icon": "./assets/android-icon-foreground.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.manadelivery.vendor"
@@ -20,7 +15,7 @@
       "package": "com.manadelivery.vendor",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#090405"
       },
       "permissions": [
@@ -36,7 +31,15 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#090405"
+        }
+      ]
     ],
     "extra": {
       "eas": {
